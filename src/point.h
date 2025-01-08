@@ -1,6 +1,8 @@
 #ifndef point_h
 #define point_h
 
+#include <utility>
+
 namespace puzzmo {
 
 // A helper object storing a pair of row/column indices.
