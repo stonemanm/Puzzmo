@@ -1,0 +1,3 @@
+exports_files(["board_spelltower.txt"])
+
+exports_files(["dictionary.txt"])

@@ -1,0 +1,24 @@
+cc_library(
+    name = "spelltower",
+    srcs = ["spelltower.cc"],
+    hdrs = ["spelltower.h"],
+    deps = [
+        "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/container:flat_hash_set",
+    ],
+)
+
+cc_binary(
+    name = "main",
+    srcs = ["main.cc"],
+    data = [
+        "//data:board_spelltower.txt",
+        "//data:dictionary.txt",
+    ],
+    deps = [
+        ":spelltower",
+        "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+    ],
+)
