@@ -32,7 +32,7 @@ ReadDictionaryFileToVector(const ReadFileOptions options) {
 
 const std::shared_ptr<TrieNode>
 CreateDictionaryTrie(const std::vector<std::string> words) {
-  const std::shared_ptr<TrieNode> dict;
+  std::shared_ptr<TrieNode> dict = std::make_shared<TrieNode>();
   for (const auto &word : words) {
     if (word.length() < 3)
       continue;

@@ -18,7 +18,7 @@ int main(int argc, const char *argv[]) {
   // Read in the dictionary
   std::vector<std::string> words =
       ReadDictionaryFileToVector({.min_letters = 3});
-  const std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
+  std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
 
   // Read in the board
   std::vector<std::vector<char>> board;
