@@ -11,7 +11,7 @@ namespace puzzmo {
 void Spelltower::DFS(std::vector<std::vector<bool>> &visited, Point p,
                      std::shared_ptr<TrieNode> node,
                      absl::flat_hash_set<Point> &path, WordMap &ans) {
-  if (!Valid(p) || visited[p.i][p.j] || LetterAt(p) == '*' ||
+  if (!Valid(p) || visited[p.row][p.col] || LetterAt(p) == '*' ||
       LetterAt(p) == ' ') {
     return;
   }
@@ -23,7 +23,7 @@ void Spelltower::DFS(std::vector<std::vector<bool>> &visited, Point p,
   }
 
   path.insert(p);
-  visited[p.i][p.j] = true;
+  visited[p.row][p.col] = true;
 
   if (child->word != nullptr) {
     int s = Score(path);
@@ -35,7 +35,7 @@ void Spelltower::DFS(std::vector<std::vector<bool>> &visited, Point p,
   }
 
   path.erase(p);
-  visited[p.i][p.j] = false;
+  visited[p.row][p.col] = false;
 }
 
 const WordMap Spelltower::FindWords() {
@@ -44,13 +44,13 @@ const WordMap Spelltower::FindWords() {
   std::vector<std::vector<bool>> visited(n_, std::vector<bool>(m_));
   for (int i = 0; i < n_; ++i) {
     for (int j = 0; j < m_; ++j) {
-      DFS(visited, {.i = i, .j = j}, dict_, path, words);
+      DFS(visited, {.row = i, .col = j}, dict_, path, words);
     }
   }
   return words;
 }
 
-const char Spelltower::LetterAt(Point p) { return board_[p.i][p.j]; }
+const char Spelltower::LetterAt(Point p) { return board_[p.row][p.col]; }
 
 int Spelltower::Score(const absl::flat_hash_set<Point> &path) {
   absl::flat_hash_set<Point> affected;
@@ -59,7 +59,7 @@ int Spelltower::Score(const absl::flat_hash_set<Point> &path) {
     char c = LetterAt(p);
     if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
       for (int j = 0; j < m_; ++j) {
-        affected.insert({.i = p.i, .j = j});
+        affected.insert({.row = p.row, .col = j});
       }
     }
     if (path.size() < 5) {
@@ -84,10 +84,12 @@ int Spelltower::Score(const absl::flat_hash_set<Point> &path) {
   return score;
 }
 
-bool Spelltower::Valid(const Point p) { return Spelltower::Valid(p.i, p.j); }
+bool Spelltower::Valid(const Point p) {
+  return Spelltower::Valid(p.row, p.col);
+}
 
-bool Spelltower::Valid(int i, int j) {
-  return (i >= 0 && i < n_ && j >= 0 && j < m_);
+bool Spelltower::Valid(int r, int c) {
+  return (r >= 0 && r < n_ && c >= 0 && c < m_);
 }
 
 } // namespace puzzmo

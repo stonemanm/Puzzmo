@@ -11,6 +11,7 @@
 #include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_set.h"
 #include "dictionary_utils.h"
+#include "point.h"
 
 using WordMap =
     absl::btree_map<int, absl::btree_set<std::string>, std::greater<int>>;
@@ -24,23 +25,6 @@ const int kLetterScores[] = {
     /* p = */ 4, /* q = */ 12, /* r = */ 2, /* s = */ 1, /* t = */ 2,
     /* u = */ 1, /* v = */ 5,  /* w = */ 5, /* x = */ 9, /* y = */ 5,
     /* z = */ 11};
-
-struct Point {
-  int i;
-  int j;
-
-  bool operator==(const Point &other) const {
-    return i == other.i && j == other.j;
-  }
-
-  Point operator+(const Point &other) const {
-    return {i + other.i, j + other.j};
-  }
-
-  template <typename H> friend H AbslHashValue(H h, const Point &p) {
-    return H::combine(std::move(h), p.i, p.j);
-  }
-};
 
 const Point kAdjacentCoords[] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
                                  {0, 1},   {1, -1}, {1, 0},  {1, 1}};
@@ -69,7 +53,7 @@ private:
   int Score(const absl::flat_hash_set<Point> &path);
 
   bool Valid(int i, int j);
-  bool Valid(const Point c);
+  bool Valid(const Point p);
 };
 
 } // namespace puzzmo

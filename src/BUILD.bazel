@@ -1,4 +1,10 @@
 cc_library(
+    name = "point",
+    srcs = ["point.cc"],
+    hdrs = ["point.h"],
+)
+
+cc_library(
     name = "dictionary_utils",
     srcs = ["dictionary_utils.cc"],
     hdrs = ["dictionary_utils.h"],
@@ -24,6 +30,7 @@ cc_library(
     hdrs = ["spelltower.h"],
     deps = [
         ":dictionary_utils",
+        ":point",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/container:flat_hash_set",
     ],
