@@ -1,4 +1,13 @@
 cc_library(
+    name = "dictionary-utils",
+    srcs = ["dictionary-utils.cc"],
+    hdrs = ["dictionary-utils.h"],
+    deps = [
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cc_library(
     name = "spelltower",
     srcs = ["spelltower.cc"],
     hdrs = ["spelltower.h"],
