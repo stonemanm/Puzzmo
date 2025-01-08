@@ -7,6 +7,12 @@
 
 namespace puzzmo {
 
+// Configuration options for ReadDictionaryFileToVector
+struct ReadFileOptions {
+  int min_letters = 1;
+  int max_letters = INT_MAX;
+};
+
 // A basic implementation of a node in a Trie.
 struct TrieNode {
   std::vector<std::shared_ptr<TrieNode>> children;
@@ -14,19 +20,13 @@ struct TrieNode {
   TrieNode() : children(26) {}
 };
 
-// Add one or more words to the trie.
-void AddToDictionary(const std::vector<std::string> words,
-                     const std::shared_ptr<TrieNode> dict);
-
-// Configuration options for ReadDictionaryFileToVector
-struct ReadFileOptions {
-  int min_letters = 1;
-  int max_letters = INT_MAX;
-};
-
 // Returns a vector containing all strings from the file that meet the criteria
 std::vector<std::string>
-ReadDictionaryFileToVector(const std::string f, const ReadFileOptions options);
+ReadDictionaryFileToVector(const ReadFileOptions options);
+
+// Add one or more words to the trie.
+const std::shared_ptr<TrieNode>
+CreateDictionaryTrie(const std::vector<std::string> words);
 
 } // namespace puzzmo
 

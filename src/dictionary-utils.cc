@@ -9,25 +9,6 @@
 
 namespace puzzmo {
 
-void AddToDictionary(const std::vector<std::string> words,
-                     const std::shared_ptr<TrieNode> dict) {
-  for (const auto &word : words) {
-    if (word.length() < 3)
-      continue;
-
-    std::shared_ptr<TrieNode> node = dict;
-    for (const char c : word) {
-      const int i = c - 'a';
-      if (node->children[i] == nullptr)
-        node->children[i] = std::make_shared<TrieNode>();
-
-      node = node->children[i];
-    }
-
-    node->word = &word;
-  }
-}
-
 std::vector<std::string>
 ReadDictionaryFileToVector(const ReadFileOptions options) {
   std::vector<std::string> words;
@@ -48,5 +29,26 @@ ReadDictionaryFileToVector(const ReadFileOptions options) {
   dictfile.close();
   return words;
 };
+
+const std::shared_ptr<TrieNode>
+CreateDictionaryTrie(const std::vector<std::string> words) {
+  const std::shared_ptr<TrieNode> dict;
+  for (const auto &word : words) {
+    if (word.length() < 3)
+      continue;
+
+    std::shared_ptr<TrieNode> node = dict;
+    for (const char c : word) {
+      const int i = c - 'a';
+      if (node->children[i] == nullptr)
+        node->children[i] = std::make_shared<TrieNode>();
+
+      node = node->children[i];
+    }
+
+    node->word = &word;
+  }
+  return dict;
+}
 
 } // namespace puzzmo

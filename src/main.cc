@@ -9,23 +9,16 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "dictionary-utils.h"
 #include "spelltower.h"
 
 using namespace puzzmo;
 
 int main(int argc, const char *argv[]) {
   // Read in the dictionary
-  std::vector<std::string> words;
-  std::string line;
-  std::ifstream dictfile("data/dictionary.txt");
-  if (!dictfile.is_open()) {
-    LOG(ERROR) << "Error: Could not open dictionary.txt";
-    return 1;
-  }
-  while (std::getline(dictfile, line)) {
-    words.push_back(line);
-  }
-  dictfile.close();
+  std::vector<std::string> words =
+      ReadDictionaryFileToVector({.min_letters = 3});
+  const std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
 
   // Read in the board
   std::vector<std::vector<char>> board;
@@ -34,6 +27,7 @@ int main(int argc, const char *argv[]) {
     LOG(ERROR) << "Error: Could not open board_spelltower.txt";
     return 1;
   }
+  std::string line;
   while (std::getline(boardfile, line)) {
     std::vector<char> row;
     std::istringstream iss(line);
@@ -46,8 +40,7 @@ int main(int argc, const char *argv[]) {
   boardfile.close();
 
   // Create a spelltower and populate it with this data, then solve it
-  Spelltower spelltower(board);
-  spelltower.AddToDictionary(words);
+  Spelltower spelltower(board, dict);
   WordMap results = spelltower.FindWords();
   LOG(INFO) << "All available words, by score:";
   for (const auto &[k, v] : results) {

@@ -8,23 +8,6 @@
 
 namespace puzzmo {
 
-void Spelltower::AddToDictionary(const std::vector<std::string> words) {
-  for (const auto &word : words) {
-    if (word.length() < 3) {
-      continue;
-    }
-    std::shared_ptr<TrieNode> node = root_;
-    for (const char c : word) {
-      const int i = c - 'a';
-      if (node->children[i] == nullptr) {
-        node->children[i] = std::make_shared<TrieNode>();
-      }
-      node = node->children[i];
-    }
-    node->word = &word;
-  }
-}
-
 void Spelltower::DFS(std::vector<std::vector<bool>> &visited, Point p,
                      std::shared_ptr<TrieNode> node,
                      absl::flat_hash_set<Point> &path, WordMap &ans) {
@@ -61,7 +44,7 @@ const WordMap Spelltower::FindWords() {
   std::vector<std::vector<bool>> visited(n_, std::vector<bool>(m_));
   for (int i = 0; i < n_; ++i) {
     for (int j = 0; j < m_; ++j) {
-      DFS(visited, {.i = i, .j = j}, root_, path, words);
+      DFS(visited, {.i = i, .j = j}, dict_, path, words);
     }
   }
   return words;

@@ -10,6 +10,7 @@
 #include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_set.h"
+#include "dictionary-utils.h"
 
 using WordMap =
     absl::btree_map<int, absl::btree_set<std::string>, std::greater<int>>;
@@ -46,21 +47,11 @@ const Point kAdjacentCoords[] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
 
 const Point kDPad[] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
-struct TrieNode {
-  std::vector<std::shared_ptr<TrieNode>> children;
-  const std::string *word = nullptr;
-  TrieNode() : children(26) {}
-};
-
 class Spelltower {
 public:
-  Spelltower(std::vector<std::vector<char>> &board)
-      : board_(board), n_(board.size()), m_(board[0].size()),
-        root_(std::make_shared<TrieNode>()) {};
-
-  // Add one or more words to the trie
-  // void AddToDictionary(const std::string &word) { AddToDictionary({word}); }
-  void AddToDictionary(const std::vector<std::string> words);
+  Spelltower(std::vector<std::vector<char>> &board,
+             const std::shared_ptr<TrieNode> dict)
+      : board_(board), n_(board.size()), m_(board[0].size()), dict_(dict) {};
 
   const WordMap FindWords();
 
@@ -69,7 +60,7 @@ public:
 private:
   std::vector<std::vector<char>> board_;
   const int n_, m_;
-  const std::shared_ptr<TrieNode> root_;
+  const std::shared_ptr<TrieNode> dict_;
 
   void DFS(std::vector<std::vector<bool>> &visited, Point p,
            std::shared_ptr<TrieNode> node, absl::flat_hash_set<Point> &path,
