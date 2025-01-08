@@ -9,7 +9,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "dictionary-utils.h"
+#include "dictionary_utils.h"
 #include "spelltower.h"
 
 using namespace puzzmo;

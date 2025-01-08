@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include "dictionary-utils.h"
+#include "dictionary_utils.h"
 
 namespace puzzmo {
 

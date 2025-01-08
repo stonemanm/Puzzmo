@@ -1,7 +1,7 @@
 cc_library(
-    name = "dictionary-utils",
-    srcs = ["dictionary-utils.cc"],
-    hdrs = ["dictionary-utils.h"],
+    name = "dictionary_utils",
+    srcs = ["dictionary_utils.cc"],
+    hdrs = ["dictionary_utils.h"],
     data = [
         "//data:dictionary.txt",
     ],
@@ -15,7 +15,7 @@ cc_library(
     srcs = ["spelltower.cc"],
     hdrs = ["spelltower.h"],
     deps = [
-        ":dictionary-utils",
+        ":dictionary_utils",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/container:flat_hash_set",
     ],
@@ -28,7 +28,7 @@ cc_binary(
         "//data:board_spelltower.txt",
     ],
     deps = [
-        ":dictionary-utils",
+        ":dictionary_utils",
         ":spelltower",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/log",
