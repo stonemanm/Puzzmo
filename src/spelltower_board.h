@@ -4,10 +4,12 @@
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
 #include "point.h"
 
 namespace puzzmo {
 
+// The value of each letter, in an array. Indexed by `c - 'a'`.
 const int kLetterScores[] = {
     /* a = */ 1, /* b = */ 4,  /* c = */ 4, /* d = */ 3, /* e = */ 1,
     /* f = */ 5, /* g = */ 3,  /* h = */ 5, /* i = */ 1, /* j = */ 9,
@@ -16,12 +18,21 @@ const int kLetterScores[] = {
     /* u = */ 1, /* v = */ 5,  /* w = */ 5, /* x = */ 9, /* y = */ 5,
     /* z = */ 11};
 
+// A board state for Spelltower.
 class SpelltowerBoard {
 public:
   explicit SpelltowerBoard(const std::vector<std::vector<char>> &board)
       : board_(board), rows_(board.size()), cols_(board.at(0).size()) {};
 
+  // Returns the letter at a given spot on the board.
   const char LetterAt(Point p);
+
+  // Returns true if the point exists on the board.
+  bool HasPoint(const Point p);
+  bool HasPoint(int row, int col);
+
+  // Calculates the score returned for the word along a given path.
+  int Score(const absl::flat_hash_set<Point> &path);
 
 private:
   std::vector<std::vector<char>> board_;

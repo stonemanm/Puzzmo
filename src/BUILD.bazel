@@ -22,6 +22,7 @@ cc_library(
     hdrs = ["spelltower_board.h"],
     deps = [
         ":point",
+        "@abseil-cpp//absl/container:flat_hash_set",
     ],
 )
 

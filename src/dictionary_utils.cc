@@ -40,9 +40,9 @@ CreateDictionaryTrie(const std::vector<std::string> words) {
     std::shared_ptr<TrieNode> node = dict;
     for (const char c : word) {
       const int i = c - 'a';
-      if (node->children[i] == nullptr)
+      if (node->children[i] == nullptr) {
         node->children[i] = std::make_shared<TrieNode>();
-
+      }
       node = node->children[i];
     }
 
