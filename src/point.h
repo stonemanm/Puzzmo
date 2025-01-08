@@ -17,6 +17,13 @@ struct Point {
   }
 };
 
+// Add to a point to get to the 8 surrounding spots around that point.
+const Point kAdjacentCoords[] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, 1},
+                                 {1, 1},   {1, 0},  {1, -1}, {0, -1}};
+
+// Add to a point to get to the 4 spots around that point.
+const Point kDPad[] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+
 } // namespace puzzmo
 
 #endif

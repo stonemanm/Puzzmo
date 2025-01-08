@@ -21,6 +21,7 @@ cc_library(
     srcs = ["spelltower_board.cc"],
     hdrs = ["spelltower_board.h"],
     deps = [
+        ":point",
     ],
 )
 
@@ -31,6 +32,7 @@ cc_library(
     deps = [
         ":dictionary_utils",
         ":point",
+        ":spelltower_board",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/container:flat_hash_set",
     ],
