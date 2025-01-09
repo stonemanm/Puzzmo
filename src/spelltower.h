@@ -23,25 +23,19 @@ class Spelltower {
 public:
   Spelltower(std::vector<std::vector<char>> &board,
              const std::shared_ptr<TrieNode> dict)
-      : board_(board), n_(board.size()), m_(board[0].size()), dict_(dict) {};
+      : starting_board_(board), dict_(dict) {};
 
+  // Returns a map of all valid words on the board, as well as their score
   const WordMap FindWords();
 
-  const char LetterAt(Point p);
-
 private:
-  std::vector<std::vector<char>> board_;
-  const int n_, m_;
+  SpelltowerBoard starting_board_;
   const std::shared_ptr<TrieNode> dict_;
 
-  void DFS(std::vector<std::vector<bool>> &visited, Point p,
-           std::shared_ptr<TrieNode> node, absl::flat_hash_set<Point> &path,
-           WordMap &ans);
-
-  int Score(const absl::flat_hash_set<Point> &path);
-
-  bool Valid(int i, int j);
-  bool Valid(const Point p);
+  void DFS(std::shared_ptr<TrieNode> node, const Point &p,
+           const SpelltowerBoard &board,
+           std::vector<std::vector<bool>> &visited,
+           absl::flat_hash_set<Point> &path, WordMap &ans);
 };
 
 } // namespace puzzmo

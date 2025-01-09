@@ -8,15 +8,16 @@
 
 namespace puzzmo {
 
-void Spelltower::DFS(std::vector<std::vector<bool>> &visited, Point p,
-                     std::shared_ptr<TrieNode> node,
+void Spelltower::DFS(std::shared_ptr<TrieNode> node, const Point &p,
+                     const SpelltowerBoard &board,
+                     std::vector<std::vector<bool>> &visited,
                      absl::flat_hash_set<Point> &path, WordMap &ans) {
-  if (!Valid(p) || visited[p.row][p.col] || LetterAt(p) == '*' ||
-      LetterAt(p) == ' ') {
+  if (!board.HasPoint(p) || visited[p.row][p.col] || board.LetterAt(p) == '*' ||
+      board.LetterAt(p) == ' ') {
     return;
   }
 
-  const char c = LetterAt(p);
+  const char c = board.LetterAt(p);
   std::shared_ptr<TrieNode> child = node->children[c - 'a'];
   if (child == nullptr) {
     return;
@@ -26,12 +27,12 @@ void Spelltower::DFS(std::vector<std::vector<bool>> &visited, Point p,
   visited[p.row][p.col] = true;
 
   if (child->word != nullptr) {
-    int s = Score(path);
+    int s = board.Score(path);
     ans[s].insert(*child->word);
   }
 
   for (const auto &dp : kAdjacentCoords) {
-    DFS(visited, p + dp, child, path, ans);
+    DFS(child, p + dp, board, visited, path, ans);
   }
 
   path.erase(p);
@@ -41,55 +42,16 @@ void Spelltower::DFS(std::vector<std::vector<bool>> &visited, Point p,
 const WordMap Spelltower::FindWords() {
   absl::flat_hash_set<Point> path;
   WordMap words;
-  std::vector<std::vector<bool>> visited(n_, std::vector<bool>(m_));
-  for (int i = 0; i < n_; ++i) {
-    for (int j = 0; j < m_; ++j) {
-      DFS(visited, {.row = i, .col = j}, dict_, path, words);
+  int rows = starting_board_.NumRows();
+  int cols = starting_board_.NumCols();
+  std::vector<std::vector<bool>> visited(rows, std::vector<bool>(cols));
+  for (int row = 0; row < rows; ++row) {
+    for (int col = 0; col < cols; ++col) {
+      DFS(dict_, {.row = row, .col = col}, starting_board_, visited, path,
+          words);
     }
   }
   return words;
-}
-
-const char Spelltower::LetterAt(Point p) { return board_[p.row][p.col]; }
-
-int Spelltower::Score(const absl::flat_hash_set<Point> &path) {
-  absl::flat_hash_set<Point> affected;
-  for (const Point p : path) {
-    affected.insert(p);
-    char c = LetterAt(p);
-    if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
-      for (int j = 0; j < m_; ++j) {
-        affected.insert({.row = p.row, .col = j});
-      }
-    }
-    if (path.size() < 5) {
-      continue;
-    }
-
-    for (const Point dp : kDPad) {
-      if (!Valid(p + dp))
-        continue;
-      affected.insert(p + dp);
-    }
-  }
-
-  int score = 0;
-  for (const Point p : affected) {
-    char c = LetterAt(p);
-    if (c == ' ' || c == '*')
-      continue;
-    score += kLetterScores[c - 'a'];
-  }
-  score *= path.size();
-  return score;
-}
-
-bool Spelltower::Valid(const Point p) {
-  return Spelltower::Valid(p.row, p.col);
-}
-
-bool Spelltower::Valid(int r, int c) {
-  return (r >= 0 && r < n_ && c >= 0 && c < m_);
 }
 
 } // namespace puzzmo

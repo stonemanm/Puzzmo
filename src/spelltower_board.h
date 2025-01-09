@@ -25,14 +25,18 @@ public:
       : board_(board), rows_(board.size()), cols_(board.at(0).size()) {};
 
   // Returns the letter at a given spot on the board.
-  const char LetterAt(Point p);
+  char LetterAt(const Point &p) const;
 
   // Returns true if the point exists on the board.
-  bool HasPoint(const Point p);
-  bool HasPoint(int row, int col);
+  bool HasPoint(const Point &p) const;
+  bool HasPoint(int row, int col) const;
+
+  // Returns the number of rows or columns on the board.
+  int NumRows() const;
+  int NumCols() const;
 
   // Calculates the score returned for the word along a given path.
-  int Score(const absl::flat_hash_set<Point> &path);
+  int Score(const absl::flat_hash_set<Point> &path) const;
 
 private:
   std::vector<std::vector<char>> board_;
