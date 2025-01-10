@@ -1,17 +1,9 @@
-#include "bongo.h"
+#include "bongo_solver.h"
 
 namespace puzzmo {
 
-Bongo::Bongo(const absl::flat_hash_set<std::string> &dict,
-             const std::string &letters)
-    : dict_(dict) {
-  // Initialize letter counts
-  for (char c : letters) {
-    ++letters_[c - 'a'];
-  }
-}
-
-absl::flat_hash_set<absl::flat_hash_set<std::string>> Bongo::FindWordSets() {
+absl::flat_hash_set<absl::flat_hash_set<std::string>>
+BongoSolver::FindWordSets() {
   absl::flat_hash_set<std::string> current_set;
   absl::flat_hash_set<absl::flat_hash_set<std::string>> word_sets;
 
@@ -19,7 +11,7 @@ absl::flat_hash_set<absl::flat_hash_set<std::string>> Bongo::FindWordSets() {
   return word_sets;
 }
 
-void Bongo::FindWordSetsHelper(
+void BongoSolver::FindWordSetsHelper(
     std::vector<int> remaining_letters,
     absl::flat_hash_set<std::string> &current_set,
     absl::flat_hash_set<absl::flat_hash_set<std::string>> &word_sets) {

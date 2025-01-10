@@ -1,5 +1,5 @@
-#ifndef bongo_h
-#define bongo_h
+#ifndef bongo_solver_h
+#define bongo_solver_h
 
 #include <string>
 #include <vector>
@@ -8,10 +8,11 @@
 
 namespace puzzmo {
 
-class Bongo {
+class BongoSolver {
 public:
-  Bongo(const absl::flat_hash_set<std::string> &dict,
-        const std::string &letters);
+  BongoSolver(const absl::flat_hash_set<std::string> &dict,
+              const std::vector<int> letters)
+      : dict_(dict), letters_(letters) {};
 
   absl::flat_hash_set<absl::flat_hash_set<std::string>> FindWordSets();
 

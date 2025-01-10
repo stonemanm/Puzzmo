@@ -1,7 +1,36 @@
+cc_binary(
+    name = "play_bongo",
+    srcs = ["play_bongo.cc"],
+    data = [
+        "//data:bongo_tiles.txt",
+    ],
+    deps = [
+        ":bongo_solver",
+        ":dictionary_utils",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_binary(
+    name = "main",
+    srcs = ["main.cc"],
+    data = [
+        "//data:board_spelltower.txt",
+    ],
+    deps = [
+        ":dictionary_utils",
+        ":spelltower",
+        "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
 cc_library(
-    name = "bongo",
-    srcs = ["bongo.cc"],
-    hdrs = ["bongo.h"],
+    name = "bongo_solver",
+    srcs = ["bongo_solver.cc"],
+    hdrs = ["bongo_solver.h"],
     deps = [
         "@abseil-cpp//absl/container:flat_hash_set",
     ],
@@ -45,20 +74,5 @@ cc_library(
         ":spelltower_board",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/container:flat_hash_set",
-    ],
-)
-
-cc_binary(
-    name = "main",
-    srcs = ["main.cc"],
-    data = [
-        "//data:board_spelltower.txt",
-    ],
-    deps = [
-        ":dictionary_utils",
-        ":spelltower",
-        "@abseil-cpp//absl/container:btree",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
     ],
 )

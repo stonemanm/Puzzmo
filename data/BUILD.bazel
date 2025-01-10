@@ -1,3 +1,5 @@
 exports_files(["board_spelltower.txt"])
 
+exports_files(["bongo_tiles.txt"])
+
 exports_files(["dictionary.txt"])
