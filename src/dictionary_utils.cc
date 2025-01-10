@@ -24,6 +24,13 @@ ReadDictionaryFileToVector(const ReadFileOptions options) {
     int l = line.length();
     if (l < options.min_letters || l > options.max_letters)
       continue;
+    if (options.filter_by_letters) {
+      std::vector<int> letters = options.letter_counts;
+      for (const char c : line) {
+        if (--letters[c - 'a'] < 0)
+          continue;
+      }
+    }
     words.push_back(line);
   }
   dictfile.close();

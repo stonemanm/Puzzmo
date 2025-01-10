@@ -11,6 +11,9 @@ namespace puzzmo {
 struct ReadFileOptions {
   int min_letters = 1;
   int max_letters = INT_MAX;
+  bool filter_by_letters = false;
+  std::vector<int> letter_counts;
+  ReadFileOptions() : letter_counts(26) {}
 };
 
 // A basic implementation of a node in a Trie.
