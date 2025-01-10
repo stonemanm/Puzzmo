@@ -12,6 +12,7 @@ namespace puzzmo {
 std::vector<std::string>
 ReadDictionaryFileToVector(const ReadFileOptions options) {
   std::vector<std::string> words;
+  // LOG(ERROR) << options.letter_counts;
 
   std::ifstream dictfile("data/dictionary.txt");
   if (!dictfile.is_open()) {

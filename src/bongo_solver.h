@@ -10,18 +10,18 @@ namespace puzzmo {
 
 class BongoSolver {
 public:
-  BongoSolver(const absl::flat_hash_set<std::string> &dict,
-              const std::vector<int> letters)
-      : dict_(dict), letters_(letters) {};
+  BongoSolver(const std::vector<int> letters,
+              const std::vector<std::string> &dict)
+      : letters_(letters), dict_(dict) {};
 
   absl::flat_hash_set<absl::flat_hash_set<std::string>> FindWordSets();
 
 private:
   std::vector<int> letters_;
-  const absl::flat_hash_set<std::string> dict_;
+  const std::vector<std::string> dict_;
 
   void FindWordSetsHelper(
-      std::vector<int> remaining_letters,
+      std::vector<int> remaining_letters, int start_at_dict_index,
       absl::flat_hash_set<std::string> &current_set,
       absl::flat_hash_set<absl::flat_hash_set<std::string>> &word_sets);
 };

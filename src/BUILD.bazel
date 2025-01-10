@@ -33,6 +33,8 @@ cc_library(
     hdrs = ["bongo_solver.h"],
     deps = [
         "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

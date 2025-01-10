@@ -1,6 +1,7 @@
 #include <cctype>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -13,9 +14,10 @@
 
 using namespace puzzmo;
 
+// Currently takes like an hour to run! Further optimization needed.
 int main(int argc, const char *argv[]) {
   // Read in the tiles
-  std::vector<int> letters;
+  std::vector<int> letters(26);
   std::ifstream tilefile("data/bongo_tiles.txt");
   if (!tilefile.is_open()) {
     LOG(ERROR) << "Error: Could not open bongo_tiles.txt";
@@ -24,29 +26,28 @@ int main(int argc, const char *argv[]) {
   std::string line;
   while (std::getline(tilefile, line)) {
     for (char c : line) {
-      if (!islower(c))
-        continue;
-      ++letters[c - 'a'];
+      if (isalpha(c)) {
+        ++letters[tolower(c) - 'a'];
+      }
     }
   }
   tilefile.close();
 
   // Read in the dictionary
-  std::vector<std::string> words =
+  std::vector<std::string> dict =
       ReadDictionaryFileToVector({.min_letters = 5,
                                   .max_letters = 5,
                                   .filter_by_letters = true,
                                   .letter_counts = letters});
-  absl::flat_hash_set<std::string> dict(words.begin(), words.end());
-
+  //--
   // Create a solver with the loaded data, then solve
-  BongoSolver bongo_solver(dict, letters);
+  BongoSolver bongo_solver(letters, dict);
 
   absl::flat_hash_set<absl::flat_hash_set<std::string>> word_sets =
       bongo_solver.FindWordSets();
-  LOG(INFO) << "All available word sets:";
+  LOG(ERROR) << "All available word sets:";
   for (const auto &word_set : word_sets) {
-    LOG(INFO) << absl::StrJoin(word_set, ", ");
+    LOG(ERROR) << absl::StrJoin(word_set, ", ");
   }
 
   return 0;
