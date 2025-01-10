@@ -1,4 +1,13 @@
 cc_library(
+    name = "bongo",
+    srcs = ["bongo.cc"],
+    hdrs = ["bongo.h"],
+    deps = [
+        "@abseil-cpp//absl/container:flat_hash_set",
+    ],
+)
+
+cc_library(
     name = "point",
     srcs = ["point.cc"],
     hdrs = ["point.h"],
