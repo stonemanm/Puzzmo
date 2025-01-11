@@ -13,19 +13,21 @@ cc_binary(
 )
 
 cc_binary(
-    name = "main",
-    srcs = ["main.cc"],
+    name = "play_spelltower",
+    srcs = ["play_spelltower.cc"],
     data = [
         "//data:board_spelltower.txt",
     ],
     deps = [
         ":dictionary_utils",
-        ":spelltower",
+        ":spelltower_solver",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
 )
+
+################################################################################
 
 cc_library(
     name = "bongo_solver",
@@ -36,12 +38,6 @@ cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
-)
-
-cc_library(
-    name = "point",
-    srcs = ["point.cc"],
-    hdrs = ["point.h"],
 )
 
 cc_library(
@@ -57,6 +53,12 @@ cc_library(
 )
 
 cc_library(
+    name = "point",
+    srcs = ["point.cc"],
+    hdrs = ["point.h"],
+)
+
+cc_library(
     name = "spelltower_board",
     srcs = ["spelltower_board.cc"],
     hdrs = ["spelltower_board.h"],
@@ -67,9 +69,9 @@ cc_library(
 )
 
 cc_library(
-    name = "spelltower",
-    srcs = ["spelltower.cc"],
-    hdrs = ["spelltower.h"],
+    name = "spelltower_solver",
+    srcs = ["spelltower_solver.cc"],
+    hdrs = ["spelltower_solver.h"],
     deps = [
         ":dictionary_utils",
         ":point",

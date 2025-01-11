@@ -1,3 +1,5 @@
+#include <cctype>
+
 #include "spelltower_board.h"
 
 namespace puzzmo {
@@ -19,9 +21,14 @@ int SpelltowerBoard::NumCols() const { return cols_; }
 
 int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
   absl::flat_hash_set<Point> affected;
+  int star_tiles = 0;
   for (const Point p : path) {
     affected.insert(p);
     char c = LetterAt(p);
+    if (std::isupper(c)) {
+      ++star_tiles;
+      c = std::tolower(c);
+    }
     if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
       for (int col = 0; col < cols_; ++col) {
         affected.insert({.row = p.row, .col = col});
@@ -39,13 +46,13 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
 
   int score = 0;
   for (const Point p : affected) {
-    char c = LetterAt(p);
+    char c = std::tolower(LetterAt(p));
     if (c == ' ' || c == '*')
       continue;
     score += kLetterScores[c - 'a'];
   }
   score *= path.size();
-  return score;
+  return score *= (1 + star_tiles);
 }
 
 } // namespace puzzmo

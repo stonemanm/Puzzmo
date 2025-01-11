@@ -10,7 +10,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "dictionary_utils.h"
-#include "spelltower.h"
+#include "spelltower_solver.h"
 
 using namespace puzzmo;
 
@@ -40,7 +40,7 @@ int main(int argc, const char *argv[]) {
   boardfile.close();
 
   // Create a spelltower and populate it with this data, then solve it
-  Spelltower spelltower(board, dict);
+  SpelltowerSolver spelltower(board, dict);
   WordMap results = spelltower.FindWords();
   LOG(INFO) << "All available words, by score:";
   for (const auto &[k, v] : results) {

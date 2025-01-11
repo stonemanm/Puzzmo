@@ -1,5 +1,5 @@
-#ifndef spelltower_h
-#define spelltower_h
+#ifndef spelltower_solver_h
+#define spelltower_solver_h
 
 #include <functional>
 #include <iostream>
@@ -19,10 +19,10 @@ using WordMap =
 
 namespace puzzmo {
 
-class Spelltower {
+class SpelltowerSolver {
 public:
-  Spelltower(std::vector<std::vector<char>> &board,
-             const std::shared_ptr<TrieNode> dict)
+  SpelltowerSolver(std::vector<std::vector<char>> &board,
+                   const std::shared_ptr<TrieNode> dict)
       : starting_board_(board), dict_(dict) {};
 
   // Returns a map of all valid words on the board, as well as their score
