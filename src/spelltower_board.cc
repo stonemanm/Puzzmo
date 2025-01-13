@@ -4,6 +4,22 @@
 
 namespace puzzmo {
 
+SpelltowerBoard::SpelltowerBoard(const std::vector<std::vector<char>> &board)
+    : board_(board), rows_(board.size()) {
+  int max_row_size = 0;
+  for (const auto &row : board_) {
+    if (max_row_size >= row.size())
+      continue;
+    max_row_size = row.size();
+  }
+  cols_ = max_row_size;
+  for (auto &row : board_) {
+    while (row.size() < cols_) {
+      row.push_back(' ');
+    }
+  }
+};
+
 char SpelltowerBoard::LetterAt(const Point &p) const {
   return board_[p.row][p.col];
 }

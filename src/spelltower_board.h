@@ -21,8 +21,7 @@ const int kLetterScores[] = {
 // A board state for Spelltower.
 class SpelltowerBoard {
 public:
-  explicit SpelltowerBoard(const std::vector<std::vector<char>> &board)
-      : board_(board), rows_(board.size()), cols_(board.at(0).size()) {};
+  explicit SpelltowerBoard(const std::vector<std::vector<char>> &board);
 
   // Returns the letter at a given spot on the board.
   char LetterAt(const Point &p) const;
