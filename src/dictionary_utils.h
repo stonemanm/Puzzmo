@@ -5,6 +5,10 @@
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
+#include "letter_count.h"
+
 namespace puzzmo {
 
 // Configuration options for ReadDictionaryFileToVector
@@ -12,7 +16,7 @@ struct ReadFileOptions {
   int min_letters = 1;
   int max_letters = INT_MAX;
   bool filter_by_letters = false;
-  std::vector<int> letter_counts;
+  LetterCount letter_count;
 };
 
 // A basic implementation of a node in a Trie.
@@ -25,6 +29,10 @@ struct TrieNode {
 // Returns a vector containing all strings from the file that meet the criteria
 std::vector<std::string>
 ReadDictionaryFileToVector(const ReadFileOptions options);
+
+// Preprocess words to get their letter counts
+const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
+CreateAnagramDictionary(const std::vector<std::string> words);
 
 // Add one or more words to the trie.
 const std::shared_ptr<TrieNode>

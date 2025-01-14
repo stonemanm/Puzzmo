@@ -26,7 +26,7 @@ ReadDictionaryFileToVector(const ReadFileOptions options) {
     if (l < options.min_letters || l > options.max_letters)
       continue;
     if (options.filter_by_letters) {
-      std::vector<int> letters = options.letter_counts;
+      std::vector<int> letters = options.letter_count.count;
       for (const char c : line) {
         if (--letters[c - 'a'] < 0)
           continue;
@@ -37,6 +37,19 @@ ReadDictionaryFileToVector(const ReadFileOptions options) {
   dictfile.close();
   return words;
 };
+
+const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
+CreateAnagramDictionary(const std::vector<std::string> words) {
+  absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>> dict;
+  for (const auto &word : words) {
+    LetterCount lc;
+    for (const char c : word) {
+      ++lc.count[c - 'a'];
+    }
+    dict[lc].insert(word);
+  }
+  return dict;
+}
 
 const std::shared_ptr<TrieNode>
 CreateDictionaryTrie(const std::vector<std::string> words) {

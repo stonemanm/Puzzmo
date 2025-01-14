@@ -48,8 +48,17 @@ cc_library(
         "//data:dictionary.txt",
     ],
     deps = [
+        "letter_count",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/log",
     ],
+)
+
+cc_library(
+    name = "letter_count",
+    srcs = ["letter_count.cc"],
+    hdrs = ["letter_count.h"],
 )
 
 cc_library(
