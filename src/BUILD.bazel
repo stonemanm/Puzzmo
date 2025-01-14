@@ -62,7 +62,21 @@ cc_library(
     srcs = ["letter_count.cc"],
     hdrs = ["letter_count.h"],
     deps = [
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "letter_count_test",
+    size = "small",
+    srcs = ["letter_count_test.cc"],
+    deps = [
+        ":letter_count",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 

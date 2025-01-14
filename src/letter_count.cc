@@ -1,13 +1,15 @@
 #include "letter_count.h"
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 
 namespace puzzmo {
 
-LetterCount::LetterCount(const std::string str) {
-  for (const char c : str) {
-    if (!isalpha(c))
+LetterCount::LetterCount(const std::string str) : count(26) {
+  for (char c : str) {
+    if (!isalpha(c)) {
       continue;
+    }
     ++count[tolower(c) - 'a'];
   }
 }
@@ -24,8 +26,9 @@ std::string LetterCount::toString() const {
   std::string str = "";
   std::vector<int> temp(count);
   for (int i = 0; i < 26; ++i) {
-    while (temp[i] > 0) {
-      str = absl::StrCat(str, 'a' + --temp[i]);
+    char c = 'a' + i;
+    while (--temp[i] >= 0) {
+      str += c;
     }
   }
   return str;
