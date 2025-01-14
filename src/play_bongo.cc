@@ -17,7 +17,7 @@ using namespace puzzmo;
 // Currently takes like an hour to run! Further optimization needed.
 int main(int argc, const char *argv[]) {
   // Read in the tiles
-  std::vector<int> letters(26);
+  LetterCount letters;
   std::ifstream tilefile("data/bongo_tiles.txt");
   if (!tilefile.is_open()) {
     LOG(ERROR) << "Error: Could not open bongo_tiles.txt";
@@ -25,11 +25,7 @@ int main(int argc, const char *argv[]) {
   }
   std::string line;
   while (std::getline(tilefile, line)) {
-    for (char c : line) {
-      if (isalpha(c)) {
-        ++letters[tolower(c) - 'a'];
-      }
-    }
+    letters += LetterCount(line);
   }
   tilefile.close();
 
@@ -38,8 +34,8 @@ int main(int argc, const char *argv[]) {
       ReadDictionaryFileToVector({.min_letters = 5,
                                   .max_letters = 5,
                                   .filter_by_letters = true,
-                                  .letter_counts = letters});
-  //--
+                                  .letter_count = letters});
+
   // Create a solver with the loaded data, then solve
   BongoSolver bongo_solver(letters, dict);
 

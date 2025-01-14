@@ -8,11 +8,11 @@ namespace puzzmo {
 
 absl::flat_hash_set<absl::flat_hash_set<std::string>>
 BongoSolver::FindWordSets() {
-  // LOG(ERROR) << absl::StrCat("[", absl::StrJoin(letters_, ", "), "]");
+  // LOG(ERROR) << absl::StrCat("[", absl::StrJoin(tiles_, ", "), "]");
   absl::flat_hash_set<std::string> current_set;
   absl::flat_hash_set<absl::flat_hash_set<std::string>> word_sets;
 
-  FindWordSetsHelper(letters_, 0, current_set, word_sets);
+  FindWordSetsHelper(tiles_, 0, current_set, word_sets);
   // int x = 10;
   // LOG(ERROR) << "yahaha!";
   // for (const auto &ws : word_sets) {
@@ -24,7 +24,7 @@ BongoSolver::FindWordSets() {
 }
 
 void BongoSolver::FindWordSetsHelper(
-    std::vector<int> remaining_letters, int start_at_dict_index,
+    LetterCount remaining_letters, int start_at_dict_index,
     absl::flat_hash_set<std::string> &current_set,
     absl::flat_hash_set<absl::flat_hash_set<std::string>> &word_sets) {
   if (current_set.size() == 5) {
@@ -35,9 +35,9 @@ void BongoSolver::FindWordSetsHelper(
     const std::string word = dict_[i];
 
     bool possible = true;
-    std::vector<int> letters(remaining_letters);
+    LetterCount letters(remaining_letters);
     for (char c : word) {
-      if (--letters[c - 'a'] < 0) {
+      if (--letters.count[c - 'a'] < 0) {
         possible = false;
         break;
       }
