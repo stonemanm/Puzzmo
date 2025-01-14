@@ -18,12 +18,21 @@ bool LetterCount::operator==(const LetterCount &other) const {
   return true;
 }
 
-LetterCount LetterCount::operator+(const LetterCount &other) const {
-  LetterCount ans;
+LetterCount &LetterCount::operator+=(const LetterCount &other) {
   for (int i = 0; i < 26; ++i) {
-    ans.count[i] = count[i] + other.count[i];
+    count[i] += other.count[i];
   }
-  return ans;
+  return *this;
+}
+
+LetterCount LetterCount::operator+(const LetterCount &other) const {
+  LetterCount ret(*this);
+  ret += other;
+  return ret;
+}
+
+LetterCount operator+(const LetterCount &lhs, const LetterCount &rhs) {
+  return lhs.operator+(rhs);
 }
 
 } // namespace puzzmo
