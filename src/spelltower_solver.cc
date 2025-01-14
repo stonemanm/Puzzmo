@@ -1,3 +1,5 @@
+#include "spelltower_solver.h"
+
 #include <cctype>
 #include <iostream>
 #include <memory>
@@ -5,7 +7,6 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
-#include "spelltower_solver.h"
 
 namespace puzzmo {
 

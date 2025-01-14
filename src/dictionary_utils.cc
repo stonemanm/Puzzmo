@@ -1,3 +1,5 @@
+#include "dictionary_utils.h"
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -5,7 +7,6 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include "dictionary_utils.h"
 
 namespace puzzmo {
 

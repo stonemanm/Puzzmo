@@ -1,6 +1,6 @@
-#include <cctype>
-
 #include "spelltower_board.h"
+
+#include <cctype>
 
 namespace puzzmo {
 
