@@ -42,10 +42,7 @@ const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
 CreateAnagramDictionary(const std::vector<std::string> words) {
   absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>> dict;
   for (const auto &word : words) {
-    LetterCount lc;
-    for (const char c : word) {
-      ++lc.count[c - 'a'];
-    }
+    LetterCount lc(word);
     dict[lc].insert(word);
   }
   return dict;

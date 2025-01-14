@@ -2,6 +2,14 @@
 
 namespace puzzmo {
 
+LetterCount::LetterCount(const std::string str) {
+  for (const char c : str) {
+    if (!isalpha(c))
+      continue;
+    ++count[tolower(c) - 'a'];
+  }
+}
+
 bool LetterCount::operator==(const LetterCount &other) const {
   for (int i = 0; i < 26; ++i) {
     if (count[i] != other.count[i])
