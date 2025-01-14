@@ -8,45 +8,40 @@ namespace puzzmo {
 
 absl::flat_hash_set<absl::flat_hash_set<std::string>>
 BongoSolver::FindWordSets() {
-  // LOG(ERROR) << absl::StrCat("[", absl::StrJoin(tiles_, ", "), "]");
-  absl::flat_hash_set<std::string> current_set;
-  absl::flat_hash_set<absl::flat_hash_set<std::string>> word_sets;
+  absl::flat_hash_set<LetterCount> current_set;
+  absl::flat_hash_set<absl::flat_hash_set<LetterCount>> letter_sets;
+  FindLetterSetsHelper(tiles_, current_set, letter_sets);
 
-  FindWordSetsHelper(tiles_, 0, current_set, word_sets);
-  // int x = 10;
-  // LOG(ERROR) << "yahaha!";
-  // for (const auto &ws : word_sets) {
-  //   if (--x < 0)
-  //     break;
-  //   LOG(ERROR) << "[" << absl::StrJoin(ws, ", ") << "]";
-  // }
+  absl::flat_hash_set<absl::flat_hash_set<std::string>> word_sets;
+  for (const auto &letter_set : letter_sets) {
+    absl::flat_hash_set<std::string> word_set;
+    for (const auto &letters : letter_set) {
+      word_set.insert(letters.toString());
+    }
+    word_sets.insert(word_set);
+  }
   return word_sets;
 }
 
-void BongoSolver::FindWordSetsHelper(
-    LetterCount remaining_letters, int start_at_dict_index,
-    absl::flat_hash_set<std::string> &current_set,
-    absl::flat_hash_set<absl::flat_hash_set<std::string>> &word_sets) {
+void BongoSolver::FindLetterSetsHelper(
+    LetterCount remaining_letters,
+    absl::flat_hash_set<LetterCount> &current_set,
+    absl::flat_hash_set<absl::flat_hash_set<LetterCount>> &letter_sets) {
   if (current_set.size() == 5) {
-    word_sets.insert(current_set);
+    letter_sets.insert(current_set);
     return;
   }
-  for (int i = start_at_dict_index; i < dict_.size(); ++i) {
-    const std::string word = dict_[i];
 
-    bool possible = true;
-    LetterCount letters(remaining_letters);
-    for (char c : word) {
-      if (--letters.count[c - 'a'] < 0) {
-        possible = false;
-        break;
-      }
-    }
-    if (!possible)
+  // Check every entry in the dictionary to see if letter_cost is possible. If
+  // so, pay it and then backtrack after.
+  for (const auto &[letter_cost, _] : dict_) {
+    LetterCount letters = remaining_letters - letter_cost;
+    if (!letters.isValid())
       continue;
-    current_set.insert(word);
-    FindWordSetsHelper(letters, i, current_set, word_sets);
-    current_set.erase(word);
+
+    current_set.insert(letter_cost);
+    FindLetterSetsHelper(letters, current_set, letter_sets);
+    current_set.erase(letter_cost);
   }
 }
 

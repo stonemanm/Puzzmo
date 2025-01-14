@@ -12,16 +12,19 @@ struct LetterCount {
   LetterCount() : count(26) {}
   explicit LetterCount(const std::string str);
 
+  bool isValid() const;
+  std::string toString() const;
+
   bool operator==(const LetterCount &other) const;
   LetterCount &operator+=(const LetterCount &other);
   LetterCount operator+(const LetterCount &rhs) const;
+  LetterCount &operator-=(const LetterCount &other);
+  LetterCount operator-(const LetterCount &rhs) const;
 
   template <typename H> friend H AbslHashValue(H h, const LetterCount &lc) {
     return H::combine(std::move(h), lc.count);
   }
 };
-
-LetterCount operator+(const LetterCount &lhs, const LetterCount &rhs);
 
 } // namespace puzzmo
 

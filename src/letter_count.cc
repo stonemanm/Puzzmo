@@ -1,5 +1,7 @@
 #include "letter_count.h"
 
+#include "absl/strings/str_cat.h"
+
 namespace puzzmo {
 
 LetterCount::LetterCount(const std::string str) {
@@ -8,6 +10,25 @@ LetterCount::LetterCount(const std::string str) {
       continue;
     ++count[tolower(c) - 'a'];
   }
+}
+
+bool LetterCount::isValid() const {
+  for (int i : count) {
+    if (i < 0)
+      return false;
+  }
+  return true;
+}
+
+std::string LetterCount::toString() const {
+  std::string str = "";
+  std::vector<int> temp(count);
+  for (int i = 0; i < 26; ++i) {
+    while (temp[i] > 0) {
+      str = absl::StrCat(str, 'a' + --temp[i]);
+    }
+  }
+  return str;
 }
 
 bool LetterCount::operator==(const LetterCount &other) const {
@@ -31,8 +52,25 @@ LetterCount LetterCount::operator+(const LetterCount &other) const {
   return ret;
 }
 
-LetterCount operator+(const LetterCount &lhs, const LetterCount &rhs) {
-  return lhs.operator+(rhs);
+// LetterCount operator+(const LetterCount &lhs, const LetterCount &rhs) {
+//   return lhs.operator+(rhs);
+// }
+
+LetterCount &LetterCount::operator-=(const LetterCount &other) {
+  for (int i = 0; i < 26; ++i) {
+    count[i] -= other.count[i];
+  }
+  return *this;
 }
+
+LetterCount LetterCount::operator-(const LetterCount &other) const {
+  LetterCount ret(*this);
+  ret -= other;
+  return ret;
+}
+
+// LetterCount operator-(const LetterCount &lhs, const LetterCount &rhs) {
+//   return lhs.operator-(rhs);
+// }
 
 } // namespace puzzmo
