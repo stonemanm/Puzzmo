@@ -72,6 +72,15 @@ LetterCount LetterCount::operator-(const LetterCount &other) const {
   return ret;
 }
 
+bool LetterCount::operator<(const LetterCount &other) const {
+  for (int i = 0; i < 26; ++i) {
+    if (count[i] != other.count[i]) {
+      return count[i] > other.count[i];
+    }
+  }
+  return false;
+}
+
 // LetterCount operator-(const LetterCount &lhs, const LetterCount &rhs) {
 //   return lhs.operator-(rhs);
 // }

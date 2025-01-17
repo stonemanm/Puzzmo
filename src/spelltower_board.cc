@@ -46,8 +46,8 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
       c = std::tolower(c);
     }
     if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
-      for (int col = 0; col < cols_; ++col) {
-        affected.insert({.row = p.row, .col = col});
+      for (int row = 0; row < rows_; ++row) {
+        affected.insert({.row = row, .col = p.col});
       }
     }
     if (path.size() < 5)

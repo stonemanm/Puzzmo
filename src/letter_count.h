@@ -20,6 +20,7 @@ struct LetterCount {
   LetterCount operator+(const LetterCount &rhs) const;
   LetterCount &operator-=(const LetterCount &other);
   LetterCount operator-(const LetterCount &rhs) const;
+  bool operator<(const LetterCount &other) const;
 
   template <typename H> friend H AbslHashValue(H h, const LetterCount &lc) {
     return H::combine(std::move(h), lc.count);
