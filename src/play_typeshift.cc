@@ -18,7 +18,7 @@ namespace {
 
 void DFS(std::shared_ptr<TrieNode> node, int i, const TypeshiftBoard &board,
          std::vector<std::string> &words) {
-  if (i > 5 || node == nullptr) {
+  if (node == nullptr) {
     return;
   }
 
@@ -33,14 +33,19 @@ void DFS(std::shared_ptr<TrieNode> node, int i, const TypeshiftBoard &board,
   }
 }
 
+int UnusedLetters(const std::string &word, const TypeshiftBoard &board) {
+  int new_letters = 0;
+  for (int i = 0; i < board.size(); ++i) {
+    if (board[i].contains(word[i])) {
+      ++new_letters;
+    }
+  }
+  return new_letters;
+}
+
 } // namespace
 
 int main(int argc, const char *argv[]) {
-  // Read in the dictionary
-  std::vector<std::string> words =
-      ReadDictionaryFileToVector({.min_letters = 5, .max_letters = 5});
-  std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
-
   // Read in the board
   TypeshiftBoard board;
   std::ifstream boardfile("data/board_typeshift.txt");
@@ -48,22 +53,46 @@ int main(int argc, const char *argv[]) {
     LOG(ERROR) << "Error: Could not open board_typeshift.txt";
     return 1;
   }
+  int word_length = 0;
+  int total_letters = 0;
   std::string line;
   while (std::getline(boardfile, line)) {
+    ++word_length;
     absl::flat_hash_set<char> row;
     std::istringstream iss(line);
     char c;
     while (iss >> c) {
+      ++total_letters;
       row.insert(c);
     }
     board.push_back(row);
   }
   boardfile.close();
 
+  // Read in the dictionary
+  std::vector<std::string> words = ReadDictionaryFileToVector(
+      {.min_letters = word_length, .max_letters = word_length});
+  std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
+
   std::vector<std::string> answers;
   DFS(dict, 0, board, answers);
-  std::sort(answers.begin(), answers.end());
-  LOG(INFO) << absl::StrJoin(answers, ", ");
+
+  absl::flat_hash_set<std::string> best_set;
+  while (total_letters > 0) {
+    // Ensure that the first element in answers will use the most unused
+    // letters.
+    std::nth_element(answers.begin(), answers.begin(), answers.end(),
+                     [board](std::string a, std::string b) {
+                       return UnusedLetters(a, board) > UnusedLetters(b, board);
+                     });
+    best_set.insert(answers[0]);
+    total_letters -= UnusedLetters(answers[0], board);
+    for (int i = 0; i < word_length; ++i) {
+      board[i].erase(answers[0][i]);
+    }
+  }
+
+  LOG(INFO) << absl::StrJoin(best_set, ", ");
 
   return 0;
 }
