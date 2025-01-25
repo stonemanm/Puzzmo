@@ -78,17 +78,26 @@ int main(int argc, const char *argv[]) {
   DFS(dict, 0, board, answers);
 
   absl::flat_hash_set<std::string> best_set;
-  while (total_letters > 0) {
-    // Ensure that the first element in answers will use the most unused
-    // letters.
-    std::nth_element(answers.begin(), answers.begin(), answers.end(),
-                     [board](std::string a, std::string b) {
-                       return UnusedLetters(a, board) > UnusedLetters(b, board);
-                     });
-    best_set.insert(answers[0]);
-    total_letters -= UnusedLetters(answers[0], board);
-    for (int i = 0; i < word_length; ++i) {
-      board[i].erase(answers[0][i]);
+  for (int i = 0; i < 20; ++i) {
+    absl::flat_hash_set<std::string> temp_set;
+    TypeshiftBoard temp_board = board;
+    int temp_letters = total_letters;
+    while (temp_letters > 0) {
+      // Ensure that the first element in answers will use the most unused
+      // letters.
+      std::nth_element(answers.begin(), answers.begin(), answers.end(),
+                       [temp_board](std::string a, std::string b) {
+                         return UnusedLetters(a, temp_board) >
+                                UnusedLetters(b, temp_board);
+                       });
+      temp_set.insert(answers[0]);
+      temp_letters -= UnusedLetters(answers[0], temp_board);
+      for (int i = 0; i < word_length; ++i) {
+        temp_board[i].erase(answers[0][i]);
+      }
+    }
+    if (best_set.empty() || temp_set.size() < best_set.size()) {
+      best_set = temp_set;
     }
   }
 
