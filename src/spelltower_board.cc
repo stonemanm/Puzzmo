@@ -1,8 +1,20 @@
 #include "spelltower_board.h"
 
 #include <cctype>
+#include <cstdlib>
+
+#include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 
 namespace puzzmo {
+namespace {
+
+int EmptyRowsBetween(const Point &p1, const Point &p2) {
+  int dist = std::abs(p1.row - p2.row);
+  return dist == 0 ? 0 : dist - 1;
+}
+
+} // namespace
 
 SpelltowerBoard::SpelltowerBoard(const std::vector<std::vector<char>> &board)
     : board_(board), rows_(board.size()) {
@@ -22,6 +34,7 @@ SpelltowerBoard::SpelltowerBoard(const std::vector<std::vector<char>> &board)
       char ltr = At(r, c);
       if (std::isupper(ltr)) {
         stars_.insert({r, c});
+        board_[r][c] = std::tolower(ltr);
       }
     }
   }
@@ -63,6 +76,29 @@ int SpelltowerBoard::NumRows() const { return rows_; }
 int SpelltowerBoard::NumCols() const { return cols_; }
 int SpelltowerBoard::NumStars() const { return stars_.size(); }
 
+absl::flat_hash_set<std::string> SpelltowerBoard::GetAllStarRegexes() const {
+  if (stars_.empty())
+    return {};
+
+  std::vector<Point> star_vec(stars_.begin(), stars_.end());
+  std::sort(star_vec.begin(), star_vec.end());
+
+  absl::flat_hash_set<std::string> regex_set;
+  do {
+    std::string s(1, At(star_vec[0]));
+    for (int i = 1; i < star_vec.size(); ++i) {
+      int d = EmptyRowsBetween(star_vec[i - 1], star_vec[i]);
+      if (d == 0) {
+        absl::StrAppend(&s, ".*", std::string(1, At(star_vec[i])));
+      } else {
+        absl::StrAppend(&s, ".{", d, ",}", std::string(1, At(star_vec[i])));
+      }
+    }
+    regex_set.insert(s);
+  } while (std::next_permutation(star_vec.begin(), star_vec.end()));
+  return regex_set;
+}
+
 absl::flat_hash_set<Point> SpelltowerBoard::StarLocations() const {
   return stars_;
 }
@@ -75,7 +111,7 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
     if (stars_.contains(p))
       ++star_tiles;
 
-    char c = std::tolower(At(p));
+    char c = At(p);
     if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
       for (int row = 0; row < rows_; ++row) {
         affected.insert({.row = row, .col = p.col});
@@ -91,7 +127,7 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
 
   int score = 0;
   for (const Point p : affected) {
-    char c = std::tolower(At(p));
+    char c = At(p);
     if (c == ' ' || c == '*')
       continue;
     score += kLetterScores[c - 'a'];

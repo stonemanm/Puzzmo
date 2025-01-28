@@ -167,6 +167,8 @@ cc_library(
     deps = [
         ":point",
         "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

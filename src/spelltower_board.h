@@ -43,6 +43,8 @@ public:
   int NumCols() const;
   int NumStars() const;
 
+  absl::flat_hash_set<std::string> GetAllStarRegexes() const;
+
   // Returns the coordinates of the bonus letters.
   absl::flat_hash_set<Point> StarLocations() const;
 

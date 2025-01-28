@@ -16,6 +16,12 @@ bool Point::operator==(const Point &other) const {
   return row == other.row && col == other.col;
 }
 
+bool Point::operator<(const Point &other) const {
+  if (row + col == other.row + other.col)
+    return row < other.row;
+  return row + col < other.row + other.col;
+}
+
 Point Point::operator+(const Point &other) const {
   return {row + other.row, col + other.col};
 }

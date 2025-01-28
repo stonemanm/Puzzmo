@@ -5,6 +5,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace puzzmo {
@@ -21,7 +22,7 @@ TEST(SpelltowerBoardTest, EmptyConstructor) {
 }
 
 TEST(SpelltowerBoardTest, At) {
-  SpelltowerBoard board({{'a', 'b', 'c'}, {'d', 'e', 'f'}});
+  SpelltowerBoard board({{'a', 'b', 'c'}, {'d', 'e', 'F'}});
   EXPECT_EQ(board.At({0, 0}), 'a');
   EXPECT_EQ(board.At(0, 0), 'a');
   EXPECT_EQ(board.At({1, 2}), 'f');
@@ -142,6 +143,34 @@ TEST(SpelltowerBoardTest, ValidMooreNeighbors) {
 
   valid_neighbors = {{0, 0}, {0, 1}};
   EXPECT_EQ(board.ValidMooreNeighbors({-1, 0}), valid_neighbors);
+}
+
+TEST(SpelltowerBoardTest, GetAllStarRegexes) {
+  SpelltowerBoard board0({{'x'}, {'x'}, {'x'}, {'x'}, {'x'}, {'x'}, {'x'}});
+  SpelltowerBoard board1({{'A'}, {'x'}, {'x'}, {'x'}, {'x'}, {'x'}, {'x'}});
+  SpelltowerBoard board2({{'A'}, {'x'}, {'x'}, {'B'}, {'x'}, {'x'}, {'x'}});
+  SpelltowerBoard board3({{'A'}, {'x'}, {'x'}, {'B'}, {'x'}, {'C'}, {'x'}});
+  SpelltowerBoard board4({{'A'}, {'x'}, {'x'}, {'B'}, {'x'}, {'C'}, {'D'}});
+
+  EXPECT_THAT(board0.GetAllStarRegexes(), testing::IsEmpty());
+  EXPECT_THAT(board1.GetAllStarRegexes(), testing::UnorderedElementsAre("a"));
+  EXPECT_THAT(board2.GetAllStarRegexes(),
+              testing::UnorderedElementsAre("a.{2,}b", "b.{2,}a"));
+  EXPECT_THAT(board3.GetAllStarRegexes(),
+              testing::UnorderedElementsAre("a.{2,}b.{1,}c", "a.{4,}c.{1,}b",
+                                            "b.{2,}a.{4,}c", "b.{1,}c.{4,}a",
+                                            "c.{4,}a.{2,}b", "c.{1,}b.{2,}a"));
+  EXPECT_THAT(board4.GetAllStarRegexes(),
+              testing::UnorderedElementsAre(
+                  "a.{2,}b.{1,}c.*d", "a.{2,}b.{2,}d.*c", "a.{4,}c.{1,}b.{2,}d",
+                  "a.{4,}c.*d.{2,}b", "a.{5,}d.{2,}b.{1,}c", "a.{5,}d.*c.{1,}b",
+                  "b.{2,}a.{4,}c.*d", "b.{2,}a.{5,}d.*c", "b.{1,}c.{4,}a.{5,}d",
+                  "b.{1,}c.*d.{5,}a", "b.{2,}d.{5,}a.{4,}c", "b.{2,}d.*c.{4,}a",
+                  "c.{1,}b.{2,}a.{5,}d", "c.{1,}b.{2,}d.{5,}a",
+                  "c.{4,}a.{2,}b.{2,}d", "c.{4,}a.{5,}d.{2,}b",
+                  "c.*d.{2,}b.{2,}a", "c.*d.{5,}a.{2,}b", "d.{2,}b.{1,}c.{4,}a",
+                  "d.{2,}b.{2,}a.{4,}c", "d.*c.{1,}b.{2,}a", "d.*c.{4,}a.{2,}b",
+                  "d.{5,}a.{2,}b.{1,}c", "d.{5,}a.{4,}c.{1,}b"));
 }
 
 } // namespace

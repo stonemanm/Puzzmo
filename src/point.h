@@ -19,7 +19,7 @@ struct Point {
   absl::flat_hash_set<Point> MooreNeighbors() const;
 
   bool operator==(const Point &other) const;
-
+  bool operator<(const Point &other) const;
   Point operator+(const Point &other) const;
 
   template <typename H> friend H AbslHashValue(H h, const Point &p) {
