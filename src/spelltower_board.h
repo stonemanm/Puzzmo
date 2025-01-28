@@ -31,16 +31,23 @@ public:
   bool HasPoint(const Point &p) const;
   bool HasPoint(int row, int col) const;
 
-  // Returns the number of rows or columns on the board.
+  // Returns the number of rows, columns, or stars on the board.
   int NumRows() const;
   int NumCols() const;
+  int NumStars() const;
+
+  // Returns the coordinates of the bonus letters.
+  absl::flat_hash_set<Point> StarLocations() const;
 
   // Calculates the score returned for the word along a given path.
+  // Note: Score does not do any checking on the validity of points on the path.
   int Score(const absl::flat_hash_set<Point> &path) const;
 
 private:
   std::vector<std::vector<char>> board_;
   int rows_, cols_;
+  absl::flat_hash_set<Point> stars_;
+
 };
 
 } // namespace puzzmo

@@ -6,16 +6,23 @@ namespace puzzmo {
 
 SpelltowerBoard::SpelltowerBoard(const std::vector<std::vector<char>> &board)
     : board_(board), rows_(board.size()) {
-  int max_row_size = 0;
+  cols_ = 0;
   for (const auto &row : board_) {
-    if (max_row_size >= row.size())
-      continue;
-    max_row_size = row.size();
+    if (cols_ < row.size())
+      cols_ = row.size();
   }
-  cols_ = max_row_size;
   for (auto &row : board_) {
     while (row.size() < cols_) {
       row.push_back(' ');
+    }
+  }
+
+  for (int r = 0; r < rows_; ++r) {
+    for (int c = 0; c < cols_; ++c) {
+      char ltr = At(r, c);
+      if (std::isupper(ltr)) {
+        stars_.insert({r, c});
+      }
     }
   }
 };
@@ -34,17 +41,21 @@ bool SpelltowerBoard::HasPoint(int row, int col) const {
 
 int SpelltowerBoard::NumRows() const { return rows_; }
 int SpelltowerBoard::NumCols() const { return cols_; }
+int SpelltowerBoard::NumStars() const { return stars_.size(); }
+
+absl::flat_hash_set<Point> SpelltowerBoard::StarLocations() const {
+  return stars_;
+}
 
 int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
   absl::flat_hash_set<Point> affected;
   int star_tiles = 0;
   for (const Point p : path) {
     affected.insert(p);
-    char c = LetterAt(p);
-    if (std::isupper(c)) {
+    if (stars_.contains(p))
       ++star_tiles;
-      c = std::tolower(c);
-    }
+
+    char c = std::tolower(LetterAt(p));
     if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
       for (int row = 0; row < rows_; ++row) {
         affected.insert({.row = row, .col = p.col});
