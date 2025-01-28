@@ -107,5 +107,42 @@ TEST(SpelltowerBoardTest, MightHaveWords) {
   EXPECT_EQ(board.MightHaveWords(words), filtered_words);
 }
 
+TEST(SpelltowerBoardTest, ValidVonNeumannNeighbors) {
+  SpelltowerBoard board({{'h', 'h', 'h', 'h', 'h'},
+                         {'a', 'e', 'i', 'o', 'u'},
+                         {'s', 's', 's', 's', 's'}});
+
+  absl::flat_hash_set<Point> valid_neighbors = {{1, 3}, {0, 2}, {1, 1}, {2, 2}};
+  EXPECT_EQ(board.ValidVonNeumannNeighbors({1, 2}), valid_neighbors);
+
+  valid_neighbors = {{0, 1}, {1, 0}};
+  EXPECT_EQ(board.ValidVonNeumannNeighbors({0, 0}), valid_neighbors);
+
+  valid_neighbors = {{2, 2}, {1, 1}, {2, 0}};
+  EXPECT_EQ(board.ValidVonNeumannNeighbors({2, 1}), valid_neighbors);
+
+  valid_neighbors = {{0, 0}};
+  EXPECT_EQ(board.ValidVonNeumannNeighbors({-1, 0}), valid_neighbors);
+}
+
+TEST(SpelltowerBoardTest, ValidMooreNeighbors) {
+  SpelltowerBoard board({{'h', 'h', 'h', 'h', 'h'},
+                         {'a', 'e', 'i', 'o', 'u'},
+                         {'s', 's', 's', 's', 's'}});
+
+  absl::flat_hash_set<Point> valid_neighbors = {{1, 3}, {0, 3}, {0, 2}, {0, 1},
+                                                {1, 1}, {2, 1}, {2, 2}, {2, 3}};
+  EXPECT_EQ(board.ValidMooreNeighbors({1, 2}), valid_neighbors);
+
+  valid_neighbors = {{0, 1}, {1, 0}, {1, 1}};
+  EXPECT_EQ(board.ValidMooreNeighbors({0, 0}), valid_neighbors);
+
+  valid_neighbors = {{2, 2}, {1, 2}, {1, 1}, {1, 0}, {2, 0}};
+  EXPECT_EQ(board.ValidMooreNeighbors({2, 1}), valid_neighbors);
+
+  valid_neighbors = {{0, 0}, {0, 1}};
+  EXPECT_EQ(board.ValidMooreNeighbors({-1, 0}), valid_neighbors);
+}
+
 } // namespace
 } // namespace puzzmo

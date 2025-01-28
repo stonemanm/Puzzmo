@@ -32,6 +32,12 @@ public:
   bool HasPoint(const Point &p) const;
   bool HasPoint(int row, int col) const;
 
+  // Returns the subset of `p`'s von Neumann neighbors that are on the board.
+  absl::flat_hash_set<Point> ValidVonNeumannNeighbors(const Point &p) const;
+
+  // Returns the subset of `p`'s Moore neighbors that are on the board.
+  absl::flat_hash_set<Point> ValidMooreNeighbors(const Point &p) const;
+
   // Returns the number of rows, columns, or stars on the board.
   int NumRows() const;
   int NumCols() const;

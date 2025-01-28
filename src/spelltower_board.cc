@@ -45,6 +45,20 @@ bool SpelltowerBoard::HasPoint(int row, int col) const {
   return (row >= 0 && row < rows_ && col >= 0 && col < cols_);
 }
 
+absl::flat_hash_set<Point>
+SpelltowerBoard::ValidVonNeumannNeighbors(const Point &p) const {
+  absl::flat_hash_set<Point> neighbors = p.VonNeumannNeighbors();
+  absl::erase_if(neighbors, [this](Point n) { return !HasPoint(n); });
+  return neighbors;
+}
+
+absl::flat_hash_set<Point>
+SpelltowerBoard::ValidMooreNeighbors(const Point &p) const {
+  absl::flat_hash_set<Point> neighbors = p.MooreNeighbors();
+  absl::erase_if(neighbors, [this](Point n) { return !HasPoint(n); });
+  return neighbors;
+}
+
 int SpelltowerBoard::NumRows() const { return rows_; }
 int SpelltowerBoard::NumCols() const { return cols_; }
 int SpelltowerBoard::NumStars() const { return stars_.size(); }
@@ -70,10 +84,8 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
     if (path.size() < 5)
       continue;
 
-    for (const Point neighbor : p.VonNeumannNeighbors()) {
-      if (!HasPoint(neighbor))
-        continue;
-      affected.insert(neighbor);
+    for (const Point n : ValidVonNeumannNeighbors(p)) {
+      affected.insert(n);
     }
   }
 
