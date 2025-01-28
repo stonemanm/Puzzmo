@@ -3,12 +3,20 @@
 
 #include <utility>
 
+#include "absl/container/flat_hash_set.h"
+
 namespace puzzmo {
 
 // A helper object storing a pair of row/column indices.
 struct Point {
   int row;
   int col;
+
+  // Returns the 4 orthogonally-adjacent neighbors of this point.
+  absl::flat_hash_set<Point> VonNeumannNeighbors() const;
+
+  // Returns the 8 surrounding neighbors of this point.
+  absl::flat_hash_set<Point> MooreNeighbors() const;
 
   bool operator==(const Point &other) const;
 
@@ -18,13 +26,6 @@ struct Point {
     return H::combine(std::move(h), p.row, p.col);
   }
 };
-
-// Add to a point to get to the 8 surrounding spots around that point.
-const Point kAdjacentCoords[] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, 1},
-                                 {1, 1},   {1, 0},  {1, -1}, {0, -1}};
-
-// Add to a point to get to the 4 spots around that point.
-const Point kDPad[] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
 
 } // namespace puzzmo
 

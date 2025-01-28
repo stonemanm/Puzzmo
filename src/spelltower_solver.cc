@@ -33,8 +33,8 @@ void SpelltowerSolver::DFS(std::shared_ptr<TrieNode> node, const Point &p,
     ans[s].insert(*child->word);
   }
 
-  for (const auto &dp : kAdjacentCoords) {
-    DFS(child, p + dp, board, visited, path, ans);
+  for (const Point &neighbor : p.MooreNeighbors()) {
+    DFS(child, neighbor, board, visited, path, ans);
   }
 
   path.erase(p);

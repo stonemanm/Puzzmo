@@ -53,10 +53,10 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
     if (path.size() < 5)
       continue;
 
-    for (const Point dp : kDPad) {
-      if (!HasPoint(p + dp))
+    for (const Point neighbor : p.VonNeumannNeighbors()) {
+      if (!HasPoint(neighbor))
         continue;
-      affected.insert(p + dp);
+      affected.insert(neighbor);
     }
   }
 
