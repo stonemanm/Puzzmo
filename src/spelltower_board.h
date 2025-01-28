@@ -44,11 +44,19 @@ public:
   // Note: Score does not do any checking on the validity of points on the path.
   int Score(const absl::flat_hash_set<Point> &path) const;
 
+  // Checks the rows (columns on the main board) to see if the letters of `word`
+  // occur in adjacent rows.
+  bool MightHaveWord(const std::string &word) const;
+
+  std::vector<std::string>
+  MightHaveWords(const std::vector<std::string> &words) const;
+
 private:
   std::vector<std::vector<char>> board_;
   int rows_, cols_;
   absl::flat_hash_set<Point> stars_;
 
+  bool DFS(const std::string &word, int i, int row) const;
 };
 
 } // namespace puzzmo

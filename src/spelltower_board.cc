@@ -88,4 +88,38 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
   return score *= (1 + star_tiles);
 }
 
+bool SpelltowerBoard::MightHaveWord(const std::string &word) const {
+  for (int row = 0; row < rows_; ++row) {
+    if (DFS(word, 0, row))
+      return true;
+  }
+  return false;
+}
+
+std::vector<std::string>
+SpelltowerBoard::MightHaveWords(const std::vector<std::string> &words) const {
+  std::vector<std::string> filtered_words;
+  for (const auto &wd : words) {
+    if (MightHaveWord(wd))
+      filtered_words.push_back(wd);
+  }
+  return filtered_words;
+}
+
+// - If we've reached the end of the word, return true.
+// - Check row `r` for `word[i]`. If we don't find it, return false.
+// - If we find it, then we need to look for the next letter in the next set of
+//   possible rows. If any of these return true, return true.
+bool SpelltowerBoard::DFS(const std::string &word, int i, int row) const {
+  if (i >= word.length())
+    return true;
+  if (row < 0 || row >= rows_)
+    return false;
+  if (!absl::c_contains(board_[row], word[i]))
+    return false;
+
+  return (DFS(word, i + 1, row - 1) || DFS(word, i + 1, row) ||
+          DFS(word, i + 1, row + 1));
+}
+
 } // namespace puzzmo

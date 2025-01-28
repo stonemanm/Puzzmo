@@ -17,6 +17,7 @@ TEST(SpelltowerBoardTest, EmptyConstructor) {
   EXPECT_FALSE(board.HasPoint({0, 0}));
   EXPECT_FALSE(board.HasPoint(0, 0));
   EXPECT_EQ(board.At({0, 0}), '*');
+  EXPECT_FALSE(board.MightHaveWord(""));
 }
 
 TEST(SpelltowerBoardTest, At) {
@@ -80,6 +81,30 @@ TEST(SpelltowerBoardTest, ScoreAdjacentCellsWhenAppropriate) {
   EXPECT_EQ(board.Score({{0, 0}, {0, 1}, {0, 2}, {0, 3}}), 0);
   // 5-long word * 5 points (1 per a)
   EXPECT_EQ(board.Score({{0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}}), 25);
+}
+
+TEST(SpelltowerBoardTest, MightHaveWord) {
+  SpelltowerBoard board({{'a', 'b', 'c', 'd', 'e'},
+                         {'f', 'g', 'h', 'i', 'j'},
+                         {'a', 'k', 'l', 'm', 'n'}});
+  EXPECT_TRUE(board.MightHaveWord(""));
+  EXPECT_TRUE(board.MightHaveWord("i"));
+  EXPECT_TRUE(board.MightHaveWord("ab"));
+  EXPECT_FALSE(board.MightHaveWord("elf"));
+
+  // Note: this is not actually possible for reasons outside the scope of what
+  // is checked. Nevertheless, this should return true.
+  EXPECT_TRUE(board.MightHaveWord("fig"));
+}
+
+TEST(SpelltowerBoardTest, MightHaveWords) {
+  SpelltowerBoard board({{'h', 'h', 'h', 'h', 'h'},
+                         {'a', 'e', 'i', 'o', 'u'},
+                         {'s', 's', 's', 's', 's'}});
+  std::vector<std::string> words = {"has", "hash", "his", "hose", "house"};
+  // Note: "house" is not actually possible but should nevertheless return true.
+  std::vector<std::string> filtered_words = {"has", "his", "hose", "house"};
+  EXPECT_EQ(board.MightHaveWords(words), filtered_words);
 }
 
 } // namespace

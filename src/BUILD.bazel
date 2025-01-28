@@ -35,6 +35,7 @@ cc_binary(
     ],
     deps = [
         ":dictionary_utils",
+        ":spelltower_board",
         ":spelltower_solver",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/log",
@@ -166,6 +167,19 @@ cc_library(
     deps = [
         ":point",
         "@abseil-cpp//absl/container:flat_hash_set",
+    ],
+)
+
+cc_test(
+    name = "spelltower_board_test",
+    size = "small",
+    srcs = ["spelltower_board_test.cc"],
+    deps = [
+        ":spelltower_board",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
