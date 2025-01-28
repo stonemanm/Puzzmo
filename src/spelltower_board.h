@@ -25,7 +25,8 @@ public:
   explicit SpelltowerBoard(const std::vector<std::vector<char>> &board);
 
   // Returns the letter at a given spot on the board.
-  char LetterAt(const Point &p) const;
+  char At(const Point &p) const;
+  char At(int row, int col) const;
 
   // Returns true if the point exists on the board.
   bool HasPoint(const Point &p) const;

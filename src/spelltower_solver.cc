@@ -14,12 +14,12 @@ void SpelltowerSolver::DFS(std::shared_ptr<TrieNode> node, const Point &p,
                            const SpelltowerBoard &board,
                            std::vector<std::vector<bool>> &visited,
                            absl::flat_hash_set<Point> &path, WordMap &ans) {
-  if (!board.HasPoint(p) || visited[p.row][p.col] || board.LetterAt(p) == '*' ||
-      board.LetterAt(p) == ' ') {
+  if (!board.HasPoint(p) || visited[p.row][p.col] || board.At(p) == '*' ||
+      board.At(p) == ' ') {
     return;
   }
 
-  const char c = std::tolower(board.LetterAt(p));
+  const char c = std::tolower(board.At(p));
   std::shared_ptr<TrieNode> child = node->children[c - 'a'];
   if (child == nullptr) {
     return;

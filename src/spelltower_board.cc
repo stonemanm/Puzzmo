@@ -27,8 +27,14 @@ SpelltowerBoard::SpelltowerBoard(const std::vector<std::vector<char>> &board)
   }
 };
 
-char SpelltowerBoard::LetterAt(const Point &p) const {
-  return board_[p.row][p.col];
+char SpelltowerBoard::At(const Point &p) const {
+  return SpelltowerBoard::At(p.row, p.col);
+}
+
+char SpelltowerBoard::At(int row, int col) const {
+  if (!HasPoint(row, col))
+    return '*';
+  return board_[row][col];
 }
 
 bool SpelltowerBoard::HasPoint(const Point &p) const {
@@ -55,7 +61,7 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
     if (stars_.contains(p))
       ++star_tiles;
 
-    char c = std::tolower(LetterAt(p));
+    char c = std::tolower(At(p));
     if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
       for (int row = 0; row < rows_; ++row) {
         affected.insert({.row = row, .col = p.col});
@@ -73,7 +79,7 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
 
   int score = 0;
   for (const Point p : affected) {
-    char c = std::tolower(LetterAt(p));
+    char c = std::tolower(At(p));
     if (c == ' ' || c == '*')
       continue;
     score += kLetterScores[c - 'a'];
