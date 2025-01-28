@@ -22,7 +22,7 @@ int main(int argc, const char *argv[]) {
   std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
 
   // Read in the board
-  std::vector<std::vector<char>> board;
+  std::vector<std::vector<char>> boardvec;
   std::ifstream boardfile("data/board_spelltower.txt");
   if (!boardfile.is_open()) {
     LOG(ERROR) << "Error: Could not open board_spelltower.txt";
@@ -36,9 +36,10 @@ int main(int argc, const char *argv[]) {
     while (iss >> c) {
       row.push_back(c);
     }
-    board.push_back(row);
+    boardvec.push_back(row);
   }
   boardfile.close();
+  SpelltowerBoard board(boardvec);
 
   // Create a spelltower and populate it with this data, then solve it
   SpelltowerSolver spelltower(board, dict);

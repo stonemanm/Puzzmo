@@ -22,8 +22,7 @@ namespace puzzmo {
 
 class SpelltowerSolver {
 public:
-  SpelltowerSolver(std::vector<std::vector<char>> &board,
-                   const std::shared_ptr<TrieNode> dict)
+  SpelltowerSolver(SpelltowerBoard &board, const std::shared_ptr<TrieNode> dict)
       : starting_board_(board), dict_(dict) {};
 
   // Returns a map of all valid words on the board, as well as their score
