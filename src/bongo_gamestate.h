@@ -21,12 +21,9 @@ public:
   BongoGameState(const std::vector<std::string> board_strings,
                  const absl::flat_hash_map<char, int> letter_values,
                  LetterCount remaining_tiles)
-      : BongoGameState(board_strings, letter_values, remaining_tiles,
-                       {{' ', ' ', ' ', ' ', ' '},
-                        {' ', ' ', ' ', ' ', ' '},
-                        {' ', ' ', ' ', ' ', ' '},
-                        {' ', ' ', ' ', ' ', ' '},
-                        {' ', ' ', ' ', ' ', ' '}}) {};
+      : BongoGameState(
+            board_strings, letter_values, remaining_tiles,
+            std::vector<std::vector<char>>(5, std::vector<char>(5, ' '))) {};
 
   const absl::flat_hash_map<char, int> LetterValues() const {
     return letter_values_;
