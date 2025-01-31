@@ -72,6 +72,30 @@ cc_binary(
 ################################################################################
 
 cc_library(
+    name = "bongo_gamestate",
+    srcs = ["bongo_gamestate.cc"],
+    hdrs = ["bongo_gamestate.h"],
+    deps = [
+        ":letter_count",
+        ":point",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "bongo_gamestate_test",
+    size = "small",
+    srcs = ["bongo_gamestate_test.cc"],
+    deps = [
+        ":bongo_gamestate",
+        "@abseil-cpp//absl/log",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "bongo_solver",
     srcs = ["bongo_solver.cc"],
     hdrs = ["bongo_solver.h"],
