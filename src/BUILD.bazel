@@ -4,6 +4,10 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 package(default_visibility = ["//visibility:public"])
 
+############
+# Binaries #
+############
+
 cc_binary(
     name = "play_bongo",
     srcs = ["play_bongo.cc"],
@@ -43,6 +47,8 @@ cc_binary(
         ":spelltower_solver",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
         "@re2",
     ],
@@ -58,9 +64,15 @@ cc_binary(
         ":dictionary_utils",
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
     ],
 )
+
+#####################
+# Libraries & Tests #
+#####################
 
 cc_library(
     name = "bongo_gamestate",

@@ -7,6 +7,8 @@
 #include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
 #include "absl/log/log.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "re2/re2.h"
@@ -53,26 +55,26 @@ int main(int argc, const char *argv[]) {
   // "addletter" or "removeletter", with optional params for how many.
   // - Write tests for dictionary_utils and find out what's going wrong there.
 
-  std::vector<std::string> filtered_words = board.MightHaveWords(words);
-  LOG(INFO) << filtered_words.size();
-  std::sort(filtered_words.begin(), filtered_words.end(),
-            [](std::string a, std::string b) {
-              if (a.length() == b.length())
-                return a < b;
-              return a.length() < b.length();
-            });
+  // std::vector<std::string> filtered_words = board.MightHaveWords(words);
+  // LOG(INFO) << filtered_words.size();
+  // std::sort(filtered_words.begin(), filtered_words.end(),
+  //           [](std::string a, std::string b) {
+  //             if (a.length() == b.length())
+  //               return a < b;
+  //             return a.length() < b.length();
+  //           });
 
-  LOG(INFO) << "All words in dictionary, shortest to longest:";
-  std::string regexmonster =
-      absl::StrJoin(board.GetAllStarRegexes(), "|",
-                    [](std::string *out, const std::string &in) {
-                      absl::StrAppend(out, "(", in, ")");
-                    });
-  for (const auto &w : filtered_words) {
-    if (RE2::PartialMatch(w, regexmonster))
-      LOG(INFO) << w;
-  }
-  return 0;
+  // LOG(INFO) << "All words in dictionary, shortest to longest:";
+  // std::string regexmonster =
+  //     absl::StrJoin(board.GetAllStarRegexes(), "|",
+  //                   [](std::string *out, const std::string &in) {
+  //                     absl::StrAppend(out, "(", in, ")");
+  //                   });
+  // for (const auto &w : filtered_words) {
+  //   if (RE2::PartialMatch(w, regexmonster))
+  //     LOG(INFO) << w;
+  // }
+  // return 0;
 
   std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
 
