@@ -42,11 +42,11 @@ BongoGameState::BongoGameState(
 
 bool BongoGameState::PlaceTile(const Point &p, char c) {
   if (!HasPoint(p) || std::isalpha(placed_tiles_[p.row][p.col]) ||
-      remaining_tiles_.count[c - 'a'] <= 0)
+      remaining_tiles_.NumLetters(c) <= 0)
     return false;
 
   placed_tiles_[p.row][p.col] = c;
-  --remaining_tiles_.count[c - 'a'];
+  remaining_tiles_.RemoveLetter(c);
   return true;
 }
 
@@ -58,7 +58,7 @@ bool BongoGameState::RemoveTile(const Point &p) {
   if (!std::isalpha(placed_tiles_[p.row][p.col]))
     return false;
 
-  ++remaining_tiles_.count[c - 'a'];
+  remaining_tiles_.AddLetter(c);
   placed_tiles_[p.row][p.col] = '\0';
   return true;
 }

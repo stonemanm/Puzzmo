@@ -21,11 +21,9 @@ const absl::flat_hash_map<char, int> kLetterValues = {
 TEST(BongoGameStateTest, Constructor) {
   BongoGameState state(kDummyBoard, kLetterValues,
                        LetterCount("aaaabbbcdefgh"));
-  std::vector<int> counts = {4, 3, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   EXPECT_EQ(state.LetterValues(), kLetterValues);
   EXPECT_EQ(state.PlacedTiles(), kEmptyBoard);
-  EXPECT_EQ(state.RemainingTiles().count, counts);
+  EXPECT_EQ(state.RemainingTiles().CharsInOrder(), "aaaabbbcdefgh");
 }
 
 TEST(BongoGameStateTest, PlaceTile) {
@@ -45,11 +43,11 @@ TEST(BongoGameStateTest, RemoveTile) {
                         {' ', ' ', 'x', ' ', ' '},
                         {' ', ' ', ' ', ' ', ' '},
                         {' ', ' ', ' ', ' ', ' '}});
-  EXPECT_EQ(state.RemainingTiles().count['x' - 'a'], 0);
+  EXPECT_EQ(state.RemainingTiles().NumLetters('x'), 0);
   EXPECT_TRUE(state.RemoveTile({0, 0}));
-  EXPECT_EQ(state.RemainingTiles().count['x' - 'a'], 1);
+  EXPECT_EQ(state.RemainingTiles().NumLetters('x'), 1);
   EXPECT_FALSE(state.RemoveTile({0, 0}));
-  EXPECT_EQ(state.RemainingTiles().count['x' - 'a'], 1);
+  EXPECT_EQ(state.RemainingTiles().NumLetters('x'), 1);
 }
 
 TEST(BongoGameStateTest, RowAndBonusWordAndScore) {

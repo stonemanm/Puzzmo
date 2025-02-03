@@ -11,13 +11,7 @@ namespace puzzmo {
 namespace {
 
 std::string LetterSetString(absl::flat_hash_set<LetterCount> set) {
-  return absl::StrCat(
-      "[",
-      absl::StrJoin(set, ", ",
-                    [](std::string *out, const LetterCount &lc) {
-                      absl::StrAppend(out, lc.toString());
-                    }),
-      "]");
+  return absl::StrCat("[", absl::StrJoin(set, ", "), "]");
 }
 
 } // namespace
@@ -45,7 +39,7 @@ BongoSolver::FindWordSets() {
   for (const auto &letter_set : letter_sets) {
     absl::flat_hash_set<std::string> word_set;
     for (const auto &letters : letter_set) {
-      word_set.insert(letters.toString());
+      word_set.insert(letters.CharsInOrder());
     }
     word_sets.insert(word_set);
   }
@@ -74,7 +68,7 @@ void BongoSolver::FindLetterSetsHelper(
     }
 
     LetterCount letters = remaining_letters - keys_[i];
-    if (!letters.isValid())
+    if (!letters.Valid())
       continue;
 
     // If this would be our fourth word, then letters would be our fifth word.

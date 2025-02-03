@@ -25,14 +25,22 @@ ReadDictionaryFileToVector(const ReadFileOptions options) {
     int l = line.length();
     if (l < options.min_letters || l > options.max_letters)
       continue;
-    if (options.filter_by_letters) {
-      std::vector<int> letters = options.letter_count.count;
-      for (const char c : line) {
-        if (--letters[c - 'a'] < 0)
-          continue;
+    if (!options.filter_by_letters) {
+      words.push_back(line);
+      continue;
+    }
+    LetterCount lc = options.letter_count;
+    bool valid = true;
+    for (char c : line) {
+      auto n = lc.RemoveLetter(c);
+      if (!n.ok()) {
+        valid = false;
+        break;
       }
     }
-    words.push_back(line);
+    if (valid) {
+      words.push_back(line);
+    }
   }
   dictfile.close();
   return words;

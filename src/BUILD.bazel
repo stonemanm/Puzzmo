@@ -40,6 +40,7 @@ cc_binary(
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@re2",
     ],
 )
 
@@ -139,7 +140,8 @@ cc_library(
     srcs = ["letter_count.cc"],
     hdrs = ["letter_count.h"],
     deps = [
-        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -151,6 +153,8 @@ cc_test(
     deps = [
         ":letter_count",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:status_matchers",
         "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -181,6 +185,7 @@ cc_library(
     hdrs = ["point.h"],
     deps = [
         "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

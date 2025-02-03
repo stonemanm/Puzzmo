@@ -9,18 +9,15 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "re2/re2.h"
 
 #include "dictionary_utils.h"
+#include "spelltower_board.h"
 #include "spelltower_solver.h"
 
 using namespace puzzmo;
 
 int main(int argc, const char *argv[]) {
-  // Read in the dictionary
-  std::vector<std::string> words =
-      ReadDictionaryFileToVector({.min_letters = 3});
-  std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
-
   // Read in the board
   std::vector<std::vector<char>> boardvec;
   std::ifstream boardfile("data/board_spelltower.txt");
@@ -29,17 +26,55 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
   std::string line;
+  LetterCount letter_count;
   while (std::getline(boardfile, line)) {
     std::vector<char> row;
     std::istringstream iss(line);
     char c;
     while (iss >> c) {
       row.push_back(c);
+      if (std::isalpha(c)) {
+        letter_count.AddLetter(c);
+      }
     }
     boardvec.push_back(row);
   }
   boardfile.close();
   SpelltowerBoard board(boardvec);
+
+  // Read in the dictionary
+  std::vector<std::string> words =
+      ReadDictionaryFileToVector({.min_letters = 3,
+                                  .filter_by_letters = true,
+                                  .letter_count = letter_count});
+
+  // TODO:
+  // - improve LetterCount so you don't have to dig into .count[c-'a']. Just do
+  // "addletter" or "removeletter", with optional params for how many.
+  // - Write tests for dictionary_utils and find out what's going wrong there.
+
+  std::vector<std::string> filtered_words = board.MightHaveWords(words);
+  LOG(INFO) << filtered_words.size();
+  std::sort(filtered_words.begin(), filtered_words.end(),
+            [](std::string a, std::string b) {
+              if (a.length() == b.length())
+                return a < b;
+              return a.length() < b.length();
+            });
+
+  LOG(INFO) << "All words in dictionary, shortest to longest:";
+  std::string regexmonster =
+      absl::StrJoin(board.GetAllStarRegexes(), "|",
+                    [](std::string *out, const std::string &in) {
+                      absl::StrAppend(out, "(", in, ")");
+                    });
+  for (const auto &w : filtered_words) {
+    if (RE2::PartialMatch(w, regexmonster))
+      LOG(INFO) << w;
+  }
+  return 0;
+
+  std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
 
   // Create a spelltower and populate it with this data, then solve it
   SpelltowerSolver spelltower(board, dict);

@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/str_format.h"
 
 namespace puzzmo {
 
@@ -24,6 +25,11 @@ struct Point {
 
   template <typename H> friend H AbslHashValue(H h, const Point &p) {
     return H::combine(std::move(h), p.row, p.col);
+  }
+
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const Point &p) {
+    absl::Format(&sink, "(%d, %d)", p.row, p.col);
   }
 };
 
