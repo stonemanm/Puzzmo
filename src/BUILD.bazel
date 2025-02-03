@@ -1,4 +1,8 @@
+# Builds the libraries and executables for the repository.
+
 load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+package(default_visibility = ["//visibility:public"])
 
 cc_binary(
     name = "play_bongo",
@@ -58,20 +62,6 @@ cc_binary(
     ],
 )
 
-################################################################################
-
-# proto_library(
-#     name = "playing_card_proto",
-#     srcs = ["playing_card.proto"],
-# )
-
-# cc_proto_library(
-#     name = "playing_card_cc_proto",
-#     deps = [":playing_card_proto"],
-# )
-
-################################################################################
-
 cc_library(
     name = "bongo_gamestate",
     srcs = ["bongo_gamestate.cc"],
@@ -107,6 +97,13 @@ cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
+)
+
+cc_library(
+    name = "card",
+    srcs = ["card.cc"],
+    hdrs = ["card.h"],
+    deps = [],
 )
 
 cc_library(
@@ -159,13 +156,6 @@ cc_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
-)
-
-cc_library(
-    name = "card",
-    srcs = ["card.cc"],
-    hdrs = ["card.h"],
-    deps = [],
 )
 
 cc_library(
