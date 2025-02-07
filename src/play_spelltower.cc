@@ -22,9 +22,9 @@ using namespace puzzmo;
 int main(int argc, const char *argv[]) {
   // Read in the board
   std::vector<std::vector<char>> boardvec;
-  std::ifstream boardfile("data/board_spelltower.txt");
+  std::ifstream boardfile("data/spelltower_board.txt");
   if (!boardfile.is_open()) {
-    LOG(ERROR) << "Error: Could not open board_spelltower.txt";
+    LOG(ERROR) << "Error: Could not open spelltower_board.txt";
     return 1;
   }
   std::string line;
@@ -54,8 +54,7 @@ int main(int argc, const char *argv[]) {
 
   if (false) {
     std::vector<std::string> filtered_words =
-        board.MightHaveWords(*words,
-                             /*all_star=*/true);
+        board.MightHaveAllStarWords(*words);
     LOG(INFO) << filtered_words.size();
     std::sort(filtered_words.begin(), filtered_words.end(),
               [](std::string a, std::string b) {

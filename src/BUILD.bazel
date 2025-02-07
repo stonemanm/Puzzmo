@@ -33,7 +33,7 @@ cc_binary(
     name = "play_pile_up_poker",
     srcs = ["play_pile_up_poker.cc"],
     data = [
-        "//data:cards_pile_up_poker.txt",
+        "//data:pile_up_poker_cards.txt",
     ],
     deps = [
         ":pile_up_poker_solver",
@@ -46,7 +46,7 @@ cc_binary(
     name = "play_spelltower",
     srcs = ["play_spelltower.cc"],
     data = [
-        "//data:board_spelltower.txt",
+        "//data:spelltower_board.txt",
     ],
     deps = [
         ":dictionary_utils",
@@ -65,13 +65,12 @@ cc_binary(
     name = "play_typeshift",
     srcs = ["play_typeshift.cc"],
     data = [
-        "//data:board_typeshift.txt",
+        "//data:typeshift_board.txt",
     ],
     deps = [
         ":dictionary_utils",
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
     ],
@@ -134,7 +133,9 @@ cc_library(
     srcs = ["dictionary_utils.cc"],
     hdrs = ["dictionary_utils.h"],
     data = [
-        "//data:dictionary.txt",
+        "//data:words_bongo.txt",
+        "//data:words_bongo_common.txt",
+        "//data:words_puzzmo.txt",
     ],
     deps = [
         "letter_count",
@@ -205,6 +206,17 @@ cc_library(
     deps = [
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "point_test",
+    size = "small",
+    srcs = ["point_test.cc"],
+    deps = [
+        ":point",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 

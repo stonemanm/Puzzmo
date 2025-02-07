@@ -1,12 +1,10 @@
 #include <algorithm>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "absl/log/log.h"
-#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_join.h"
 
@@ -50,9 +48,9 @@ int UnusedLetters(const std::string &word, const TypeshiftBoard &board) {
 int main(int argc, const char *argv[]) {
   // Read in the board
   TypeshiftBoard board;
-  std::ifstream boardfile("data/board_typeshift.txt");
+  std::ifstream boardfile("data/typeshift_board.txt");
   if (!boardfile.is_open()) {
-    LOG(ERROR) << "Error: Could not open board_typeshift.txt";
+    LOG(ERROR) << "Error: Could not open typeshift_board.txt";
     return 1;
   }
   int word_length = 0;

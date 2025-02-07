@@ -11,7 +11,7 @@
 #include "absl/strings/str_cat.h"
 #include "re2/re2.h"
 
-ABSL_FLAG(std::string, path_to_word_file, "data/dictionary.txt",
+ABSL_FLAG(std::string, path_to_word_file, "data/words_puzzmo.txt",
           "Input file containing all legal words.");
 
 namespace puzzmo {

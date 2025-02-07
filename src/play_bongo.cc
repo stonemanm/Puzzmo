@@ -1,9 +1,5 @@
 #include <algorithm>
-#include <cctype>
 #include <fstream>
-#include <iostream>
-#include <numeric>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -14,13 +10,10 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 #include "bongo_gamestate.h"
-#include "bongo_solver.h"
 #include "dictionary_utils.h"
 
 ABSL_FLAG(std::string, path_to_board_file, "data/bongo_board.txt",
@@ -38,7 +31,7 @@ using LettersToWordsMap =
 namespace {
 
 absl::StatusOr<std::vector<std::string>>
-LoadStringVector(absl::string_view path) {
+LoadStringVector(const std::string &path) {
   std::ifstream file(path);
   if (!file.is_open()) {
     return absl::InvalidArgumentError(
