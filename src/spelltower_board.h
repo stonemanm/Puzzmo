@@ -55,12 +55,12 @@ public:
   // Checks the rows (columns on the main board) to see if the letters of `word`
   // occur in adjacent rows.
   bool MightHaveWord(const std::string &word) const;
-  bool MightHaveWord(const std::string &word, bool all_star) const;
-
   std::vector<std::string>
   MightHaveWords(const std::vector<std::string> &words) const;
-  std::vector<std::string> MightHaveWords(const std::vector<std::string> &words,
-                                          bool all_star) const;
+
+  bool MightHaveAllStarWord(const std::string &word) const;
+  std::vector<std::string>
+  MightHaveAllStarWords(const std::vector<std::string> &words) const;
 
 private:
   std::vector<std::vector<char>> board_;

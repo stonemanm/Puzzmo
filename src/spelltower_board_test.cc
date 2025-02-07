@@ -87,25 +87,50 @@ TEST(SpelltowerBoardTest, ScoreAdjacentCellsWhenAppropriate) {
 TEST(SpelltowerBoardTest, MightHaveWord) {
   SpelltowerBoard board({{'a', 'b', 'c', 'd', 'e'},
                          {'f', 'g', 'h', 'i', 'j'},
-                         {'a', 'k', 'l', 'm', 'n'}});
+                         {'k', 'l', 'm', 'n', 'A'}});
   EXPECT_TRUE(board.MightHaveWord(""));
+  EXPECT_FALSE(board.MightHaveAllStarWord(""));
+
   EXPECT_TRUE(board.MightHaveWord("i"));
-  EXPECT_TRUE(board.MightHaveWord("ab"));
+  EXPECT_FALSE(board.MightHaveAllStarWord("i"));
+
   EXPECT_FALSE(board.MightHaveWord("elf"));
+  EXPECT_FALSE(board.MightHaveAllStarWord("elf"));
+
+  EXPECT_TRUE(board.MightHaveWord("ace"));
+  EXPECT_FALSE(board.MightHaveAllStarWord("ace"));
 
   // Note: this is not actually possible for reasons outside the scope of what
   // is checked. Nevertheless, this should return true.
-  EXPECT_TRUE(board.MightHaveWord("fig"));
+  EXPECT_TRUE(board.MightHaveWord("man"));
+  EXPECT_TRUE(board.MightHaveAllStarWord("man"));
+
+  SpelltowerBoard starless_board({{'a', 'b', 'c', 'd', 'e'},
+                                  {'f', 'g', 'h', 'i', 'j'},
+                                  {'k', 'l', 'm', 'n', 'a'}});
+  EXPECT_TRUE(starless_board.MightHaveAllStarWord(""));
 }
 
 TEST(SpelltowerBoardTest, MightHaveWords) {
-  SpelltowerBoard board({{'h', 'h', 'h', 'h', 'h'},
-                         {'a', 'e', 'i', 'o', 'u'},
-                         {'s', 's', 's', 's', 's'}});
   std::vector<std::string> words = {"has", "hash", "his", "hose", "house"};
   // Note: "house" is not actually possible but should nevertheless return true.
   std::vector<std::string> filtered_words = {"has", "his", "hose", "house"};
-  EXPECT_EQ(board.MightHaveWords(words), filtered_words);
+
+  SpelltowerBoard starless_board({{'h', 'h', 'h', 'h', 'h'},
+                                  {'a', 'e', 'i', 'o', 'u'},
+                                  {'s', 's', 's', 's', 's'}});
+  EXPECT_THAT(starless_board.MightHaveWords(words),
+              testing::ElementsAreArray(filtered_words));
+  EXPECT_THAT(starless_board.MightHaveAllStarWords(words),
+              testing::ElementsAreArray(filtered_words));
+
+  SpelltowerBoard board({{'h', 'h', 'h', 'h', 'h'},
+                         {'a', 'e', 'I', 'o', 'u'},
+                         {'s', 's', 's', 's', 's'}});
+  EXPECT_THAT(board.MightHaveWords(words),
+              testing::ElementsAreArray(filtered_words));
+  EXPECT_THAT(board.MightHaveAllStarWords(words),
+              testing::ElementsAreArray({"his"}));
 }
 
 TEST(SpelltowerBoardTest, ValidVonNeumannNeighbors) {
