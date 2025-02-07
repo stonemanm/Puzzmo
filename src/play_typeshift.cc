@@ -72,9 +72,13 @@ int main(int argc, const char *argv[]) {
   boardfile.close();
 
   // Read in the dictionary
-  std::vector<std::string> words = ReadDictionaryFileToVector(
+  auto words = ReadDictionaryFileToVector(
       {.min_letters = word_length, .max_letters = word_length});
-  std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
+  if (!words.ok()) {
+    LOG(ERROR) << words.status();
+    return 1;
+  }
+  std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(*words);
 
   std::vector<std::string> answers;
   DFS(dict, 0, board, answers);

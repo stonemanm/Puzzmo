@@ -3,19 +3,92 @@
 #include <numeric>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 
 namespace puzzmo {
+namespace {
 
-LetterCount::LetterCount(absl::string_view s) : count(26) {
+void nCk(int start_at, int k, std::string &current, absl::string_view str,
+         absl::flat_hash_set<std::string> &combinations) {
+  if (k == 0) {
+    combinations.insert(current);
+    return;
+  }
+  for (int i = start_at; i < str.size() - (k - 1); ++i) {
+    current.push_back(str[i]);
+    nCk(i + 1, k - 1, current, str, combinations);
+    current.pop_back();
+  }
+}
+
+} // namespace
+
+LetterCount::LetterCount(absl::string_view s) : counts_(26) {
   for (char c : s) {
     if (!std::isalpha(c)) {
       continue;
     }
-    ++count[tolower(c) - 'a'];
+    ++counts_[tolower(c) - 'a'];
   }
 }
 
-absl::StatusOr<int> LetterCount::AddLetter(char c) { return AddLetter(c, 1); }
+int LetterCount::Count(char c) const {
+  return std::isalpha(c) ? counts_[std::tolower(c) - 'a'] : -1;
+}
+
+bool LetterCount::Contains(const LetterCount &other) const {
+  for (int i = 0; i < 26; ++i) {
+    char c = 'a' + i;
+    if (Count(c) < other.Count(c)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool LetterCount::Empty() const { return Size() == 0; }
+
+bool LetterCount::Valid() const {
+  for (int n : counts_) {
+    if (n < 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+int LetterCount::Size() const {
+  return std::accumulate(counts_.begin(), counts_.end(), 0);
+}
+
+std::string LetterCount::AnyCharRegex() const {
+  std::string s = "[";
+  for (int i = 0; i < 26; ++i) {
+    if (counts_[i] > 0) {
+      absl::StrAppend(&s, std::string(1, 'a' + i));
+    }
+  }
+  return absl::StrCat(s, "]");
+}
+
+std::string LetterCount::CharsInOrder() const {
+  std::string s = "";
+  std::vector<int> temp(counts_);
+  for (int i = 0; i < 26; ++i) {
+    char c = 'a' + i;
+    while (--temp[i] >= 0) {
+      s += c;
+    }
+  }
+  return s;
+}
+
+absl::flat_hash_set<std::string> LetterCount::CombinationsOfSize(int k) const {
+  absl::flat_hash_set<std::string> combinations;
+  std::string s = "";
+  nCk(0, k, s, CharsInOrder(), combinations);
+  return combinations;
+}
 
 absl::StatusOr<int> LetterCount::AddLetter(char c, int i) {
   if (!std::isalpha(c)) {
@@ -29,28 +102,8 @@ absl::StatusOr<int> LetterCount::AddLetter(char c, int i) {
                      std::string(1, c), "'s."));
   }
 
-  count[std::tolower(c) - 'a'] += i;
-  return count[std::tolower(c) - 'a'];
-}
-
-std::string LetterCount::CharsInOrder() const {
-  std::string s = "";
-  std::vector<int> temp(count);
-  for (int i = 0; i < 26; ++i) {
-    char c = 'a' + i;
-    while (--temp[i] >= 0) {
-      s += c;
-    }
-  }
-  return s;
-}
-
-int LetterCount::NumLetters(char c) const {
-  return std::isalpha(c) ? count[std::tolower(c) - 'a'] : -1;
-}
-
-absl::StatusOr<int> LetterCount::RemoveLetter(char c) {
-  return RemoveLetter(c, 1);
+  counts_[std::tolower(c) - 'a'] += i;
+  return counts_[std::tolower(c) - 'a'];
 }
 
 absl::StatusOr<int> LetterCount::RemoveLetter(char c, int i) {
@@ -65,33 +118,20 @@ absl::StatusOr<int> LetterCount::RemoveLetter(char c, int i) {
                      std::string(1, c), "'s."));
   }
 
-  int n = count[std::tolower(c) - 'a'];
+  int n = counts_[std::tolower(c) - 'a'];
   if (n < i) {
     return absl::InvalidArgumentError(
         absl::StrCat("LetterCount contains only ", n, " '", std::string(1, c),
                      "'s, which is fewer than the ", i, " being removed."));
   }
 
-  count[std::tolower(c) - 'a'] -= i;
-  return count[std::tolower(c) - 'a'];
-}
-
-int LetterCount::Size() const {
-  return std::accumulate(count.begin(), count.end(), 0);
-}
-
-bool LetterCount::Valid() const {
-  for (int n : count) {
-    if (n < 0) {
-      return false;
-    }
-  }
-  return true;
+  counts_[std::tolower(c) - 'a'] -= i;
+  return counts_[std::tolower(c) - 'a'];
 }
 
 bool LetterCount::operator==(const LetterCount &other) const {
   for (int i = 0; i < 26; ++i) {
-    if (count[i] != other.count[i])
+    if (counts_[i] != other.counts_[i])
       return false;
   }
   return true;
@@ -99,8 +139,8 @@ bool LetterCount::operator==(const LetterCount &other) const {
 
 bool LetterCount::operator<(const LetterCount &other) const {
   for (int i = 0; i < 26; ++i) {
-    if (count[i] != other.count[i]) {
-      return count[i] > other.count[i];
+    if (counts_[i] != other.counts_[i]) {
+      return counts_[i] > other.counts_[i];
     }
   }
   return false;
@@ -108,7 +148,7 @@ bool LetterCount::operator<(const LetterCount &other) const {
 
 LetterCount &LetterCount::operator+=(const LetterCount &other) {
   for (int i = 0; i < 26; ++i) {
-    count[i] += other.count[i];
+    counts_[i] += other.counts_[i];
   }
   return *this;
 }
@@ -121,7 +161,7 @@ LetterCount LetterCount::operator+(const LetterCount &other) const {
 
 LetterCount &LetterCount::operator-=(const LetterCount &other) {
   for (int i = 0; i < 26; ++i) {
-    count[i] -= other.count[i];
+    counts_[i] -= other.counts_[i];
   }
   return *this;
 }

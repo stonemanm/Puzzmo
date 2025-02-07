@@ -1,5 +1,6 @@
 #include "spelltower_board.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cstdlib>
 
@@ -33,11 +34,12 @@ SpelltowerBoard::SpelltowerBoard(const std::vector<std::vector<char>> &board)
     for (int c = 0; c < cols_; ++c) {
       char ltr = At(r, c);
       if (std::isupper(ltr)) {
-        stars_.insert({r, c});
+        stars_.push_back({r, c});
         board_[r][c] = std::tolower(ltr);
       }
     }
   }
+  std::sort(stars_.begin(), stars_.end());
 };
 
 char SpelltowerBoard::At(const Point &p) const {
@@ -80,9 +82,7 @@ absl::flat_hash_set<std::string> SpelltowerBoard::GetAllStarRegexes() const {
   if (stars_.empty())
     return {};
 
-  std::vector<Point> star_vec(stars_.begin(), stars_.end());
-  std::sort(star_vec.begin(), star_vec.end());
-
+  std::vector<Point> star_vec(stars_);
   absl::flat_hash_set<std::string> regex_set;
   do {
     std::string s(1, At(star_vec[0]));
@@ -99,16 +99,14 @@ absl::flat_hash_set<std::string> SpelltowerBoard::GetAllStarRegexes() const {
   return regex_set;
 }
 
-absl::flat_hash_set<Point> SpelltowerBoard::StarLocations() const {
-  return stars_;
-}
+std::vector<Point> SpelltowerBoard::StarLocations() const { return stars_; }
 
 int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
   absl::flat_hash_set<Point> affected;
   int star_tiles = 0;
   for (const Point p : path) {
     affected.insert(p);
-    if (stars_.contains(p))
+    if (absl::c_contains(stars_, p))
       ++star_tiles;
 
     char c = At(p);
@@ -137,8 +135,16 @@ int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
 }
 
 bool SpelltowerBoard::MightHaveWord(const std::string &word) const {
+  return MightHaveWord(word, false);
+}
+
+bool SpelltowerBoard::MightHaveWord(const std::string &word,
+                                    bool all_star) const {
+  std::vector<Point> star_vec(stars_.begin(), stars_.end());
+
   for (int row = 0; row < rows_; ++row) {
-    if (DFS(word, 0, row))
+    std::vector<bool> used_stars(star_vec.size(), false);
+    if (DFS(word, 0, row, used_stars))
       return true;
   }
   return false;
@@ -146,9 +152,15 @@ bool SpelltowerBoard::MightHaveWord(const std::string &word) const {
 
 std::vector<std::string>
 SpelltowerBoard::MightHaveWords(const std::vector<std::string> &words) const {
+  return MightHaveWords(words, false);
+}
+
+std::vector<std::string>
+SpelltowerBoard::MightHaveWords(const std::vector<std::string> &words,
+                                bool all_star) const {
   std::vector<std::string> filtered_words;
   for (const auto &wd : words) {
-    if (MightHaveWord(wd))
+    if (MightHaveWord(wd, all_star))
       filtered_words.push_back(wd);
   }
   return filtered_words;
@@ -168,6 +180,33 @@ bool SpelltowerBoard::DFS(const std::string &word, int i, int row) const {
 
   return (DFS(word, i + 1, row - 1) || DFS(word, i + 1, row) ||
           DFS(word, i + 1, row + 1));
+}
+
+bool SpelltowerBoard::DFS(const std::string &word, int i, int row,
+                          std::vector<bool> &used_stars) const {
+  if (i >= word.length() && std::all_of(used_stars.begin(), used_stars.end(),
+                                        [](bool b) { return b; }))
+    return true;
+  if (row < 0 || row >= rows_)
+    return false;
+  if (!absl::c_contains(board_[row], word[i]))
+    return false;
+
+  int s = 0;
+  for (; s < stars_.size(); ++s) {
+    if (stars_[s].row != row)
+      continue;
+    if (word[i] == At(stars_[s])) {
+      used_stars[s] = true;
+      break;
+    }
+  }
+
+  bool ret = (DFS(word, i + 1, row - 1, used_stars) ||
+              DFS(word, i + 1, row, used_stars) ||
+              DFS(word, i + 1, row + 1, used_stars));
+  used_stars[s] = false;
+  return ret;
 }
 
 } // namespace puzzmo

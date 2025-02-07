@@ -10,6 +10,9 @@
 
 namespace puzzmo {
 
+using WordMap =
+    absl::btree_map<int, absl::btree_set<std::string>, std::greater<int>>;
+
 void SpelltowerSolver::DFS(std::shared_ptr<TrieNode> node, const Point &p,
                            const SpelltowerBoard &board,
                            std::vector<std::vector<bool>> &visited,

@@ -14,42 +14,44 @@ namespace {
 
 using ::absl_testing::IsOkAndHolds;
 using ::absl_testing::StatusIs;
+using ::testing::StrEq;
 
 TEST(LetterCountTest, EmptyConstructor) {
   LetterCount lc;
-  EXPECT_EQ(lc.Size(), 0);
+  EXPECT_TRUE(lc.Empty());
+  EXPECT_EQ(lc.AnyCharRegex(), "[]");
   EXPECT_EQ(lc.CharsInOrder(), "");
 }
 
 TEST(LetterCountTest, StringConstructor) {
   LetterCount lc("Can you hear me?");
-  EXPECT_EQ(lc.NumLetters('a'), 2);
-  EXPECT_EQ(lc.NumLetters('b'), 0);
-  EXPECT_EQ(lc.NumLetters('c'), 1);
-  EXPECT_EQ(lc.NumLetters('d'), 0);
-  EXPECT_EQ(lc.NumLetters('e'), 2);
-  EXPECT_EQ(lc.NumLetters('f'), 0);
-  EXPECT_EQ(lc.NumLetters('g'), 0);
-  EXPECT_EQ(lc.NumLetters('h'), 1);
-  EXPECT_EQ(lc.NumLetters('i'), 0);
-  EXPECT_EQ(lc.NumLetters('j'), 0);
-  EXPECT_EQ(lc.NumLetters('k'), 0);
-  EXPECT_EQ(lc.NumLetters('l'), 0);
-  EXPECT_EQ(lc.NumLetters('m'), 1);
-  EXPECT_EQ(lc.NumLetters('n'), 1);
-  EXPECT_EQ(lc.NumLetters('o'), 1);
-  EXPECT_EQ(lc.NumLetters('p'), 0);
-  EXPECT_EQ(lc.NumLetters('q'), 0);
-  EXPECT_EQ(lc.NumLetters('r'), 1);
-  EXPECT_EQ(lc.NumLetters('s'), 0);
-  EXPECT_EQ(lc.NumLetters('t'), 0);
-  EXPECT_EQ(lc.NumLetters('u'), 1);
-  EXPECT_EQ(lc.NumLetters('v'), 0);
-  EXPECT_EQ(lc.NumLetters('w'), 0);
-  EXPECT_EQ(lc.NumLetters('x'), 0);
-  EXPECT_EQ(lc.NumLetters('y'), 1);
-  EXPECT_EQ(lc.NumLetters('z'), 0);
-  EXPECT_EQ(lc.NumLetters('?'), -1);
+  EXPECT_EQ(lc.Count('a'), 2);
+  EXPECT_EQ(lc.Count('b'), 0);
+  EXPECT_EQ(lc.Count('c'), 1);
+  EXPECT_EQ(lc.Count('d'), 0);
+  EXPECT_EQ(lc.Count('e'), 2);
+  EXPECT_EQ(lc.Count('f'), 0);
+  EXPECT_EQ(lc.Count('g'), 0);
+  EXPECT_EQ(lc.Count('h'), 1);
+  EXPECT_EQ(lc.Count('i'), 0);
+  EXPECT_EQ(lc.Count('j'), 0);
+  EXPECT_EQ(lc.Count('k'), 0);
+  EXPECT_EQ(lc.Count('l'), 0);
+  EXPECT_EQ(lc.Count('m'), 1);
+  EXPECT_EQ(lc.Count('n'), 1);
+  EXPECT_EQ(lc.Count('o'), 1);
+  EXPECT_EQ(lc.Count('p'), 0);
+  EXPECT_EQ(lc.Count('q'), 0);
+  EXPECT_EQ(lc.Count('r'), 1);
+  EXPECT_EQ(lc.Count('s'), 0);
+  EXPECT_EQ(lc.Count('t'), 0);
+  EXPECT_EQ(lc.Count('u'), 1);
+  EXPECT_EQ(lc.Count('v'), 0);
+  EXPECT_EQ(lc.Count('w'), 0);
+  EXPECT_EQ(lc.Count('x'), 0);
+  EXPECT_EQ(lc.Count('y'), 1);
+  EXPECT_EQ(lc.Count('z'), 0);
+  EXPECT_EQ(lc.Count('?'), -1);
 }
 
 TEST(LetterCountTest, AddLetter) {
@@ -70,12 +72,12 @@ TEST(LetterCountTest, CharsInOrder) {
   EXPECT_EQ(lc.CharsInOrder(), "aaceehmnoruy");
 }
 
-TEST(LetterCountTest, NumLetters) {
+TEST(LetterCountTest, Count) {
   LetterCount lc("Can you hear me?");
-  EXPECT_EQ(lc.NumLetters('a'), 2);
-  EXPECT_EQ(lc.NumLetters('b'), 0);
-  EXPECT_EQ(lc.NumLetters('c'), 1);
-  EXPECT_EQ(lc.NumLetters('?'), -1);
+  EXPECT_EQ(lc.Count('a'), 2);
+  EXPECT_EQ(lc.Count('b'), 0);
+  EXPECT_EQ(lc.Count('c'), 1);
+  EXPECT_EQ(lc.Count('?'), -1);
 }
 
 TEST(LetterCountTest, RemoveLetter) {
@@ -110,6 +112,40 @@ TEST(LetterCountTest, AbslStringify) {
   EXPECT_EQ(absl::StrFormat("%v", lc),
             "[a:2, b:0, c:1, d:0, e:2, f:0, g:0, h:1, i:0, j:0, k:0, l:0, m:1, "
             "n:1, o:1, p:0, q:0, r:1, s:0, t:0, u:1, v:0, w:0, x:0, y:1, z:0]");
+}
+
+TEST(LetterCountTest, CombinationsOfSize) {
+  LetterCount lc("wwwxxyz");
+  EXPECT_THAT(lc.CombinationsOfSize(0),
+              testing::UnorderedElementsAre(StrEq("")));
+  EXPECT_THAT(lc.CombinationsOfSize(1),
+              testing::UnorderedElementsAre(StrEq("w"), StrEq("x"), StrEq("y"),
+                                            StrEq("z")));
+  EXPECT_THAT(lc.CombinationsOfSize(4),
+              testing::UnorderedElementsAre(
+                  StrEq("wwwx"), StrEq("wwwy"), StrEq("wwwz"), StrEq("wwxx"),
+                  StrEq("wwxy"), StrEq("wwxz"), StrEq("wwyz"), StrEq("wxxy"),
+                  StrEq("wxxz"), StrEq("wxyz"), StrEq("xxyz")));
+}
+
+TEST(LetterCountTest, Contains) {
+  LetterCount lc("wwwxxyz");
+  EXPECT_TRUE(lc.Contains(""));
+  EXPECT_TRUE(lc.Contains("w"));
+  EXPECT_TRUE(lc.Contains("wx"));
+  EXPECT_TRUE(lc.Contains("ww"));
+  EXPECT_TRUE(lc.Contains("www"));
+  EXPECT_FALSE(lc.Contains("wwww"));
+
+  LetterCount other("w");
+  EXPECT_TRUE(lc.Contains(other));
+  EXPECT_FALSE(other.Contains(lc));
+  EXPECT_TRUE(lc.Contains(lc));
+}
+
+TEST(LetterCountTest, AnyCharRegex) {
+  LetterCount lc("zwvwwxxy");
+  EXPECT_THAT(lc.AnyCharRegex(), StrEq("[vwxyz]"));
 }
 
 } // namespace

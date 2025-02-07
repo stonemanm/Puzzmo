@@ -1,7 +1,9 @@
 #include "bongo_gamestate.h"
 
 #include <cctype>
+#include <string>
 
+#include "absl/algorithm/container.h"
 #include "absl/strings/str_cat.h"
 
 namespace puzzmo {
@@ -10,12 +12,12 @@ constexpr char kBonusSpace = '*';
 constexpr char kDoubleMultiplier = '2';
 constexpr char kTripleMultiplier = '3';
 
-BongoGameState::BongoGameState(
-    const std::vector<std::string> board_strings,
-    const absl::flat_hash_map<char, int> letter_values,
-    LetterCount remaining_tiles, std::vector<std::vector<char>> placed_tiles)
-    : letter_values_(letter_values), placed_tiles_(placed_tiles),
-      remaining_tiles_(remaining_tiles), multipliers_(5, std::vector<int>(5)) {
+BongoGameState::BongoGameState(const std::vector<std::string> board_strings,
+                               absl::flat_hash_map<char, int> letter_values,
+                               LetterCount remaining_tiles,
+                               std::vector<std::string> placed_tiles)
+    : letter_values_(letter_values), multipliers_(5, std::vector<int>(5)),
+      placed_tiles_(placed_tiles), remaining_tiles_(remaining_tiles) {
 
   // Parse the board_strings to populate multipliers_ and bonus_word_path_
   for (int row = 0; row < 5; ++row) {
@@ -40,13 +42,54 @@ BongoGameState::BongoGameState(
   }
 }
 
+std::string BongoGameState::NMostValuableTiles(int n) const {
+  if (n <= 0)
+    return "";
+  std::string letters = remaining_tiles_.CharsInOrder();
+  if (letters.size() < n) {
+    n = letters.size();
+  }
+  std::sort(letters.begin(), letters.end(), [this](char l, char r) {
+    return letter_values_.at(l) > letter_values_.at(r);
+  });
+  return letters.substr(0, n);
+}
+
+bool BongoGameState::Complete() const {
+  for (int row = 0; row < 5; ++row) {
+    for (int col = 0; col < 5; ++col) {
+      if (!std::isalpha(placed_tiles_[row][col])) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+std::vector<std::string> BongoGameState::TilePlacements() const {
+  return placed_tiles_;
+}
+
 bool BongoGameState::PlaceTile(const Point &p, char c) {
   if (!HasPoint(p) || std::isalpha(placed_tiles_[p.row][p.col]) ||
-      remaining_tiles_.NumLetters(c) <= 0)
+      !remaining_tiles_.RemoveLetter(c).ok())
     return false;
-
   placed_tiles_[p.row][p.col] = c;
-  remaining_tiles_.RemoveLetter(c);
+  return true;
+}
+
+bool BongoGameState::FillRestOfWord(int row, absl::string_view word) {
+  if (row < 0 || row >= 5 || word.size() != 5)
+    return false;
+  LetterCount needs = LetterCount(word) - LetterCount(RowWord(row));
+  if (!needs.Valid() || !remaining_tiles_.Contains(needs))
+    return false;
+  for (int col = 0; col < 5; ++col) {
+    if (std::isalpha(placed_tiles_[row][col]))
+      continue;
+    placed_tiles_[row][col] = word[col];
+  }
+  remaining_tiles_ -= needs;
   return true;
 }
 
@@ -55,15 +98,61 @@ bool BongoGameState::RemoveTile(const Point &p) {
     return false;
 
   char c = placed_tiles_[p.row][p.col];
-  if (!std::isalpha(placed_tiles_[p.row][p.col]))
+  if (!std::isalpha(c) || !remaining_tiles_.AddLetter(c).ok())
     return false;
-
-  remaining_tiles_.AddLetter(c);
-  placed_tiles_[p.row][p.col] = '\0';
+  placed_tiles_[p.row][p.col] = '_';
   return true;
 }
 
+bool BongoGameState::ClearRowExceptBonusTiles(int row) {
+  if (row < 0 || row >= 5)
+    return false;
+  for (int col = 0; col < 5; ++col) {
+    Point p = {row, col};
+    char c = placed_tiles_[row][col];
+    if (absl::c_linear_search(bonus_word_path_, p) ||
+        multipliers_[row][col] > 1 || !std::isalpha(c) ||
+        !remaining_tiles_.AddLetter(c).ok())
+      continue;
+    placed_tiles_[row][col] = '_';
+  }
+  return true;
+}
+
+bool BongoGameState::ClearBoardExceptBonusTiles() {
+  for (int row = 0; row < 5; ++row) {
+    for (int col = 0; col < 5; ++col) {
+      Point p = {row, col};
+      char c = placed_tiles_[row][col];
+      if (absl::c_linear_search(bonus_word_path_, p) ||
+          multipliers_[row][col] > 1 || !std::isalpha(c) ||
+          !remaining_tiles_.AddLetter(c).ok())
+        continue;
+      placed_tiles_[row][col] = '_';
+    }
+  }
+  return true;
+}
+
+std::vector<Point> BongoGameState::MultiplierSquares() const {
+  std::vector<Point> mult_squares;
+  for (int row = 0; row < 5; ++row) {
+    for (int col = 0; col < 5; ++col) {
+      if (multipliers_[row][col] >= 2) {
+        mult_squares.push_back({row, col});
+      }
+    }
+  }
+  return mult_squares;
+}
+
+std::vector<Point> BongoGameState::BonusWordPath() const {
+  return bonus_word_path_;
+}
+
 std::string BongoGameState::RowWord(int row) const {
+  if (row < 0 || row >= 5)
+    return "";
   std::string row_word;
   for (int col = 0; col < 5; ++col) {
     char c = placed_tiles_[row][col];
@@ -85,7 +174,18 @@ std::string BongoGameState::BonusWord() const {
   return bonus_word;
 }
 
+int BongoGameState::Score() const {
+  int score = 0;
+  for (int row = 0; row < 5; ++row) {
+    score += RowWordScore(0);
+  }
+  score += BonusWordScore();
+  return score;
+}
+
 int BongoGameState::RowWordScore(int row) const {
+  if (row < 0 || row >= 5)
+    return 0;
   int row_word_score = 0;
   for (int col = 0; col < 5; ++col) {
     char c = placed_tiles_[row][col];
@@ -107,8 +207,62 @@ int BongoGameState::BonusWordScore() const {
   return bonus_word_score;
 }
 
+int BongoGameState::WordScore(absl::string_view word) const {
+  int score = 0;
+  for (char c : word) {
+    score += letter_values_.at(c);
+  }
+  return score;
+}
+
+std::string BongoGameState::RowRegex(int row) const {
+  if (row < 0 || row >= 5)
+    return "";
+  std::string rgx = "";
+  for (int col = 0; col < 5; ++col) {
+    char c = placed_tiles_[row][col];
+    absl::StrAppend(&rgx, std::isalpha(c) ? std::string(1, c)
+                                          : remaining_tiles_.AnyCharRegex());
+  }
+  return rgx;
+}
+
+int BongoGameState::IndexOfFullestIncompleteRow() const {
+  int i = 0;
+  int most_letters = 0;
+  for (int row = 0; row < 5; ++row) {
+    int letters = absl::c_count_if(placed_tiles_[row],
+                                   [](char c) { return std::isalpha(c); });
+    if (letters > most_letters && letters < 5) {
+      most_letters = letters;
+      i = row;
+    }
+  }
+  return i;
+}
+
 bool BongoGameState::HasPoint(const Point &p) const {
   return (0 <= p.row && p.row < 5 && 0 <= p.col && p.col < 5);
+}
+
+bool operator==(const BongoGameState &lhs, const BongoGameState &rhs) {
+  return lhs.bonus_word_path_ == rhs.bonus_word_path_ &&
+         lhs.letter_values_ == rhs.letter_values_ &&
+         lhs.multipliers_ == rhs.multipliers_ &&
+         lhs.placed_tiles_ == rhs.placed_tiles_ &&
+         lhs.remaining_tiles_ == rhs.remaining_tiles_;
+}
+
+bool operator<(const BongoGameState &lhs, const BongoGameState &rhs) {
+  return !(lhs.bonus_word_path_ == rhs.bonus_word_path_)
+             ? (lhs.bonus_word_path_ < rhs.bonus_word_path_)
+         : !(lhs.multipliers_ == rhs.multipliers_)
+             ? (lhs.multipliers_ < rhs.multipliers_)
+         : !(lhs.placed_tiles_ == rhs.placed_tiles_)
+             ? (lhs.placed_tiles_ < rhs.placed_tiles_)
+         : !(lhs.remaining_tiles_ == rhs.remaining_tiles_)
+             ? (lhs.remaining_tiles_ < rhs.remaining_tiles_)
+             : false;
 }
 
 } // namespace puzzmo

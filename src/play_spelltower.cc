@@ -36,7 +36,7 @@ int main(int argc, const char *argv[]) {
     while (iss >> c) {
       row.push_back(c);
       if (std::isalpha(c)) {
-        letter_count.AddLetter(c);
+        auto s = letter_count.AddLetter(c);
       }
     }
     boardvec.push_back(row);
@@ -45,42 +45,43 @@ int main(int argc, const char *argv[]) {
   SpelltowerBoard board(boardvec);
 
   // Read in the dictionary
-  std::vector<std::string> words =
-      ReadDictionaryFileToVector({.min_letters = 3,
-                                  .filter_by_letters = true,
-                                  .letter_count = letter_count});
+  auto words = ReadDictionaryFileToVector(
+      {.min_letters = 3, .letter_count = letter_count});
+  if (!words.ok()) {
+    LOG(ERROR) << words.status();
+    return 1;
+  }
 
-  // TODO:
-  // - improve LetterCount so you don't have to dig into .count[c-'a']. Just do
-  // "addletter" or "removeletter", with optional params for how many.
-  // - Write tests for dictionary_utils and find out what's going wrong there.
+  if (false) {
+    std::vector<std::string> filtered_words =
+        board.MightHaveWords(*words,
+                             /*all_star=*/true);
+    LOG(INFO) << filtered_words.size();
+    std::sort(filtered_words.begin(), filtered_words.end(),
+              [](std::string a, std::string b) {
+                if (a.length() == b.length())
+                  return a < b;
+                return a.length() < b.length();
+              });
 
-  // std::vector<std::string> filtered_words = board.MightHaveWords(words);
-  // LOG(INFO) << filtered_words.size();
-  // std::sort(filtered_words.begin(), filtered_words.end(),
-  //           [](std::string a, std::string b) {
-  //             if (a.length() == b.length())
-  //               return a < b;
-  //             return a.length() < b.length();
-  //           });
+    LOG(INFO) << "All words in dictionary, shortest to longest:";
+    std::string regexmonster =
+        absl::StrJoin(board.GetAllStarRegexes(), "|",
+                      [](std::string *out, const std::string &in) {
+                        absl::StrAppend(out, "(", in, ")");
+                      });
+    for (const auto &w : filtered_words) {
+      if (RE2::PartialMatch(w, regexmonster))
+        LOG(INFO) << w;
+    }
+    return 0;
+  }
 
-  // LOG(INFO) << "All words in dictionary, shortest to longest:";
-  // std::string regexmonster =
-  //     absl::StrJoin(board.GetAllStarRegexes(), "|",
-  //                   [](std::string *out, const std::string &in) {
-  //                     absl::StrAppend(out, "(", in, ")");
-  //                   });
-  // for (const auto &w : filtered_words) {
-  //   if (RE2::PartialMatch(w, regexmonster))
-  //     LOG(INFO) << w;
-  // }
-  // return 0;
-
-  std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(words);
+  std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(*words);
 
   // Create a spelltower and populate it with this data, then solve it
   SpelltowerSolver spelltower(board, dict);
-  WordMap results = spelltower.FindWords();
+  auto results = spelltower.FindWords();
   LOG(INFO) << "All available words, by score:";
   for (const auto &[k, v] : results) {
     LOG(INFO) << absl::StrCat(k, ": ", absl::StrJoin(v, ", "));

@@ -6,34 +6,44 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 
+#include "dictionary_utils.h"
+
 namespace puzzmo {
 
 namespace {
 
-std::string LetterSetString(absl::flat_hash_set<LetterCount> set) {
-  return absl::StrCat("[", absl::StrJoin(set, ", "), "]");
-}
+// std::string LetterSetString(absl::flat_hash_set<LetterCount> set) {
+//   return absl::StrCat("[", absl::StrJoin(set, ", "), "]");
+// }
 
 } // namespace
 
-BongoSolver::BongoSolver(
-    const LetterCount tiles,
-    const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
-        &dict)
-    : tiles_(tiles), dict_(dict) {
-  keys_.reserve(dict_.size());
-  for (const auto &[k, v] : dict_) {
-    keys_.push_back(k);
+BongoSolver::BongoSolver(const BongoGameState &bgs,
+                         const std::vector<std::string> &words)
+    : starting_state_(bgs) {
+
+  for (const auto &word : words) {
+    LetterCount lc(word);
+    if (word.length() == 5) {
+      letters_to_words_[lc].insert(word);
+    } else {
+      letters_to_bonus_words_[lc].insert(word);
+    }
   }
-  std::sort(keys_.begin(), keys_.end());
+  // keys_.reserve(dict_.size());
+  // for (const auto &[k, v] : dict_) {
+  //   keys_.push_back(k);
+  // }
+  // std::sort(keys_.begin(), keys_.end());
 };
 
 absl::flat_hash_set<absl::flat_hash_set<std::string>>
 BongoSolver::FindWordSets() {
-  LOG(ERROR) << absl::StrCat("Words in dict: ", dict_.size());
+  LOG(ERROR) << absl::StrCat("Words in dict: ", letters_to_words_.size());
   absl::flat_hash_set<LetterCount> current_set;
   absl::flat_hash_set<absl::flat_hash_set<LetterCount>> letter_sets;
-  FindLetterSetsHelper(tiles_, 0, current_set, letter_sets);
+  FindLetterSetsHelper(starting_state_.RemainingTiles(), 0, current_set,
+                       letter_sets);
 
   absl::flat_hash_set<absl::flat_hash_set<std::string>> word_sets;
   for (const auto &letter_set : letter_sets) {
@@ -59,7 +69,7 @@ void BongoSolver::FindLetterSetsHelper(
 
   // Check every entry in the dictionary to see if letter_cost is possible. If
   // so, pay it and then backtrack after.
-  for (int i = starting_index; i < dict_.size(); ++i) {
+  for (int i = starting_index; i < letters_to_words_.size(); ++i) {
     if (current_set.empty() && i % 433 == 0) {
       LOG(ERROR) << i / 433
                  << "/15 of the way through possible first words. It'll get "
@@ -75,7 +85,7 @@ void BongoSolver::FindLetterSetsHelper(
     // If it's a word, we want to include it too. If not, then it's faster to
     // move on now.
     if (current_set.size() == 3) {
-      if (dict_.contains(letters)) {
+      if (letters_to_words_.contains(letters)) {
         current_set.insert(keys_[i]);
         current_set.insert(letters);
         letter_sets.insert(current_set);

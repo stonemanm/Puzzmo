@@ -12,12 +12,19 @@ cc_binary(
     name = "play_bongo",
     srcs = ["play_bongo.cc"],
     data = [
+        "//data:bongo_board.txt",
         "//data:bongo_tiles.txt",
     ],
     deps = [
+        ":bongo_gamestate",
         ":bongo_solver",
         ":dictionary_utils",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -81,6 +88,7 @@ cc_library(
     deps = [
         ":letter_count",
         ":point",
+        "@abseil-cpp//absl/algorithm:container",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/strings",
     ],
@@ -93,6 +101,7 @@ cc_test(
     deps = [
         ":bongo_gamestate",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -103,6 +112,8 @@ cc_library(
     srcs = ["bongo_solver.cc"],
     hdrs = ["bongo_solver.h"],
     deps = [
+        ":bongo_gamestate",
+        ":dictionary_utils",
         ":letter_count",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/container:flat_hash_set",
@@ -129,7 +140,12 @@ cc_library(
         "letter_count",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@re2",
     ],
 )
 
@@ -149,6 +165,7 @@ cc_library(
     srcs = ["letter_count.cc"],
     hdrs = ["letter_count.h"],
     deps = [
+        "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",

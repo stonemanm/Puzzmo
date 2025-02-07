@@ -7,24 +7,24 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 
+#include "bongo_gamestate.h"
 #include "letter_count.h"
 
 namespace puzzmo {
 
 class BongoSolver {
 public:
-  BongoSolver(
-      const LetterCount tiles,
-      const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
-          &dict);
+  BongoSolver(const BongoGameState &bgs, const std::vector<std::string> &words);
 
   absl::flat_hash_set<absl::flat_hash_set<std::string>> FindWordSets();
 
 private:
-  LetterCount tiles_;
+  const BongoGameState starting_state_;
+  absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
+      letters_to_words_;
+  absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
+      letters_to_bonus_words_;
   std::vector<LetterCount> keys_;
-  const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
-      dict_;
 
   void FindLetterSetsHelper(
       LetterCount remaining_letters, int starting_index,

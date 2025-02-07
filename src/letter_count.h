@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -13,34 +14,39 @@ namespace puzzmo {
 
 class LetterCount {
 public:
-  LetterCount() : count(26) {}
+  LetterCount() : counts_(26) {};
   explicit LetterCount(absl::string_view s);
 
-  absl::StatusOr<int> AddLetter(char c);
-  absl::StatusOr<int> AddLetter(char c, int i);
+  int Count(char c) const;
 
-  std::string CharsInOrder() const;
+  bool Contains(const LetterCount &other) const;
+  bool Contains(absl::string_view other) const {
+    return Contains(LetterCount(other));
+  }
 
-  int NumLetters(char c) const;
-
-  absl::StatusOr<int> RemoveLetter(char c);
-  absl::StatusOr<int> RemoveLetter(char c, int i);
+  bool Empty() const;
+  bool Valid() const;
 
   int Size() const;
 
-  bool Valid() const;
+  std::string AnyCharRegex() const;
+  std::string CharsInOrder() const;
+  absl::flat_hash_set<std::string> CombinationsOfSize(int k) const;
+
+  absl::StatusOr<int> AddLetter(char c) { return AddLetter(c, 1); }
+  absl::StatusOr<int> AddLetter(char c, int i);
+  absl::StatusOr<int> RemoveLetter(char c) { return RemoveLetter(c, 1); }
+  absl::StatusOr<int> RemoveLetter(char c, int i);
 
   bool operator==(const LetterCount &other) const;
   bool operator<(const LetterCount &other) const;
-
   LetterCount &operator+=(const LetterCount &other);
   LetterCount operator+(const LetterCount &rhs) const;
-
   LetterCount &operator-=(const LetterCount &other);
   LetterCount operator-(const LetterCount &rhs) const;
 
   template <typename H> friend H AbslHashValue(H h, const LetterCount &lc) {
-    return H::combine(std::move(h), lc.count);
+    return H::combine(std::move(h), lc.counts_);
   }
 
   template <typename Sink>
@@ -49,17 +55,17 @@ public:
                  "[a:%d, b:%d, c:%d, d:%d, e:%d, f:%d, g:%d, h:%d, i:%d, j:"
                  "%d, k:%d, l:%d, m:%d, n:%d, o:%d, p:%d, q:%d, r:%d, s:%d, t:"
                  "%d, u:%d, v:%d, w:%d, x:%d, y:%d, z:%d]",
-                 lc.count[0], lc.count[1], lc.count[2], lc.count[3],
-                 lc.count[4], lc.count[5], lc.count[6], lc.count[7],
-                 lc.count[8], lc.count[9], lc.count[10], lc.count[11],
-                 lc.count[12], lc.count[13], lc.count[14], lc.count[15],
-                 lc.count[16], lc.count[17], lc.count[18], lc.count[19],
-                 lc.count[20], lc.count[21], lc.count[22], lc.count[23],
-                 lc.count[24], lc.count[25]);
+                 lc.counts_[0], lc.counts_[1], lc.counts_[2], lc.counts_[3],
+                 lc.counts_[4], lc.counts_[5], lc.counts_[6], lc.counts_[7],
+                 lc.counts_[8], lc.counts_[9], lc.counts_[10], lc.counts_[11],
+                 lc.counts_[12], lc.counts_[13], lc.counts_[14], lc.counts_[15],
+                 lc.counts_[16], lc.counts_[17], lc.counts_[18], lc.counts_[19],
+                 lc.counts_[20], lc.counts_[21], lc.counts_[22], lc.counts_[23],
+                 lc.counts_[24], lc.counts_[25]);
   }
 
 private:
-  std::vector<int> count;
+  std::vector<int> counts_;
 };
 
 } // namespace puzzmo

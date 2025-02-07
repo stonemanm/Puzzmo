@@ -46,7 +46,7 @@ public:
   absl::flat_hash_set<std::string> GetAllStarRegexes() const;
 
   // Returns the coordinates of the bonus letters.
-  absl::flat_hash_set<Point> StarLocations() const;
+  std::vector<Point> StarLocations() const;
 
   // Calculates the score returned for the word along a given path.
   // Note: Score does not do any checking on the validity of points on the path.
@@ -55,16 +55,21 @@ public:
   // Checks the rows (columns on the main board) to see if the letters of `word`
   // occur in adjacent rows.
   bool MightHaveWord(const std::string &word) const;
+  bool MightHaveWord(const std::string &word, bool all_star) const;
 
   std::vector<std::string>
   MightHaveWords(const std::vector<std::string> &words) const;
+  std::vector<std::string> MightHaveWords(const std::vector<std::string> &words,
+                                          bool all_star) const;
 
 private:
   std::vector<std::vector<char>> board_;
   int rows_, cols_;
-  absl::flat_hash_set<Point> stars_;
+  std::vector<Point> stars_;
 
   bool DFS(const std::string &word, int i, int row) const;
+  bool DFS(const std::string &word, int i, int row,
+           std::vector<bool> &used_stars) const;
 };
 
 } // namespace puzzmo
