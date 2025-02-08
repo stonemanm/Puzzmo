@@ -1,13 +1,10 @@
 #include "dictionary_utils.h"
 
 #include <fstream>
-#include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
 #include "absl/flags/flag.h"
-#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "re2/re2.h"
 

@@ -1,7 +1,6 @@
 #ifndef pile_up_poker_solver_h
 #define pile_up_poker_solver_h
 
-#include <string>
 #include <vector>
 
 #include "card.h"

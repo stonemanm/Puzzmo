@@ -1,5 +1,7 @@
 #include "card.h"
 
+#include <vector>
+
 namespace puzzmo {
 namespace {
 

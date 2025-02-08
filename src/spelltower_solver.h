@@ -2,7 +2,6 @@
 #define spelltower_solver_h
 
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>

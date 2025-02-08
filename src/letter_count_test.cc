@@ -1,12 +1,7 @@
 #include "letter_count.h"
 
-#include <vector>
-
-#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/status_matchers.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

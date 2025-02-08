@@ -1,7 +1,6 @@
 #ifndef card_h
 #define card_h
 
-#include <iostream>
 #include <string>
 
 namespace puzzmo {

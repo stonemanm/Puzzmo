@@ -4,7 +4,6 @@
 #include <cctype>
 #include <cstdlib>
 
-#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 
 namespace puzzmo {

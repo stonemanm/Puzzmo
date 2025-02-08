@@ -3,7 +3,6 @@
 #include <numeric>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
 
 namespace puzzmo {
 namespace {
