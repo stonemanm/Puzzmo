@@ -16,9 +16,9 @@ cc_binary(
         "//data:bongo_tiles.txt",
     ],
     deps = [
+        ":bongo_dictionary",
         ":bongo_gamestate",
         ":bongo_solver",
-        ":dictionary_utils",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/flags:flag",
@@ -52,6 +52,7 @@ cc_binary(
         ":dictionary_utils",
         ":spelltower_board",
         ":spelltower_solver",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
@@ -79,14 +80,48 @@ cc_binary(
 #####################
 
 cc_library(
+    name = "bongo_dictionary",
+    srcs = ["bongo_dictionary.cc"],
+    hdrs = ["bongo_dictionary.h"],
+    data = [
+        "//data:words_bongo.txt",
+        "//data:words_bongo_common.txt",
+    ],
+    deps = [
+        ":letter_count",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@re2",
+    ],
+)
+
+cc_test(
+    name = "bongo_dictionary_test",
+    size = "small",
+    srcs = ["bongo_dictionary_test.cc"],
+    deps = [
+        ":bongo_dictionary",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "bongo_gamestate",
     srcs = ["bongo_gamestate.cc"],
     hdrs = ["bongo_gamestate.h"],
     deps = [
+        ":bongo_dictionary",
         ":letter_count",
         ":point",
         "@abseil-cpp//absl/algorithm:container",
         "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
 )

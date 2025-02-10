@@ -3,17 +3,19 @@
 #include <string>
 #include <vector>
 
+#include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "re2/re2.h"
-
 #include "dictionary_utils.h"
+#include "re2/re2.h"
 #include "spelltower_board.h"
 #include "spelltower_solver.h"
 
 using namespace puzzmo;
+
+ABSL_FLAG(bool, run_regex, false, "Run regex mode instead of the DFS?");
 
 int main(int argc, const char *argv[]) {
   // Read in the board
@@ -48,14 +50,13 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  if (false) {
+  if (absl::GetFlag(FLAGS_run_regex)) {
     std::vector<std::string> filtered_words =
         board.MightHaveAllStarWords(*words);
     LOG(INFO) << filtered_words.size();
     std::sort(filtered_words.begin(), filtered_words.end(),
               [](std::string a, std::string b) {
-                if (a.length() == b.length())
-                  return a < b;
+                if (a.length() == b.length()) return a < b;
                 return a.length() < b.length();
               });
 
@@ -66,8 +67,7 @@ int main(int argc, const char *argv[]) {
                         absl::StrAppend(out, "(", in, ")");
                       });
     for (const auto &w : filtered_words) {
-      if (RE2::PartialMatch(w, regexmonster))
-        LOG(INFO) << w;
+      if (RE2::PartialMatch(w, regexmonster)) LOG(INFO) << w;
     }
     return 0;
   }

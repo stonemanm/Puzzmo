@@ -8,14 +8,30 @@
 #include "absl/strings/str_cat.h"
 #include "re2/re2.h"
 
-ABSL_FLAG(std::string, path_to_word_file, "data/words_puzzmo.txt",
+ABSL_FLAG(std::string, common_bongo_words_path, "data/words_bongo_common.txt",
+          "Input file containing all \"common\" words in Bongo. (Common words "
+          "are worth 1.3x when scored.)");
+ABSL_FLAG(std::string, bongo_words_path, "data/words_bongo.txt",
+          "Input file containing all legal words for Bongo.");
+ABSL_FLAG(std::string, puzzmo_words_path, "data/words_puzzmo.txt",
           "Input file containing all legal words.");
 
 namespace puzzmo {
 
 absl::StatusOr<std::vector<std::string>>
 ReadDictionaryFileToVector(const ReadFileOptions options) {
-  const std::string path = absl::GetFlag(FLAGS_path_to_word_file);
+  std::string path;
+  switch (options.word_source) {
+  case WordSet::kPuzzmoWords:
+    path = absl::GetFlag(FLAGS_puzzmo_words_path);
+    break;
+  case WordSet::kBongoWords:
+    path = absl::GetFlag(FLAGS_bongo_words_path);
+    break;
+  case WordSet::kCommonBongoWords:
+    path = absl::GetFlag(FLAGS_common_bongo_words_path);
+    break;
+  }
   std::ifstream dictfile(path);
   if (!dictfile.is_open()) {
     return absl::InvalidArgumentError(

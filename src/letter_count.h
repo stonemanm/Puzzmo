@@ -11,7 +11,7 @@
 namespace puzzmo {
 
 class LetterCount {
-public:
+ public:
   LetterCount() : counts_(26) {};
   explicit LetterCount(absl::string_view s);
 
@@ -43,29 +43,22 @@ public:
   LetterCount &operator-=(const LetterCount &other);
   LetterCount operator-(const LetterCount &rhs) const;
 
-  template <typename H> friend H AbslHashValue(H h, const LetterCount &lc) {
+  template <typename H>
+  friend H AbslHashValue(H h, const LetterCount &lc) {
     return H::combine(std::move(h), lc.counts_);
   }
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const LetterCount &lc) {
-    absl::Format(&sink,
-                 "[a:%d, b:%d, c:%d, d:%d, e:%d, f:%d, g:%d, h:%d, i:%d, j:"
-                 "%d, k:%d, l:%d, m:%d, n:%d, o:%d, p:%d, q:%d, r:%d, s:%d, t:"
-                 "%d, u:%d, v:%d, w:%d, x:%d, y:%d, z:%d]",
-                 lc.counts_[0], lc.counts_[1], lc.counts_[2], lc.counts_[3],
-                 lc.counts_[4], lc.counts_[5], lc.counts_[6], lc.counts_[7],
-                 lc.counts_[8], lc.counts_[9], lc.counts_[10], lc.counts_[11],
-                 lc.counts_[12], lc.counts_[13], lc.counts_[14], lc.counts_[15],
-                 lc.counts_[16], lc.counts_[17], lc.counts_[18], lc.counts_[19],
-                 lc.counts_[20], lc.counts_[21], lc.counts_[22], lc.counts_[23],
-                 lc.counts_[24], lc.counts_[25]);
+    absl::Format(&sink, "%w", lc.StringifyHelper());
   }
 
-private:
+ private:
   std::vector<int> counts_;
+
+  std::string StringifyHelper() const;
 };
 
-} // namespace puzzmo
+}  // namespace puzzmo
 
 #endif

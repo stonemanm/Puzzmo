@@ -3,6 +3,7 @@
 #include <numeric>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 
 namespace puzzmo {
 namespace {
@@ -20,7 +21,7 @@ void nCk(int start_at, int k, std::string &current, absl::string_view str,
   }
 }
 
-} // namespace
+}  // namespace
 
 LetterCount::LetterCount(absl::string_view s) : counts_(26) {
   for (char c : s) {
@@ -36,11 +37,10 @@ int LetterCount::Count(char c) const {
 }
 
 bool LetterCount::Contains(const LetterCount &other) const {
+  if (other.Empty()) return true;
   for (int i = 0; i < 26; ++i) {
     char c = 'a' + i;
-    if (Count(c) < other.Count(c)) {
-      return false;
-    }
+    if (Count(c) < other.Count(c)) return false;
   }
   return true;
 }
@@ -49,9 +49,7 @@ bool LetterCount::Empty() const { return Size() == 0; }
 
 bool LetterCount::Valid() const {
   for (int n : counts_) {
-    if (n < 0) {
-      return false;
-    }
+    if (n < 0) return false;
   }
   return true;
 }
@@ -130,8 +128,7 @@ absl::StatusOr<int> LetterCount::RemoveLetter(char c, int i) {
 
 bool LetterCount::operator==(const LetterCount &other) const {
   for (int i = 0; i < 26; ++i) {
-    if (counts_[i] != other.counts_[i])
-      return false;
+    if (counts_[i] != other.counts_[i]) return false;
   }
   return true;
 }
@@ -171,4 +168,14 @@ LetterCount LetterCount::operator-(const LetterCount &other) const {
   return ret;
 }
 
-} // namespace puzzmo
+std::string LetterCount::StringifyHelper() const {
+  if (Empty()) return "";
+  std::vector<std::string> v;
+  for (int i = 0; i < 26; ++i) {
+    if (counts_[i] == 0) continue;
+    v.push_back(absl::StrCat(std::string(1, 'a' + i), ":", counts_[i]));
+  }
+  return absl::StrCat("[", absl::StrJoin(v, ", "), "]");
+}
+
+}  // namespace puzzmo

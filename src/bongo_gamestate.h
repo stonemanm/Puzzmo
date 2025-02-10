@@ -5,14 +5,14 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
-
+#include "bongo_dictionary.h"
 #include "letter_count.h"
 #include "point.h"
 
 namespace puzzmo {
 
 class BongoGameState {
-public:
+ public:
   // board_strings should be a vector of length 5, containing 5-long strings
   BongoGameState(const std::vector<std::string> board_strings,
                  absl::flat_hash_map<char, int> letter_values,
@@ -48,12 +48,11 @@ public:
   std::string RowWord(int row) const;
   std::string BonusWord() const;
 
-  // These do not check whether or not the word is legitimate!
-  // They also cannot check whether the word gets the common-word 1.3x bonus.
-  int Score() const;
-  int RowWordScore(int row) const;
-  int BonusWordScore() const;
-  int WordScore(absl::string_view word) const;
+  // Calculates the score of the entire board. Uses the dictionary to check
+  // validity and commonality of words.
+  int BonusWordScore(const BongoDictionary &dict) const;
+  int RowWordScore(int row, const BongoDictionary &dict) const;
+  int Score(const BongoDictionary &dict) const;
 
   std::string RowRegex(int row) const;
 
@@ -62,7 +61,7 @@ public:
   friend bool operator==(const BongoGameState &lhs, const BongoGameState &rhs);
   friend bool operator<(const BongoGameState &lhs, const BongoGameState &rhs);
 
-private:
+ private:
   std::vector<Point> bonus_word_path_;
   absl::flat_hash_map<char, int> letter_values_;
   std::vector<std::vector<int>> multipliers_;
@@ -71,7 +70,8 @@ private:
 
   bool HasPoint(const Point &p) const;
 
-  template <typename H> friend H AbslHashValue(H h, const BongoGameState &bgs) {
+  template <typename H>
+  friend H AbslHashValue(H h, const BongoGameState &bgs) {
     return H::combine(std::move(h), bgs.bonus_word_path_, bgs.letter_values_,
                       bgs.multipliers_, bgs.placed_tiles_,
                       bgs.remaining_tiles_);
@@ -79,17 +79,16 @@ private:
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const BongoGameState &bgs) {
-    absl::Format(
-        &sink,
-        "Placed tiles:\n[%s]\n[%s]\n[%s]\n[%s]\n[%s]\n\nRemaining tiles:\n$%v",
-        bgs.placed_tiles_[0], bgs.placed_tiles_[1], bgs.placed_tiles_[2],
-        bgs.placed_tiles_[3], bgs.placed_tiles_[4], bgs.remaining_tiles_);
+    absl::Format(&sink, "%v\n[%s]\n[%s]\n[%s]\n[%s]\n[%s]",
+                 bgs.remaining_tiles_, bgs.placed_tiles_[0],
+                 bgs.placed_tiles_[1], bgs.placed_tiles_[2],
+                 bgs.placed_tiles_[3], bgs.placed_tiles_[4]);
   }
 };
 
 bool operator==(const BongoGameState &lhs, const BongoGameState &rhs);
 bool operator<(const BongoGameState &lhs, const BongoGameState &rhs);
 
-} // namespace puzzmo
+}  // namespace puzzmo
 
 #endif

@@ -8,13 +8,19 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/statusor.h"
-
 #include "letter_count.h"
 
 namespace puzzmo {
 
+enum class WordSet {
+  kPuzzmoWords = 0,
+  kBongoWords,
+  kCommonBongoWords,
+};
+
 // Configuration options for ReadDictionaryFileToVector
 struct ReadFileOptions {
+  WordSet word_source;  // Defaults to kPuzzmoWords.
   int min_letters = 1;
   int max_letters = INT_MAX;
   LetterCount letter_count;
@@ -28,8 +34,8 @@ struct TrieNode {
 };
 
 // Returns a vector containing all strings from the file that meet the criteria
-absl::StatusOr<std::vector<std::string>>
-ReadDictionaryFileToVector(const ReadFileOptions options);
+absl::StatusOr<std::vector<std::string>> ReadDictionaryFileToVector(
+    const ReadFileOptions options);
 
 // Preprocess words to get their letter counts
 const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
@@ -46,9 +52,9 @@ const absl::flat_hash_set<std::string> FindMatchesInAnagramDictionary(
     const LetterCount &lc, absl::string_view rgx);
 
 // Add one or more words to the trie.
-const std::shared_ptr<TrieNode>
-CreateDictionaryTrie(const std::vector<std::string> words);
+const std::shared_ptr<TrieNode> CreateDictionaryTrie(
+    const std::vector<std::string> words);
 
-} // namespace puzzmo
+}  // namespace puzzmo
 
 #endif
