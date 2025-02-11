@@ -29,7 +29,7 @@ ABSL_FLAG(
     "make possible bonus words. Note that increasing this n scales by O(n^2).");
 
 ABSL_FLAG(
-    int, tiles_for_multiplier_tiles, 6,
+    int, tiles_for_multiplier_tiles, 8,
     "The number to pass NMostValuableTiles, from which sets of 3 are chosen to "
     "make possible bonus words. Note that increasing this n scales by O(n^2).");
 

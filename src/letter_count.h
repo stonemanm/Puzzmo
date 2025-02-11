@@ -50,7 +50,8 @@ class LetterCount {
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const LetterCount &lc) {
-    absl::Format(&sink, "%w", lc.StringifyHelper());
+    sink.Append(lc.StringifyHelper());
+    // absl::Format(&sink, "%w", lc.StringifyHelper());
   }
 
  private:
