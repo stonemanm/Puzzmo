@@ -1,0 +1,29 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+############
+# Binaries #
+############
+
+cc_binary(
+    name = "word_decompressor",
+    srcs = ["word_decompressor.cc"],
+    data = [
+        "//utils:in.txt",
+        "//utils:out.txt",
+    ],
+    deps = [
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+#########
+# Files #
+#########
+
+exports_files(["in.txt"])
+
+exports_files(["out.txt"])
