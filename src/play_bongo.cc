@@ -95,8 +95,8 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  auto s = starting_state->PlaceString(
-      "alive", {{4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}});
+  auto s = starting_state->FillPath({{4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}},
+                                    "alive");
   if (!s.ok()) {
     LOG(ERROR) << s;
     return 1;

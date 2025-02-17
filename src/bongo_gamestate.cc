@@ -79,7 +79,24 @@ BongoGameState::BongoGameState(const std::vector<std::string> board,
   }
 }
 
-absl::Status BongoGameState::PlaceLetter(const Point &p, char c) {
+absl::Status BongoGameState::ClearSquare(const Point &p) {
+  if (!HasPoint(p))
+    return absl::OutOfRangeError(
+        absl::StrCat("Point ", p, " is outside of the gamestate.\n", *this));
+  if (is_locked_at(p))
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Point ", p, " is locked and cannot be removed. Unlock it first.\n",
+        *this));
+  if (char x = char_at(p); std::isalpha(x)) {
+    auto s = letters_remaining_.AddLetter(x);
+    if (!s.ok()) return s.status();
+  }
+
+  set_char_at(p, '_');
+  return absl::OkStatus();
+}
+
+absl::Status BongoGameState::FillSquare(const Point &p, char c) {
   if (!HasPoint(p))
     return absl::OutOfRangeError(
         absl::StrCat("Point ", p, " is outside of the gamestate.\n", *this));
@@ -97,27 +114,36 @@ absl::Status BongoGameState::PlaceLetter(const Point &p, char c) {
   return absl::OkStatus();
 }
 
-absl::Status BongoGameState::PlaceString(absl::string_view word,
-                                         const std::vector<Point> &path) {
+absl::Status BongoGameState::ClearPath(const std::vector<Point> &path) {
+  for (const Point &p : path) {
+    if (is_locked_at(p)) continue;
+    auto s = ClearSquare({p});
+    if (!s.ok()) return s;
+  }
+  return absl::OkStatus();
+}
+
+absl::Status BongoGameState::FillPath(const std::vector<Point> &path,
+                                      absl::string_view sv) {
   // Ensure the word and path are of equal size.
-  if (word.length() != path.size())
+  if (path.size() != sv.length())
     return absl::InvalidArgumentError(
-        absl::StrCat("Word has length ", word.length(), " but path has size ",
+        absl::StrCat("Word has length ", sv.length(), " but path has size ",
                      path.size(), ".\n", *this));
 
   // Make sure there are enough letters to place the word.
   std::string path_str = path_string(path);
-  LetterCount needs = LetterCount(word) - LetterCount(path_str);
+  LetterCount needs = LetterCount(sv) - LetterCount(path_str);
   if (!letters_remaining_.contains(needs))
     return absl::InvalidArgumentError(
-        absl::StrCat("Insufficient tiles remain to place word ", word, " in ",
+        absl::StrCat("Insufficient tiles remain to place word ", sv, " in ",
                      path_str, "\n", *this));
 
   // Check if any of the important slots are locked, and if so, if they need
   // to be overwritten.
   for (int i = 0; i < path.size(); ++i) {
     const Point p = path[i];
-    if (is_locked_at(p) && path_str[i] != word[i]) {
+    if (is_locked_at(p) && path_str[i] != sv[i]) {
       return absl::InvalidArgumentError(absl::StrCat(
           "Point ", p,
           " is locked and cannot be overwritten. Unlock it first.\n", *this));
@@ -128,33 +154,7 @@ absl::Status BongoGameState::PlaceString(absl::string_view word,
   for (int i = 0; i < path.size(); ++i) {
     const Point p = path[i];
     if (is_locked_at(p)) continue;
-    if (auto s = PlaceLetter(p, word[i]); !s.ok()) return s;
-  }
-  return absl::OkStatus();
-}
-
-absl::Status BongoGameState::ClearLetter(const Point &p) {
-  if (!HasPoint(p))
-    return absl::OutOfRangeError(
-        absl::StrCat("Point ", p, " is outside of the gamestate.\n", *this));
-  if (is_locked_at(p))
-    return absl::InvalidArgumentError(absl::StrCat(
-        "Point ", p, " is locked and cannot be removed. Unlock it first.\n",
-        *this));
-  if (char x = char_at(p); std::isalpha(x)) {
-    auto s = letters_remaining_.AddLetter(x);
-    if (!s.ok()) return s.status();
-  }
-
-  set_char_at(p, '_');
-  return absl::OkStatus();
-}
-
-absl::Status BongoGameState::ClearString(const std::vector<Point> &path) {
-  for (const Point &p : path) {
-    if (is_locked_at(p)) continue;
-    auto s = ClearLetter({p});
-    if (!s.ok()) return s;
+    if (auto s = FillSquare(p, sv[i]); !s.ok()) return s;
   }
   return absl::OkStatus();
 }
@@ -163,7 +163,7 @@ absl::Status BongoGameState::ClearBoard() {
   for (int row = 0; row < 5; ++row) {
     for (int col = 0; col < 5; ++col) {
       if (is_locked_at(row, col)) continue;
-      auto s = ClearLetter({row, col});
+      auto s = ClearSquare({row, col});
       if (!s.ok()) return s;
     }
   }

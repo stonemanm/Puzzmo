@@ -28,20 +28,20 @@ TEST(BongoGameStateTest, Constructor) {
 TEST(BongoGameStateTest, PlaceTile) {
   BongoGameState state(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"),
                        kEmptyBoard);
-  EXPECT_TRUE(state.PlaceLetter({0, 0}, 'a'));
-  EXPECT_FALSE(state.PlaceLetter({0, 0}, 'a'));
-  EXPECT_FALSE(state.PlaceLetter({0, 5}, 'a'));
-  EXPECT_TRUE(state.PlaceLetter({0, 1}, 'c'));
-  EXPECT_FALSE(state.PlaceLetter({0, 2}, 'c'));
+  EXPECT_TRUE(state.FillSquare({0, 0}, 'a'));
+  EXPECT_FALSE(state.FillSquare({0, 0}, 'a'));
+  EXPECT_FALSE(state.FillSquare({0, 5}, 'a'));
+  EXPECT_TRUE(state.FillSquare({0, 1}, 'c'));
+  EXPECT_FALSE(state.FillSquare({0, 2}, 'c'));
 }
 
 TEST(BongoGameStateTest, RemoveTile) {
   BongoGameState state(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"),
                        {"xxx__", "___x_", "__x__", "_____", "_____"});
   EXPECT_EQ(state.tiles_remaining().count('x'), 0);
-  EXPECT_TRUE(state.ClearLetter({0, 0}));
+  EXPECT_TRUE(state.ClearSquare({0, 0}));
   EXPECT_EQ(state.tiles_remaining().count('x'), 1);
-  EXPECT_FALSE(state.ClearLetter({0, 0}));
+  EXPECT_FALSE(state.ClearSquare({0, 0}));
   EXPECT_EQ(state.tiles_remaining().count('x'), 1);
 }
 

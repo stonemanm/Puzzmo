@@ -58,7 +58,7 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
 
     // Place the bonus word on the board
     BongoGameState current_board = starting_state_;
-    if (auto s = current_board.PlaceString(bonus_word, bonus_path); !s.ok())
+    if (auto s = current_board.FillPath(bonus_path, bonus_word); !s.ok())
       return s;
     for (const Point &p : bonus_path) {
       current_board.set_is_locked_at(p, true);
@@ -76,7 +76,7 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
         if (std::isalpha(current_board.char_at(p))) continue;
         // If we have an error placing tiles, clean up the ones we have placed
         // so far and then move on.
-        if (auto s = current_board.PlaceLetter(p, top3[i]); !s.ok()) return s;
+        if (auto s = current_board.FillSquare(p, top3[i]); !s.ok()) return s;
 
         current_board.set_is_locked_at(p, true);
         locked_here.push_back(p);
@@ -86,7 +86,7 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
 
       for (int i = 0; i < locked_here.size(); ++i) {
         current_board.set_is_locked_at(locked_here[i], false);
-        if (auto s = current_board.ClearLetter(locked_here[i]); !s.ok())
+        if (auto s = current_board.ClearSquare(locked_here[i]); !s.ok())
           return s;
       }
     } while (std::next_permutation(top3.begin(), top3.end()));
@@ -133,7 +133,7 @@ absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
   // For each match, if it's possible to place it on the board, do so, recurse,
   // then backtrack.
   for (const auto &word : matches) {
-    if (auto s = current_board.PlaceString(word, current_board.row_path(row));
+    if (auto s = current_board.FillPath(current_board.row_path(row), word);
         !s.ok()) {
       return s;
     }
@@ -144,7 +144,7 @@ absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
       return s;
     }
 
-    auto s = current_board.ClearString(current_board.row_path(row));
+    auto s = current_board.ClearPath(current_board.row_path(row));
     if (!s.ok()) return s;
   }
 

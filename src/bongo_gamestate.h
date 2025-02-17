@@ -28,29 +28,20 @@ class BongoGameState {
                  LetterCount letters_remaining)
       : BongoGameState(board, letter_values, letters_remaining, {}) {};
 
-  // Places letter c at point p in the tile grid and updates letters_remaining_.
-  // If another letter is already there, removes it and places c instead.
-  // Returns an error if c is not in tiles_remaining_, p is not in the
-  // gamestate, or p is locked.
-  absl::Status PlaceLetter(const Point &p, char c);
+  // Clears the letter from unlocked square p, if present.
+  absl::Status ClearSquare(const Point &p);
 
-  // Places the string at the points along the path, updating
-  // letters_remaining_. Replaces any letters that are already in that row,
-  // unless they are locked. Returns an error if word and path have different
-  // lengths, if letters_remaining_ have insufficient characters to place the
-  // word, or if a tile that needs to be overwritten is locked.
-  absl::Status PlaceString(absl::string_view word,
-                           const std::vector<Point> &path);
+  // Takes c from the remaining letters and places it in unlocked square p.
+  absl::Status FillSquare(const Point &p, char c);
 
-  // If a letter is at point p in the tile grid, removes it and updates
-  // letters_remaining_. Returns an error if p is not in the gamespace or if p
-  // is locked.
-  absl::Status ClearLetter(const Point &p);
+  // Clears all unlocked letters from squares along the path.
+  absl::Status ClearPath(const std::vector<Point> &path);
 
-  // Removes all unlocked letters from the path. updating letters_remaining_.
-  absl::Status ClearString(const std::vector<Point> &path);
+  // Fills squares along the path with the string_view, unless it conflicts with
+  // the contents of a locked square.
+  absl::Status FillPath(const std::vector<Point> &path, absl::string_view sv);
 
-  // Removes all unlocked letters from the board, updating letters_remaining_.
+  // Clears all unlocked letters from the board.
   absl::Status ClearBoard();
 
   // Grabs the longest consecutive substring of letters from the path. If it is
