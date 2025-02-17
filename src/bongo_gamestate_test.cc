@@ -2,10 +2,8 @@
 
 #include <vector>
 
-#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/status_matchers.h"
-#include "absl/strings/str_cat.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -242,32 +240,6 @@ TEST(BongoGameStateTest, RegexForPath) {
   EXPECT_EQ(bgs.RegexForPath(bgs.row_path(3)), "pqr[jms]t");
   EXPECT_EQ(bgs.RegexForPath(bgs.bonus_path()), "ag[jms][jms]");
 }
-
-// TEST(BongoGameStateTest, RowAndBonusWordAndScore) {
-//   BongoGameState state(kDummyBoard, kLetterValues, LetterCount(""),
-//                        {"_q__a", "panel", "vines", "flute", "finds"});
-//   EXPECT_EQ(state.GetRowWord(0), "qa");
-//   EXPECT_EQ(state.GetRowWord(1), "panel");
-//   EXPECT_EQ(state.GetRowWord(2), "vines");
-//   EXPECT_EQ(state.GetRowWord(3), "flute");
-//   EXPECT_EQ(state.GetRowWord(4), "finds");
-//   EXPECT_EQ(state.GetBonusWord(), "qnet");
-
-//   EXPECT_EQ(state.RowWordScore(0), 18);
-//   EXPECT_EQ(state.RowWordScore(1), 80);
-//   EXPECT_EQ(state.RowWordScore(2), 78);
-//   EXPECT_EQ(state.RowWordScore(3), 64);
-//   EXPECT_EQ(state.RowWordScore(4), 71);
-//   EXPECT_EQ(state.BonusWordScore(), 56);
-// }
-
-// TEST(BongoGameStateTest, RowRegex) {
-//   BongoGameState state(kDummyBoard, kLetterValues, LetterCount("lliiiiiffm"),
-//                        {"_qat_", "panel", "vines", "flute", "finds"});
-//   const std::string open = state.tiles_remaining().RegexMatchingChars();
-//   EXPECT_EQ(state.RegexForRow(0), absl::StrCat(open, "qat", open));
-//   EXPECT_EQ(state.RegexForRow(1), "panel");
-// }
 
 }  // namespace
 }  // namespace puzzmo

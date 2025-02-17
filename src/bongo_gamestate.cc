@@ -5,8 +5,6 @@
 #include <cmath>
 #include <string>
 
-#include "absl/algorithm/container.h"
-#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 
 namespace puzzmo {
