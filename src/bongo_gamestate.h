@@ -6,6 +6,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "bongo_dictionary.h"
 #include "letter_count.h"
 #include "point.h"
@@ -33,39 +34,30 @@ class BongoGameState {
   // gamestate, or p is locked.
   absl::Status PlaceLetter(const Point &p, char c);
 
-  // Places word in the numbered row, starting at column col, and updates
-  // letters_remaining_. Replaces any letters that are already in that row.
-  // Returns an error if row or col are not in the gamestate, if
-  // letters_remaining_ has insufficient characters, or if word is too long to
-  // fit.
-  absl::Status PlaceWord(absl::string_view word, int row, int col);
-  absl::Status PlaceWord(absl::string_view word, int row) {
-    return PlaceWord(word, row, 0);
-  }
-
-  absl::Status PlaceBonusWord(absl::string_view word);
+  // Places the string at the points along the path, updating
+  // letters_remaining_. Replaces any letters that are already in that row,
+  // unless they are locked. Returns an error if word and path have different
+  // lengths, if letters_remaining_ have insufficient characters to place the
+  // word, or if a tile that needs to be overwritten is locked.
+  absl::Status PlaceString(absl::string_view word,
+                           const std::vector<Point> &path);
 
   // If a letter is at point p in the tile grid, removes it and updates
   // letters_remaining_. Returns an error if p is not in the gamespace or if p
   // is locked.
-  absl::Status RemoveLetter(const Point &p);
+  absl::Status ClearLetter(const Point &p);
 
-  // Removes all letters from the numbered row that are not locked. updating
-  // letters_remaining_. Returns an error if row is not in the gamestate.
-  absl::Status RemoveWord(int row);
+  // Removes all unlocked letters from the path. updating letters_remaining_.
+  absl::Status ClearString(const std::vector<Point> &path);
 
-  // Removes all letters from the board that are not locked, updating
-  // letters_remaining_.
-  void ClearBoard();
+  // Removes all unlocked letters from the board, updating letters_remaining_.
+  absl::Status ClearBoard();
 
-  // If row contains 3+ consecutive letters, returns them. If not, returns an
-  // empty string.
-  // Note: RowWord does not validate the "word" it returns.
-  std::string RowWord(int row) const;
-
-  // If the bonus path is filled, returns the bonus string. Does not validate
-  // that the string is a word.
-  std::string BonusWord() const;
+  // Grabs the longest consecutive substring of letters from the path. If it is
+  // 3+ characters (or 4+ if it's the bonus path), return it; otherwise, returns
+  // an empty string. Note that whether or not this is a dictionary word is not
+  // validated.
+  std::string GetWord(const std::vector<Point> &path) const;
 
   // Returns the index of the row with the most letters but doesn't have 3+
   // consecutive letters. Breaks ties in favor of the lowest index.
@@ -81,21 +73,16 @@ class BongoGameState {
   // values first. If fewer than n letters remain, returns all of them.
   std::string NMostValuableTiles(int n) const;
 
-  // Returns regex to match the row as it currently exists. Any letters will
+  // Returns regex to match the path as it currently exists. Any letters will
   // match, and any nonalphabetical characters are replaced with regex matching
   // any of the letters remaining.
-  std::string RegexForRow(int row) const;
-
-  // Returns regex to match the bonus word as it currently exists. Any letters
-  // will match, and any nonalphabetical characters are replaced with regex
-  // matching any of the letters remaining.
-  std::string RegexForBonus() const;
+  std::string RegexForPath(const std::vector<Point> &path) const;
 
   // Uses the dictionary to check validity and commonality of words, then
   // calculates the relative score.
   int CalculateScore(const BongoDictionary &dict) const;
-  int CalculateRowScore(int row, const BongoDictionary &dict) const;
-  int CalculateBonusScore(const BongoDictionary &dict) const;
+  int CalculatePathScore(const std::vector<Point> &path,
+                         const BongoDictionary &dict) const;
 
   /** * * * * * * * * * * *
    * Accessors & mutators *
@@ -109,8 +96,6 @@ class BongoGameState {
 
   void set_letter_grid(std::vector<std::string> grid);
   std::vector<std::string> letter_grid() const;
-  void set_row_string(int row, absl::string_view sv);
-  std::string row_string(int row) const;
   void set_char_at(const Point &p, char c);
   void set_char_at(int row, int col, char c) { set_char_at({row, col}, c); }
   char char_at(const Point &p) const;
@@ -127,7 +112,13 @@ class BongoGameState {
     return multiplier_at({row, col});
   }
 
-  void set_bonus_word_path(std::vector<Point> path);
+  std::vector<Point> row_path(int row) const;
+  void set_row_string(int row, absl::string_view sv);
+  std::string row_string(int row) const;
+
+  std::string path_string(const std::vector<Point> &path) const;
+
+  void set_bonus_word_path(const std::vector<Point> &path);
   std::vector<Point> bonus_word_path() const;
   void set_bonus_string(absl::string_view sv);
   std::string bonus_string() const;

@@ -95,7 +95,17 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  (void)starting_state->PlaceWord("serve", 4);
+  auto s = starting_state->PlaceString(
+      "alive", {{4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}});
+  if (!s.ok()) {
+    LOG(ERROR) << s;
+    return 1;
+  }
+  starting_state->set_is_locked({{0, 0, 0, 0, 0},
+                                 {0, 0, 0, 0, 0},
+                                 {0, 0, 0, 0, 0},
+                                 {0, 0, 0, 0, 0},
+                                 {0, 1, 1, 1, 1}});
 
   BongoSolver bongo_solver(
       dict, *starting_state,

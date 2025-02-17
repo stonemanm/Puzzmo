@@ -39,9 +39,9 @@ TEST(BongoGameStateTest, RemoveTile) {
   BongoGameState state(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"),
                        {"xxx__", "___x_", "__x__", "_____", "_____"});
   EXPECT_EQ(state.tiles_remaining().count('x'), 0);
-  EXPECT_TRUE(state.RemoveLetter({0, 0}));
+  EXPECT_TRUE(state.ClearLetter({0, 0}));
   EXPECT_EQ(state.tiles_remaining().count('x'), 1);
-  EXPECT_FALSE(state.RemoveLetter({0, 0}));
+  EXPECT_FALSE(state.ClearLetter({0, 0}));
   EXPECT_EQ(state.tiles_remaining().count('x'), 1);
 }
 

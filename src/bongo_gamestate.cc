@@ -97,76 +97,43 @@ absl::Status BongoGameState::PlaceLetter(const Point &p, char c) {
   return absl::OkStatus();
 }
 
-absl::Status BongoGameState::PlaceWord(absl::string_view word, int row,
-                                       int starting_col) {
-  if (!HasRow(row))
-    return absl::OutOfRangeError(absl::StrCat(
-        "Row ", row, " falls outside the bounds of the Bongo board.\n", *this));
-  if (!HasRow(starting_col))
-    return absl::OutOfRangeError(
-        absl::StrCat("Column ", starting_col,
-                     " falls outside the bounds of the Bongo board.\n", *this));
-  if (word.length() > 5 - starting_col)
+absl::Status BongoGameState::PlaceString(absl::string_view word,
+                                         const std::vector<Point> &path) {
+  // Ensure the word and path are of equal size.
+  if (word.length() != path.size())
     return absl::InvalidArgumentError(
-        absl::StrCat("Word ", word, " has length ", word.length(),
-                     ", which cannot fit in the ", 5 - starting_col,
-                     " remaining spaces.\n", *this));
+        absl::StrCat("Word has length ", word.length(), " but path has size ",
+                     path.size(), ".\n", *this));
 
-  LetterCount needs = LetterCount(word) - LetterCount(row_string(row));
-  if (!letters_remaining().contains(needs))
-    return absl::InvalidArgumentError(
-        absl::StrCat("Insufficient tiles remain to place word ", word,
-                     " in row ", row_string(row), "\n", *this));
-
-  // Check if any of the important slots are locked, and if so, if they need to
-  // be overwritten.
-  for (int col = starting_col; col < 5; ++col) {
-    if (is_locked_at(row, col) &&
-        char_at(row, col) != word[col - starting_col]) {
-      Point p = {row, col};
-      return absl::InvalidArgumentError(absl::StrCat(
-          "Point ", p,
-          " is locked and cannot be overwritten. Unlock it first.\n", *this));
-    }
-  }
-
-  for (int col = starting_col; col < 5; ++col) {
-    char c = word[col - starting_col];
-    if (is_locked_at(row, col)) continue;
-    auto s = PlaceLetter({row, col}, c);
-    if (!s.ok()) return s;
-  }
-  return absl::OkStatus();
-}
-
-absl::Status BongoGameState::PlaceBonusWord(absl::string_view word) {
-  LetterCount needs = LetterCount(word) - LetterCount(bonus_string());
+  // Make sure there are enough letters to place the word.
+  std::string path_str = path_string(path);
+  LetterCount needs = LetterCount(word) - LetterCount(path_str);
   if (!letters_remaining_.contains(needs))
     return absl::InvalidArgumentError(
-        absl::StrCat("Insufficient tiles remain to place word ", word,
-                     " in bonus ", bonus_string(), "\n", *this));
+        absl::StrCat("Insufficient tiles remain to place word ", word, " in ",
+                     path_str, "\n", *this));
 
   // Check if any of the important slots are locked, and if so, if they need
   // to be overwritten.
-  for (int i = 0; i < bonus_word_path_.size(); ++i) {
-    const Point p = bonus_word_path_[i];
-    if (is_locked_at(p) && char_at(p) != word[i]) {
+  for (int i = 0; i < path.size(); ++i) {
+    const Point p = path[i];
+    if (is_locked_at(p) && path_str[i] != word[i]) {
       return absl::InvalidArgumentError(absl::StrCat(
           "Point ", p,
           " is locked and cannot be overwritten. Unlock it first.\n", *this));
     }
   }
 
-  for (int i = 0; i < word.size(); ++i) {
-    const Point p = bonus_word_path_[i];
+  // Place letters to complete the word.
+  for (int i = 0; i < path.size(); ++i) {
+    const Point p = path[i];
     if (is_locked_at(p)) continue;
     if (auto s = PlaceLetter(p, word[i]); !s.ok()) return s;
-    set_is_locked_at(p, true);
   }
   return absl::OkStatus();
 }
 
-absl::Status BongoGameState::RemoveLetter(const Point &p) {
+absl::Status BongoGameState::ClearLetter(const Point &p) {
   if (!HasPoint(p))
     return absl::OutOfRangeError(
         absl::StrCat("Point ", p, " is outside of the gamestate.\n", *this));
@@ -183,55 +150,49 @@ absl::Status BongoGameState::RemoveLetter(const Point &p) {
   return absl::OkStatus();
 }
 
-absl::Status BongoGameState::RemoveWord(int row) {
-  if (!HasRow(row))
-    return absl::OutOfRangeError(absl::StrCat(
-        "Row ", row, " falls outside the bounds of the Bongo board.\n", *this));
-  for (int col = 0; col < 5; ++col) {
-    if (is_locked_at(row, col)) continue;
-    auto s = RemoveLetter({row, col});
+absl::Status BongoGameState::ClearString(const std::vector<Point> &path) {
+  for (const Point &p : path) {
+    if (is_locked_at(p)) continue;
+    auto s = ClearLetter({p});
     if (!s.ok()) return s;
   }
   return absl::OkStatus();
 }
 
-void BongoGameState::ClearBoard() {
+absl::Status BongoGameState::ClearBoard() {
   for (int row = 0; row < 5; ++row) {
     for (int col = 0; col < 5; ++col) {
       if (is_locked_at(row, col)) continue;
-      (void)RemoveLetter({row, col});
+      auto s = ClearLetter({row, col});
+      if (!s.ok()) return s;
     }
   }
+  return absl::OkStatus();
 }
 
-std::string BongoGameState::RowWord(int row) const {
-  if (row < 0 || row >= 5) return "";
-  std::string s = LongestAlphaSubstring(row_string(row));
-  return s.length() >= 3 ? s : "";
-}
-
-std::string BongoGameState::BonusWord() const {
-  std::string s = bonus_string();
-  return LetterCount(s).size() == 4 ? s : "";
+std::string BongoGameState::GetWord(const std::vector<Point> &path) const {
+  int threshold = (path == bonus_word_path_) ? 4 : 3;
+  std::string path_substr = LongestAlphaSubstring(path_string(path));
+  return (path_substr.length() >= threshold) ? path_substr : "";
 }
 
 int BongoGameState::MostRestrictedWordlessRow() const {
-  int row = 0;
+  int row_to_focus = 0;
   int most_letters = INT_MIN;
-  for (int i = 0; i < 5; ++i) {
-    if (!RowWord(i).empty()) continue;
-    int letters = LetterCount(row_string(i)).size();
-    if (letters > most_letters && letters < 5) {
+  for (int row = 0; row < 5; ++row) {
+    if (!GetWord(row_path(row)).empty()) continue;
+    int letters = LetterCount(row_string(row)).size();
+    if (letters > most_letters) {
       most_letters = letters;
-      row = i;
+      row_to_focus = row;
     }
   }
-  return row;
+  return row_to_focus;
 }
 
 bool BongoGameState::Complete() const {
   for (int row = 0; row < 5; ++row) {
-    if (RowWord(row).empty()) return false;
+    if (GetWord(row_path(row)).empty()) return false;
   }
   return true;
 }
@@ -260,25 +221,13 @@ std::string BongoGameState::NMostValuableTiles(int n) const {
   return letters.substr(0, n);
 }
 
-// TODO: make things callable on rows or bonus alike by passing in a vector of
-// points.
-std::string BongoGameState::RegexForRow(int row) const {
+std::string BongoGameState::RegexForPath(const std::vector<Point> &path) const {
   // TODO: Add the ability to search for 4 letter words.
-  std::string rgx = "";
-  std::string s = row_string(row);
-  if (row < 0 || row >= 5 || LongestAlphaSubstring(s).empty()) return rgx;
-  for (char c : s) {
-    absl::StrAppend(&rgx, std::isalpha(c)
-                              ? std::string(1, c)
-                              : letters_remaining_.RegexMatchingContents());
-  }
-  return rgx;
-}
 
-std::string BongoGameState::RegexForBonus() const {
+  std::string s = path_string(path);
+  if (LetterCount(s).empty()) return "";
+
   std::string rgx = "";
-  std::string s = bonus_string();
-  if (LongestAlphaSubstring(s).empty()) return rgx;
   for (char c : s) {
     absl::StrAppend(&rgx, std::isalpha(c)
                               ? std::string(1, c)
@@ -288,32 +237,31 @@ std::string BongoGameState::RegexForBonus() const {
 }
 
 int BongoGameState::CalculateScore(const BongoDictionary &dict) const {
-  return CalculateRowScore(0, dict) + CalculateRowScore(1, dict) +
-         CalculateRowScore(2, dict) + CalculateRowScore(3, dict) +
-         CalculateRowScore(4, dict) + CalculateBonusScore(dict);
+  return CalculatePathScore(row_path(0), dict) +
+         CalculatePathScore(row_path(1), dict) +
+         CalculatePathScore(row_path(2), dict) +
+         CalculatePathScore(row_path(3), dict) +
+         CalculatePathScore(row_path(4), dict) +
+         CalculatePathScore(bonus_word_path(), dict);
 }
 
-int BongoGameState::CalculateRowScore(int row,
-                                      const BongoDictionary &dict) const {
-  if (row < 0 || row >= 5 || !dict.IsValidWord(RowWord(row))) return 0;
-  int score = 0;
-  for (int col = 0; col < 5; ++col) {
-    if (char c = letter_grid_[row][col]; std::isalpha(c)) {
-      score += (letter_values_.at(c) * multiplier_grid_[row][col]);
-    }
-  }
-  return std::ceil(score * (dict.IsCommonWord(RowWord(row)) ? 1.3 : 1));
-}
+int BongoGameState::CalculatePathScore(const std::vector<Point> &path,
+                                       const BongoDictionary &dict) const {
+  std::string word = GetWord(path);
+  if (!dict.IsValidWord(word)) return 0;
 
-int BongoGameState::CalculateBonusScore(const BongoDictionary &dict) const {
-  if (!dict.IsValidWord(BonusWord())) return 0;
-  int score = 0;
-  for (const Point &p : bonus_word_path_) {
-    char c = letter_grid_[p.row][p.col];
-    if (!std::isalpha(c)) continue;
-    score += letter_values_.at(c) * multiplier_grid_[p.row][p.col];
+  // Find the index in path where word begins.
+  int offset = 0;
+  while (path_string(path).substr(offset, word.size()) != word) {
+    ++offset;
   }
-  return std::ceil(score * (dict.IsCommonWord(BonusWord()) ? 1.3 : 1));
+
+  int score = 0;
+  for (int i = 0; i < word.size(); ++i) {
+    char c = word[i];
+    score += (letter_values_.at(c) * multiplier_at(path[i + offset]));
+  }
+  return std::ceil(score * (dict.IsCommonWord(word) ? 1.3 : 1));
 }
 
 /** * * * * * * * * * * *
@@ -339,6 +287,14 @@ std::vector<std::string> BongoGameState::letter_grid() const {
 void BongoGameState::set_row_string(int row, absl::string_view sv) {
   if (!HasRow(row)) return;
   letter_grid_[row] = sv.substr(0, 5);
+}
+
+std::string BongoGameState::path_string(const std::vector<Point> &path) const {
+  std::string s = "";
+  for (const Point &p : path) {
+    s += char_at(p);
+  }
+  return s;
 }
 
 std::string BongoGameState::row_string(int row) const {
@@ -372,12 +328,20 @@ int BongoGameState::multiplier_at(const Point &p) const {
   return multiplier_grid_[p.row][p.col];
 }
 
-void BongoGameState::set_bonus_word_path(std::vector<Point> path) {
+void BongoGameState::set_bonus_word_path(const std::vector<Point> &path) {
   bonus_word_path_ = path;
 }
 
 std::vector<Point> BongoGameState::bonus_word_path() const {
   return bonus_word_path_;
+}
+
+std::vector<Point> BongoGameState::row_path(int row) const {
+  std::vector<Point> path;
+  for (int col = 0; col < 5; ++col) {
+    path.push_back({row, col});
+  }
+  return path;
 }
 
 void BongoGameState::set_bonus_string(absl::string_view sv) {
