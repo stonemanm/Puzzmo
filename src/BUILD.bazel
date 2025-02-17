@@ -132,6 +132,8 @@ cc_test(
     srcs = ["bongo_gamestate_test.cc"],
     deps = [
         ":bongo_gamestate",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:status_matchers",
         "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
         "@googletest//:gtest_main",

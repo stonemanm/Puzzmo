@@ -50,12 +50,12 @@ class BongoGameState {
   // validated.
   std::string GetWord(const std::vector<Point> &path) const;
 
+  // Returns true iff every row has a word.
+  bool IsComplete() const;
+
   // Returns the index of the row with the most letters but doesn't have 3+
   // consecutive letters. Breaks ties in favor of the lowest index.
   int MostRestrictedWordlessRow() const;
-
-  // Returns true iff every row has 3+ consecutive letters.
-  bool Complete() const;
 
   // Returns a vector of the points that have tile multipliers on them.
   std::vector<Point> MultiplierSquares() const;
@@ -82,10 +82,10 @@ class BongoGameState {
   // Note: mutators allow setting chars not in the letter count, or overwriting
   // of locked points. Use with caution!
 
-  void set_letters_remaining(LetterCount lc);
+  void set_letters_remaining(LetterCount lc);  // Unused
   LetterCount letters_remaining() const;
 
-  void set_letter_grid(std::vector<std::string> grid);
+  void set_letter_grid(std::vector<std::string> grid);  // Unused
   std::vector<std::string> letter_grid() const;
   void set_char_at(const Point &p, char c);
   void set_char_at(int row, int col, char c) { set_char_at({row, col}, c); }
@@ -103,14 +103,14 @@ class BongoGameState {
     return multiplier_at({row, col});
   }
 
+  void set_bonus_path(const std::vector<Point> &path);
+  std::vector<Point> bonus_path() const;
   std::vector<Point> row_path(int row) const;
+  std::string path_string(const std::vector<Point> &path) const;
+
   void set_row_string(int row, absl::string_view sv);
   std::string row_string(int row) const;
 
-  std::string path_string(const std::vector<Point> &path) const;
-
-  void set_bonus_word_path(const std::vector<Point> &path);
-  std::vector<Point> bonus_word_path() const;
   void set_bonus_string(absl::string_view sv);
   std::string bonus_string() const;
 
@@ -131,7 +131,7 @@ class BongoGameState {
   LetterCount letters_remaining_;
   std::vector<std::string> letter_grid_;
   std::vector<std::vector<int>> multiplier_grid_;
-  std::vector<Point> bonus_word_path_;
+  std::vector<Point> bonus_path_;
   absl::flat_hash_map<char, int> letter_values_;
   std::vector<std::vector<bool>> is_locked_;
 
@@ -143,8 +143,8 @@ class BongoGameState {
   template <typename H>
   friend H AbslHashValue(H h, const BongoGameState &bgs) {
     return H::combine(std::move(h), bgs.letters_remaining_, bgs.letter_grid_,
-                      bgs.multiplier_grid_, bgs.bonus_word_path_,
-                      bgs.letter_values_, bgs.is_locked_);
+                      bgs.multiplier_grid_, bgs.bonus_path_, bgs.letter_values_,
+                      bgs.is_locked_);
   }
 
   // Allows easy conversion of BongoGameState to string.

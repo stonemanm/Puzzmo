@@ -9,7 +9,7 @@
 namespace puzzmo {
 
 absl::StatusOr<BongoGameState> BongoSolver::Solve() {
-  std::vector<Point> bonus_path = starting_state_.bonus_word_path();
+  std::vector<Point> bonus_path = starting_state_.bonus_path();
   std::vector<Point> multiplier_squares = starting_state_.MultiplierSquares();
 
   // Point triple_square;
@@ -97,7 +97,7 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
 absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
   // If all rows are filled, score the board. Update highest_scoring_board_ if
   // appropriate
-  if (current_board.Complete()) {
+  if (current_board.IsComplete()) {
     if (current_board.CalculateScore(dict_) >
         highest_scoring_board_.CalculateScore(dict_)) {
       LOG(INFO) << absl::StrCat("New best score! (",
@@ -105,7 +105,7 @@ absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
       for (const auto &path :
            {current_board.row_path(0), current_board.row_path(1),
             current_board.row_path(2), current_board.row_path(3),
-            current_board.row_path(4), current_board.bonus_word_path()}) {
+            current_board.row_path(4), current_board.bonus_path()}) {
         std::string word = current_board.GetWord(path);
         LOG(INFO) << absl::StrCat(
             current_board.CalculatePathScore(path, dict_), " - ", word,
