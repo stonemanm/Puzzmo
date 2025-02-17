@@ -18,19 +18,19 @@ ABSL_FLAG(std::string, puzzmo_words_path, "data/words_puzzmo.txt",
 
 namespace puzzmo {
 
-absl::StatusOr<std::vector<std::string>>
-ReadDictionaryFileToVector(const ReadFileOptions options) {
+absl::StatusOr<std::vector<std::string>> ReadDictionaryFileToVector(
+    const ReadFileOptions options) {
   std::string path;
   switch (options.word_source) {
-  case WordSet::kPuzzmoWords:
-    path = absl::GetFlag(FLAGS_puzzmo_words_path);
-    break;
-  case WordSet::kBongoWords:
-    path = absl::GetFlag(FLAGS_bongo_words_path);
-    break;
-  case WordSet::kCommonBongoWords:
-    path = absl::GetFlag(FLAGS_common_bongo_words_path);
-    break;
+    case WordSet::kPuzzmoWords:
+      path = absl::GetFlag(FLAGS_puzzmo_words_path);
+      break;
+    case WordSet::kBongoWords:
+      path = absl::GetFlag(FLAGS_bongo_words_path);
+      break;
+    case WordSet::kCommonBongoWords:
+      path = absl::GetFlag(FLAGS_common_bongo_words_path);
+      break;
   }
   std::ifstream dictfile(path);
   if (!dictfile.is_open()) {
@@ -42,9 +42,8 @@ ReadDictionaryFileToVector(const ReadFileOptions options) {
   std::string line;
   while (std::getline(dictfile, line)) {
     int l = line.length();
-    if (l < options.min_letters || l > options.max_letters)
-      continue;
-    if (options.letter_count.Empty()) {
+    if (l < options.min_letters || l > options.max_letters) continue;
+    if (options.letter_count.empty()) {
       words.push_back(line);
       continue;
     }
@@ -81,7 +80,7 @@ const absl::flat_hash_set<std::string> FindMatchesInAnagramDictionary(
     const LetterCount &lc) {
   absl::flat_hash_set<std::string> words;
   for (const auto &[key, values] : dict) {
-    if (key.Contains(lc)) {
+    if (key.contains(lc)) {
       absl::flat_hash_set<std::string> matches = dict.at(key);
       words.insert(matches.begin(), matches.end());
     }
@@ -95,7 +94,7 @@ const absl::flat_hash_set<std::string> FindMatchesInAnagramDictionary(
     const LetterCount &lc, absl::string_view rgx) {
   absl::flat_hash_set<std::string> words;
   for (const auto &[key, values] : dict) {
-    if (lc.Contains(key)) {
+    if (lc.contains(key)) {
       absl::flat_hash_set<std::string> matches = dict.at(key);
       for (const auto &word : matches) {
         if (RE2::FullMatch(word, rgx)) {
@@ -107,12 +106,11 @@ const absl::flat_hash_set<std::string> FindMatchesInAnagramDictionary(
   return words;
 }
 
-const std::shared_ptr<TrieNode>
-CreateDictionaryTrie(const std::vector<std::string> words) {
+const std::shared_ptr<TrieNode> CreateDictionaryTrie(
+    const std::vector<std::string> words) {
   std::shared_ptr<TrieNode> dict = std::make_shared<TrieNode>();
   for (const auto &word : words) {
-    if (word.length() < 3)
-      continue;
+    if (word.length() < 3) continue;
 
     std::shared_ptr<TrieNode> node = dict;
     for (const char c : word) {
@@ -128,4 +126,4 @@ CreateDictionaryTrie(const std::vector<std::string> words) {
   return dict;
 }
 
-} // namespace puzzmo
+}  // namespace puzzmo

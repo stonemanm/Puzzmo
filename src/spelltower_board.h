@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
-
+#include "letter_count.h"
 #include "point.h"
 
 namespace puzzmo {
@@ -21,7 +21,7 @@ const int kLetterScores[] = {
 
 // A board state for Spelltower.
 class SpelltowerBoard {
-public:
+ public:
   explicit SpelltowerBoard(const std::vector<std::vector<char>> &board);
 
   // Returns the letter at a given spot on the board.
@@ -45,6 +45,8 @@ public:
 
   absl::flat_hash_set<std::string> GetAllStarRegexes() const;
 
+  std::vector<LetterCount> GetRowLetterCounts() const;
+
   // Returns the coordinates of the bonus letters.
   std::vector<Point> StarLocations() const;
 
@@ -55,23 +57,27 @@ public:
   // Checks the rows (columns on the main board) to see if the letters of `word`
   // occur in adjacent rows.
   bool MightHaveWord(const std::string &word) const;
-  std::vector<std::string>
-  MightHaveWords(const std::vector<std::string> &words) const;
+  std::vector<std::string> MightHaveWords(
+      const std::vector<std::string> &words) const;
 
   bool MightHaveAllStarWord(const std::string &word) const;
-  std::vector<std::string>
-  MightHaveAllStarWords(const std::vector<std::string> &words) const;
+  std::vector<std::string> MightHaveAllStarWords(
+      const std::vector<std::string> &words) const;
 
-private:
+ private:
   std::vector<std::vector<char>> board_;
-  int rows_, cols_;
+  int rows_, cols_ = 0;
   std::vector<Point> stars_;
+
+  static const int max_cols_ = 13;
+  static const int max_rows_ = 9;
 
   bool DFS(const std::string &word, int i, int row) const;
   bool DFS(const std::string &word, int i, int row,
-           std::vector<bool> &used_stars) const;
+           std::vector<bool> &used_stars,
+           std::vector<LetterCount> &row_letter_counts) const;
 };
 
-} // namespace puzzmo
+}  // namespace puzzmo
 
 #endif

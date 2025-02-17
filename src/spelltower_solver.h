@@ -9,24 +9,23 @@
 #include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_set.h"
-
 #include "dictionary_utils.h"
 #include "point.h"
 #include "spelltower_board.h"
 
 namespace puzzmo {
 using WordMap =
-    absl::btree_map<int, absl::btree_set<std::string>, std::greater<int>>;
+    absl::btree_map<int, absl::btree_set<std::string>, std::less<int>>;
 
 class SpelltowerSolver {
-public:
+ public:
   SpelltowerSolver(SpelltowerBoard &board, const std::shared_ptr<TrieNode> dict)
       : starting_board_(board), dict_(dict) {};
 
   // Returns a map of all valid words on the board, as well as their score
   const WordMap FindWords();
 
-private:
+ private:
   SpelltowerBoard starting_board_;
   const std::shared_ptr<TrieNode> dict_;
 
@@ -36,6 +35,6 @@ private:
            absl::flat_hash_set<Point> &path, WordMap &ans);
 };
 
-} // namespace puzzmo
+}  // namespace puzzmo
 
 #endif

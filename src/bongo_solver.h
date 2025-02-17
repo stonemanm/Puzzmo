@@ -1,37 +1,52 @@
 #ifndef bongo_solver_h
 #define bongo_solver_h
 
-#include <string>
-#include <vector>
-
-#include "absl/container/flat_hash_map.h"
-#include "absl/container/flat_hash_set.h"
-
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "bongo_dictionary.h"
 #include "bongo_gamestate.h"
-#include "letter_count.h"
 
 namespace puzzmo {
 
 class BongoSolver {
-public:
-  BongoSolver(const BongoGameState &bgs, const std::vector<std::string> &words);
+ public:
+  struct BongoSolverOptions {
+    // The number to pass NMostValuableTiles, from which sets of 3 are chosen to
+    // make possible bonus words. Note that increasing this n scales by O(n^2).
+    int tiles_for_bonus_words = 7;
 
-  absl::flat_hash_set<absl::flat_hash_set<std::string>> FindWordSets();
+    // The number to pass NMostValuableTiles, from which sets are chosen to
+    // place on the multiplier tiles. Note that increasing this n scales by
+    // O(n^2).
+    int tiles_for_multiplier_tiles = 4;
+  };
 
-private:
+  BongoSolver(const BongoDictionary &dict, const BongoGameState &bgs,
+              BongoSolverOptions options)
+      : dict_(dict),
+        starting_state_(bgs),
+        highest_scoring_board_(bgs),
+        tiles_for_bonus_words_(options.tiles_for_bonus_words),
+        tiles_for_multiplier_tiles_(options.tiles_for_multiplier_tiles) {}
+
+  absl::StatusOr<BongoGameState> Solve();
+
+ private:
+  absl::Status FindWordsRecursively(BongoGameState &current_board);
+
+  const BongoDictionary dict_;
   const BongoGameState starting_state_;
-  absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
-      letters_to_words_;
-  absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
-      letters_to_bonus_words_;
-  std::vector<LetterCount> keys_;
+  BongoGameState highest_scoring_board_;
 
-  void FindLetterSetsHelper(
-      LetterCount remaining_letters, int starting_index,
-      absl::flat_hash_set<LetterCount> &current_set,
-      absl::flat_hash_set<absl::flat_hash_set<LetterCount>> &letter_sets);
+  // The number to pass NMostValuableTiles, from which sets of 3 are chosen to
+  // make possible bonus words. Note that increasing this n scales by O(n^2).
+  int tiles_for_bonus_words_;
+
+  // The number to pass NMostValuableTiles, from which sets are chosen to place
+  // on the multiplier tiles. Note that increasing this n scales by O(n^2).
+  int tiles_for_multiplier_tiles_;
 };
 
-} // namespace puzzmo
+}  // namespace puzzmo
 
 #endif

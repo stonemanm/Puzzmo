@@ -61,9 +61,9 @@ absl::flat_hash_set<std::string> BongoDictionary::GetMatchingWords(
     if (len < options.min_length || options.max_length < len) continue;
 
     for (const auto& [letter_count, anagrams] : submap) {
-      if (!letter_count.Contains(options.min_letters)) continue;
-      if (!options.max_letters.Empty() &&
-          !options.max_letters.Contains(letter_count))
+      if (!letter_count.contains(options.min_letters)) continue;
+      if (!options.max_letters.empty() &&
+          !options.max_letters.contains(letter_count))
         continue;
 
       for (const std::string& word : anagrams) {

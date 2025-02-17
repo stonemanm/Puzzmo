@@ -15,7 +15,7 @@
 
 using namespace puzzmo;
 
-ABSL_FLAG(bool, run_regex, true, "Run regex mode instead of the DFS?");
+ABSL_FLAG(bool, run_regex, false, "Run regex mode instead of the DFS?");
 
 int main(int argc, const char *argv[]) {
   // Read in the board

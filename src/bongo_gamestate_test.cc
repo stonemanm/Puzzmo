@@ -20,40 +20,40 @@ const absl::flat_hash_map<char, int> kLetterValues = {
 TEST(BongoGameStateTest, Constructor) {
   BongoGameState state(kDummyBoard, kLetterValues,
                        LetterCount("aaaabbbcdefgh"));
-  EXPECT_EQ(state.LetterValues(), kLetterValues);
-  EXPECT_EQ(state.PlacedTiles(), kEmptyBoard);
-  EXPECT_EQ(state.RemainingTiles().CharsInOrder(), "aaaabbbcdefgh");
+  EXPECT_EQ(state.letter_values(), kLetterValues);
+  EXPECT_EQ(state.tile_grid(), kEmptyBoard);
+  EXPECT_EQ(state.tiles_remaining().CharsInOrder(), "aaaabbbcdefgh");
 }
 
 TEST(BongoGameStateTest, PlaceTile) {
   BongoGameState state(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"),
                        kEmptyBoard);
-  EXPECT_TRUE(state.PlaceTile({0, 0}, 'a'));
-  EXPECT_FALSE(state.PlaceTile({0, 0}, 'a'));
-  EXPECT_FALSE(state.PlaceTile({0, 5}, 'a'));
-  EXPECT_TRUE(state.PlaceTile({0, 1}, 'c'));
-  EXPECT_FALSE(state.PlaceTile({0, 2}, 'c'));
+  EXPECT_TRUE(state.PlaceLetter({0, 0}, 'a'));
+  EXPECT_FALSE(state.PlaceLetter({0, 0}, 'a'));
+  EXPECT_FALSE(state.PlaceLetter({0, 5}, 'a'));
+  EXPECT_TRUE(state.PlaceLetter({0, 1}, 'c'));
+  EXPECT_FALSE(state.PlaceLetter({0, 2}, 'c'));
 }
 
 TEST(BongoGameStateTest, RemoveTile) {
   BongoGameState state(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"),
                        {"xxx__", "___x_", "__x__", "_____", "_____"});
-  EXPECT_EQ(state.RemainingTiles().Count('x'), 0);
-  EXPECT_TRUE(state.RemoveTile({0, 0}));
-  EXPECT_EQ(state.RemainingTiles().Count('x'), 1);
-  EXPECT_FALSE(state.RemoveTile({0, 0}));
-  EXPECT_EQ(state.RemainingTiles().Count('x'), 1);
+  EXPECT_EQ(state.tiles_remaining().count('x'), 0);
+  EXPECT_TRUE(state.RemoveLetter({0, 0}));
+  EXPECT_EQ(state.tiles_remaining().count('x'), 1);
+  EXPECT_FALSE(state.RemoveLetter({0, 0}));
+  EXPECT_EQ(state.tiles_remaining().count('x'), 1);
 }
 
 TEST(BongoGameStateTest, RowAndBonusWordAndScore) {
   BongoGameState state(kDummyBoard, kLetterValues, LetterCount(""),
                        {"_q__a", "panel", "vines", "flute", "finds"});
-  EXPECT_EQ(state.RowWord(0), "qa");
-  EXPECT_EQ(state.RowWord(1), "panel");
-  EXPECT_EQ(state.RowWord(2), "vines");
-  EXPECT_EQ(state.RowWord(3), "flute");
-  EXPECT_EQ(state.RowWord(4), "finds");
-  EXPECT_EQ(state.BonusWord(), "qnet");
+  EXPECT_EQ(state.GetRowWord(0), "qa");
+  EXPECT_EQ(state.GetRowWord(1), "panel");
+  EXPECT_EQ(state.GetRowWord(2), "vines");
+  EXPECT_EQ(state.GetRowWord(3), "flute");
+  EXPECT_EQ(state.GetRowWord(4), "finds");
+  EXPECT_EQ(state.GetBonusWord(), "qnet");
 
   EXPECT_EQ(state.RowWordScore(0), 18);
   EXPECT_EQ(state.RowWordScore(1), 80);
@@ -78,10 +78,10 @@ TEST(BongoGameStateTest, NMostValuableTiles) {
 TEST(BongoGameStateTest, RowRegex) {
   BongoGameState state(kDummyBoard, kLetterValues, LetterCount("lliiiiiffm"),
                        {"_qat_", "panel", "vines", "flute", "finds"});
-  const std::string open = state.RemainingTiles().AnyCharRegex();
-  EXPECT_EQ(state.RowRegex(0), absl::StrCat(open, "qat", open));
-  EXPECT_EQ(state.RowRegex(1), "panel");
+  const std::string open = state.tiles_remaining().RegexMatchingChars();
+  EXPECT_EQ(state.RegexForRow(0), absl::StrCat(open, "qat", open));
+  EXPECT_EQ(state.RegexForRow(1), "panel");
 }
 
-} // namespace
-} // namespace puzzmo
+}  // namespace
+}  // namespace puzzmo

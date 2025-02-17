@@ -1,13 +1,12 @@
 #include "letter_count.h"
 
+#include <algorithm>
 #include <numeric>
-
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
 
 namespace puzzmo {
 namespace {
 
+// Recursive function to help all combinations of size k
 void nCk(int start_at, int k, std::string &current, absl::string_view str,
          absl::flat_hash_set<std::string> &combinations) {
   if (k == 0) {
@@ -25,47 +24,55 @@ void nCk(int start_at, int k, std::string &current, absl::string_view str,
 
 LetterCount::LetterCount(absl::string_view s) : counts_(26) {
   for (char c : s) {
-    if (!std::isalpha(c)) {
-      continue;
-    }
+    if (!std::isalpha(c)) continue;
     ++counts_[tolower(c) - 'a'];
   }
 }
 
-int LetterCount::Count(char c) const {
-  return std::isalpha(c) ? counts_[std::tolower(c) - 'a'] : -1;
-}
-
-bool LetterCount::Contains(const LetterCount &other) const {
-  if (other.Empty()) return true;
-  for (int i = 0; i < 26; ++i) {
-    char c = 'a' + i;
-    if (Count(c) < other.Count(c)) return false;
+absl::StatusOr<int> LetterCount::AddLetter(char c, int i) {
+  if (!std::isalpha(c)) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Non-alphabetical character '", std::string(1, c),
+                     "' cannot be passed to AddLetter."));
   }
-  return true;
+  if (i < 0)
+    return absl::InvalidArgumentError(
+        "Quantity passed to AddLetter must be nonnegative.");
+
+  c = std::tolower(c);
+  if (i > 0) set_count(c, count(c) + i);
+  return count(c);
 }
 
-bool LetterCount::Empty() const { return Size() == 0; }
+void LetterCount::AddLetters(absl::string_view s) { *this += s; }
 
-bool LetterCount::Valid() const {
-  for (int n : counts_) {
-    if (n < 0) return false;
+absl::StatusOr<int> LetterCount::RemoveLetter(char c, int i) {
+  if (!std::isalpha(c)) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Non-alphabetical character '", std::string(1, c),
+                     "' cannot be passed to RemoveLetter."));
   }
-  return true;
-}
-
-int LetterCount::Size() const {
-  return std::accumulate(counts_.begin(), counts_.end(), 0);
-}
-
-std::string LetterCount::AnyCharRegex() const {
-  std::string s = "[";
-  for (int i = 0; i < 26; ++i) {
-    if (counts_[i] > 0) {
-      absl::StrAppend(&s, std::string(1, 'a' + i));
-    }
+  if (i < 0) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("RemoveLetter can only remove a positive number of '",
+                     std::string(1, c), "'s."));
   }
-  return absl::StrCat(s, "]");
+  c = std::tolower(c);
+  if (count(c) < i) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "LetterCount contains only ", count(c), " '", std::string(1, c),
+        "'s, which is fewer than the ", i, " being removed."));
+  }
+  if (i > 0) set_count(c, count(c) - i);
+  return count(c);
+}
+
+absl::Status LetterCount::RemoveLetters(absl::string_view s) {
+  if (!this->contains(s))
+    return absl::InvalidArgumentError(
+        absl::StrCat("LetterCount does not contain all of the letters in ", s));
+  *this -= s;
+  return absl::OkStatus();
 }
 
 std::string LetterCount::CharsInOrder() const {
@@ -87,95 +94,87 @@ absl::flat_hash_set<std::string> LetterCount::CombinationsOfSize(int k) const {
   return combinations;
 }
 
-absl::StatusOr<int> LetterCount::AddLetter(char c, int i) {
-  if (!std::isalpha(c)) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Non-alphabetical character '", std::string(1, c),
-                     "' cannot be passed to AddLetter."));
-  }
-  if (i <= 0) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("AddLetter can only add a positive number of '",
-                     std::string(1, c), "'s."));
-  }
-
-  counts_[std::tolower(c) - 'a'] += i;
-  return counts_[std::tolower(c) - 'a'];
-}
-
-absl::StatusOr<int> LetterCount::RemoveLetter(char c, int i) {
-  if (!std::isalpha(c)) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Non-alphabetical character '", std::string(1, c),
-                     "' cannot be passed to RemoveLetter."));
-  }
-  if (i <= 0) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("RemoveLetter can only remove a positive number of '",
-                     std::string(1, c), "'s."));
-  }
-
-  int n = counts_[std::tolower(c) - 'a'];
-  if (n < i) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("LetterCount contains only ", n, " '", std::string(1, c),
-                     "'s, which is fewer than the ", i, " being removed."));
-  }
-
-  counts_[std::tolower(c) - 'a'] -= i;
-  return counts_[std::tolower(c) - 'a'];
-}
-
-bool LetterCount::operator==(const LetterCount &other) const {
+std::string LetterCount::RegexMatchingContents() const {
+  std::string s = "[";
   for (int i = 0; i < 26; ++i) {
-    if (counts_[i] != other.counts_[i]) return false;
+    if (counts_[i] > 0) {
+      absl::StrAppend(&s, std::string(1, 'a' + i));
+    }
+  }
+  return absl::StrCat(s, "]");
+}
+
+/** * * * * * * * * *
+ * Container methods *
+ * * * * * * * * * **/
+
+bool LetterCount::contains(const LetterCount &other) const {
+  if (other.empty()) return true;
+  for (int i = 0; i < 26; ++i) {
+    char c = 'a' + i;
+    if (count(c) < other.count(c)) return false;
   }
   return true;
 }
 
-bool LetterCount::operator<(const LetterCount &other) const {
-  for (int i = 0; i < 26; ++i) {
-    if (counts_[i] != other.counts_[i]) {
-      return counts_[i] > other.counts_[i];
-    }
-  }
-  return false;
+bool LetterCount::empty() const { return size() == 0; }
+
+int LetterCount::size() const {
+  return std::accumulate(counts_.begin(), counts_.end(), 0);
 }
+
+/** * * * * * * * * * * *
+ * Accessors & mutators *
+ * * * * * * * * * * * **/
+
+void LetterCount::set_count(char c, int i) {
+  if (!std::isalpha(c)) return;
+  counts_[std::tolower(c) - 'a'] = i;
+}
+
+int LetterCount::count(char c) const {
+  return std::isalpha(c) ? counts_[std::tolower(c) - 'a'] : 0;
+}
+
+/** * * * * * * * * * * *
+ * Overloaded operators *
+ * * * * * * * * * * * **/
 
 LetterCount &LetterCount::operator+=(const LetterCount &other) {
   for (int i = 0; i < 26; ++i) {
-    counts_[i] += other.counts_[i];
+    set_count('a' + i, count('a' + i) + other.count('a' + i));
   }
   return *this;
-}
-
-LetterCount LetterCount::operator+(const LetterCount &other) const {
-  LetterCount ret(*this);
-  ret += other;
-  return ret;
 }
 
 LetterCount &LetterCount::operator-=(const LetterCount &other) {
   for (int i = 0; i < 26; ++i) {
-    counts_[i] -= other.counts_[i];
+    set_count('a' + i, std::max(count('a' + i) - other.count('a' + i), 0));
   }
   return *this;
 }
 
-LetterCount LetterCount::operator-(const LetterCount &other) const {
-  LetterCount ret(*this);
-  ret -= other;
-  return ret;
+bool operator==(const LetterCount &lhs, const LetterCount &rhs) {
+  for (int i = 0; i < 26; ++i) {
+    if (lhs.count('a' + i) != rhs.count('a' + i)) return false;
+  }
+  return true;
 }
 
-std::string LetterCount::StringifyHelper() const {
-  if (Empty()) return "";
-  std::vector<std::string> v;
-  for (int i = 0; i < 26; ++i) {
-    if (counts_[i] == 0) continue;
-    v.push_back(absl::StrCat(std::string(1, 'a' + i), ":", counts_[i]));
-  }
-  return absl::StrCat("[", absl::StrJoin(v, ", "), "]");
+bool operator!=(const LetterCount &lhs, const LetterCount &rhs) {
+  return !(lhs == rhs);
+}
+
+LetterCount operator+(const LetterCount &lhs, const LetterCount &rhs) {
+  LetterCount result = lhs;
+  result += rhs;
+  return result;
+}
+
+LetterCount operator-(const LetterCount &lhs, const LetterCount &rhs) {
+  LetterCount result = lhs;
+  result -= rhs;
+  return result;
 }
 
 }  // namespace puzzmo
