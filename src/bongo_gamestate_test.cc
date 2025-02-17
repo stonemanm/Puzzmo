@@ -24,9 +24,9 @@ const absl::flat_hash_map<char, int> kLetterValues = {
 
 TEST(BongoGameStateTest, Constructor) {
   BongoGameState bgs(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"));
-  EXPECT_EQ(bgs.letter_values(), kLetterValues);
-  EXPECT_EQ(bgs.letter_grid(), kEmptyBoard);
-  EXPECT_EQ(bgs.letters_remaining().CharsInOrder(), "aaaabbbcdefgh");
+  EXPECT_EQ(bgs.values(), kLetterValues);
+  EXPECT_EQ(bgs.letter_board(), kEmptyBoard);
+  EXPECT_EQ(bgs.letter_pool().CharsInOrder(), "aaaabbbcdefgh");
 }
 
 TEST(BongoGameStateTest, FillAndClear) {
@@ -48,16 +48,16 @@ TEST(BongoGameStateTest, FillAndClear) {
    */
 
   // Uses letter from letter count
-  EXPECT_EQ(bgs.letters_remaining().count('a'), 37);
+  EXPECT_EQ(bgs.letter_pool().count('a'), 37);
   EXPECT_THAT(bgs.FillSquare(p1, 'a'), IsOk());
-  EXPECT_EQ(bgs.letters_remaining().count('a'), 36);
+  EXPECT_EQ(bgs.letter_pool().count('a'), 36);
   EXPECT_EQ(bgs.char_at(p1), 'a');
 
   // Removes placed letter if present
   EXPECT_THAT(bgs.FillSquare(p2, 'a'), IsOk());
-  EXPECT_EQ(bgs.letters_remaining().count('a'), 35);
+  EXPECT_EQ(bgs.letter_pool().count('a'), 35);
   EXPECT_THAT(bgs.FillSquare(p2, 'b'), IsOk());
-  EXPECT_EQ(bgs.letters_remaining().count('a'), 36);
+  EXPECT_EQ(bgs.letter_pool().count('a'), 36);
   EXPECT_EQ(bgs.char_at(p2), 'b');
 
   // Fails for letter not in bgs
@@ -68,10 +68,10 @@ TEST(BongoGameStateTest, FillAndClear) {
 
   // Fails if square is locked
   bgs.set_is_locked_at(p4, true);
-  EXPECT_EQ(bgs.letters_remaining().count('d'), 1);
+  EXPECT_EQ(bgs.letter_pool().count('d'), 1);
   EXPECT_THAT(bgs.FillSquare(p4, 'd'),
               StatusIs(absl::StatusCode::kFailedPrecondition));
-  EXPECT_EQ(bgs.letters_remaining().count('d'), 0);
+  EXPECT_EQ(bgs.letter_pool().count('d'), 0);
   EXPECT_EQ(bgs.char_at(p4), '_');
 
   // Fails if square is out of bounds

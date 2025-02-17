@@ -101,11 +101,6 @@ int main(int argc, const char *argv[]) {
     LOG(ERROR) << s;
     return 1;
   }
-  starting_state->set_is_locked({{0, 0, 0, 0, 0},
-                                 {0, 0, 0, 0, 0},
-                                 {0, 0, 0, 0, 0},
-                                 {0, 0, 0, 0, 0},
-                                 {0, 1, 1, 1, 1}});
 
   BongoSolver bongo_solver(
       dict, *starting_state,

@@ -44,7 +44,7 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
         {.min_length = 4,
          .max_length = 4,
          .min_letters = LetterCount(combo),
-         .max_letters = starting_state_.letters_remaining(),
+         .max_letters = starting_state_.letter_pool(),
          .matching_regex = starting_state_.RegexForPath(bonus_path)});
     bonus_words_to_try.insert(words.begin(), words.end());
   }
@@ -124,9 +124,11 @@ absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
   absl::flat_hash_set<std::string> matches = dict_.GetMatchingWords(
       {.min_length = 5,
        .max_length = 5,
-       .min_letters = LetterCount(current_board.row_string(row)),
-       .max_letters = current_board.letters_remaining() +
-                      LetterCount(current_board.row_string(row)),
+       .min_letters =
+           LetterCount(current_board.path_string(current_board.row_path(row))),
+       .max_letters =
+           current_board.letter_pool() +
+           LetterCount(current_board.path_string(current_board.row_path(row))),
        .matching_regex =
            current_board.RegexForPath(current_board.row_path(row))});
 

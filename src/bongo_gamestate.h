@@ -21,12 +21,12 @@ class BongoGameState {
   // remains.
   BongoGameState(const std::vector<std::string> board,
                  absl::flat_hash_map<char, int> letter_values,
-                 LetterCount letters_remaining,
-                 std::vector<std::string> letter_grid);
+                 LetterCount letter_pool,
+                 std::vector<std::string> letter_board);
   BongoGameState(const std::vector<std::string> board,
                  absl::flat_hash_map<char, int> letter_values,
-                 LetterCount letters_remaining)
-      : BongoGameState(board, letter_values, letters_remaining, {}) {};
+                 LetterCount letter_pool)
+      : BongoGameState(board, letter_values, letter_pool, {}) {};
 
   // Clears the letter from unlocked square p, if present.
   absl::Status ClearSquare(const Point &p);
@@ -79,61 +79,34 @@ class BongoGameState {
    * Accessors & mutators *
    * * * * * * * * * * * **/
 
-  // Note: mutators allow setting chars not in the letter count, or overwriting
-  // of locked points. Use with caution!
-
-  void set_letters_remaining(LetterCount lc);  // Unused
-  LetterCount letters_remaining() const;
-
-  void set_letter_grid(std::vector<std::string> grid);  // Unused
-  std::vector<std::string> letter_grid() const;
-  void set_char_at(const Point &p, char c);
-  void set_char_at(int row, int col, char c) { set_char_at({row, col}, c); }
-  char char_at(const Point &p) const;
-  char char_at(int row, int col) const { return char_at({row, col}); }
-
-  void set_multiplier_grid(std::vector<std::vector<int>> grid);
-  std::vector<std::vector<int>> multiplier_grid() const;
-  void set_multiplier_at(const Point &p, int i);
-  void set_multiplier_at(int row, int col, int i) {
-    set_multiplier_at({row, col}, i);
-  }
-  int multiplier_at(const Point &p) const;
-  int multiplier_at(int row, int col) const {
-    return multiplier_at({row, col});
-  }
-
-  void set_bonus_path(const std::vector<Point> &path);
-  std::vector<Point> bonus_path() const;
+  LetterCount letter_pool() const { return letter_pool_; }
+  std::vector<std::string> letter_board() const { return letter_board_; }
+  std::vector<std::vector<int>> mult_board() const { return mult_board_; }
+  std::vector<std::vector<bool>> lock_board() const { return lock_board_; }
+  absl::flat_hash_map<char, int> values() const { return values_; }
+  std::vector<Point> bonus_path() const { return bonus_path_; }
   std::vector<Point> row_path(int row) const;
   std::string path_string(const std::vector<Point> &path) const;
 
-  void set_row_string(int row, absl::string_view sv);
-  std::string row_string(int row) const;
-
-  void set_bonus_string(absl::string_view sv);
-  std::string bonus_string() const;
-
-  void set_letter_values(absl::flat_hash_map<char, int> lvmap);
-  absl::flat_hash_map<char, int> letter_values() const;
-
-  void set_is_locked(std::vector<std::vector<bool>> is_locked);
-  std::vector<std::vector<bool>> is_locked() const;
-
-  void set_is_locked_at(const Point &p, bool is_locked);
-  void set_is_locked_at(int row, int col, bool is_locked) {
-    set_is_locked_at({row, col}, is_locked);
-  }
+  char char_at(const Point &p) const;
+  char char_at(int row, int col) const;
+  int multiplier_at(const Point &p) const;
+  int multiplier_at(int row, int col) const;
   bool is_locked_at(const Point &p) const;
-  bool is_locked_at(int row, int col) const { return is_locked_at({row, col}); }
+  bool is_locked_at(int row, int col) const;
+  void set_is_locked_at(const Point &p, bool is_locked);
+  void set_is_locked_at(int row, int col, bool is_locked);
 
  private:
-  LetterCount letters_remaining_;
-  std::vector<std::string> letter_grid_;
-  std::vector<std::vector<int>> multiplier_grid_;
+  void set_char_at(const Point &p, char c);
+  void set_char_at(int row, int col, char c);
+
+  LetterCount letter_pool_;
+  std::vector<std::string> letter_board_;
+  std::vector<std::vector<int>> mult_board_;
+  std::vector<std::vector<bool>> lock_board_;
+  absl::flat_hash_map<char, int> values_;
   std::vector<Point> bonus_path_;
-  absl::flat_hash_map<char, int> letter_values_;
-  std::vector<std::vector<bool>> is_locked_;
 
   /** * * * * * * * * *
    * Abseil functions *
@@ -142,18 +115,18 @@ class BongoGameState {
   // Allows hashing of BongoGameState.
   template <typename H>
   friend H AbslHashValue(H h, const BongoGameState &bgs) {
-    return H::combine(std::move(h), bgs.letters_remaining_, bgs.letter_grid_,
-                      bgs.multiplier_grid_, bgs.bonus_path_, bgs.letter_values_,
-                      bgs.is_locked_);
+    return H::combine(std::move(h), bgs.letter_pool_, bgs.letter_board_,
+                      bgs.mult_board_, bgs.bonus_path_, bgs.values_,
+                      bgs.lock_board_);
   }
 
   // Allows easy conversion of BongoGameState to string.
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const BongoGameState &bgs) {
-    absl::Format(&sink, "%v\n[%s]\n[%s]\n[%s]\n[%s]\n[%s]",
-                 bgs.letters_remaining_, bgs.letter_grid_[0],
-                 bgs.letter_grid_[1], bgs.letter_grid_[2], bgs.letter_grid_[3],
-                 bgs.letter_grid_[4]);
+    absl::Format(&sink, "%v\n[%s]\n[%s]\n[%s]\n[%s]\n[%s]", bgs.letter_pool_,
+                 bgs.letter_board_[0], bgs.letter_board_[1],
+                 bgs.letter_board_[2], bgs.letter_board_[3],
+                 bgs.letter_board_[4]);
   }
 };
 
