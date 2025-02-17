@@ -140,6 +140,17 @@ absl::Status BongoGameState::ClearBoard() {
   return absl::OkStatus();
 }
 
+absl::flat_hash_set<std::vector<Point>> BongoGameState::PathsToScore() const {
+  absl::flat_hash_set<std::vector<Point>> paths;
+  paths.insert(row_path(0));
+  paths.insert(row_path(1));
+  paths.insert(row_path(2));
+  paths.insert(row_path(3));
+  paths.insert(row_path(4));
+  paths.insert(bonus_path_);
+  return paths;
+}
+
 std::string BongoGameState::GetWord(const std::vector<Point> &path) const {
   int threshold = (path == bonus_path_) ? 4 : 3;
   std::string path_substr = LongestAlphaSubstring(path_string(path));
@@ -147,8 +158,9 @@ std::string BongoGameState::GetWord(const std::vector<Point> &path) const {
 }
 
 bool BongoGameState::IsComplete() const {
-  for (int row = 0; row < 5; ++row) {
-    if (GetWord(row_path(row)).empty()) return false;
+  for (const auto &path : PathsToScore()) {
+    if (path == bonus_path_) continue;
+    if (GetWord(path).empty()) return false;
   }
   return true;
 }
@@ -204,12 +216,11 @@ std::string BongoGameState::RegexForPath(const std::vector<Point> &path) const {
 }
 
 int BongoGameState::CalculateScore(const BongoDictionary &dict) const {
-  return CalculatePathScore(row_path(0), dict) +
-         CalculatePathScore(row_path(1), dict) +
-         CalculatePathScore(row_path(2), dict) +
-         CalculatePathScore(row_path(3), dict) +
-         CalculatePathScore(row_path(4), dict) +
-         CalculatePathScore(bonus_path(), dict);
+  int score = 0;
+  for (const auto &path : PathsToScore()) {
+    score += CalculatePathScore(path, dict);
+  }
+  return score;
 }
 
 int BongoGameState::CalculatePathScore(const std::vector<Point> &path,

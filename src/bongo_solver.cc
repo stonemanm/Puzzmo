@@ -102,10 +102,7 @@ absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
         highest_scoring_board_.CalculateScore(dict_)) {
       LOG(INFO) << absl::StrCat("New best score! (",
                                 current_board.CalculateScore(dict_), ")");
-      for (const auto &path :
-           {current_board.row_path(0), current_board.row_path(1),
-            current_board.row_path(2), current_board.row_path(3),
-            current_board.row_path(4), current_board.bonus_path()}) {
+      for (const auto &path : current_board.PathsToScore()) {
         std::string word = current_board.GetWord(path);
         LOG(INFO) << absl::StrCat(
             current_board.CalculatePathScore(path, dict_), " - ", word,

@@ -44,6 +44,9 @@ class BongoGameState {
   // Clears all unlocked letters from the board.
   absl::Status ClearBoard();
 
+  // Returns the six paths used to score the board.
+  absl::flat_hash_set<std::vector<Point>> PathsToScore() const;
+
   // Grabs the longest consecutive substring of letters from the path. If it is
   // 3+ characters (or 4+ if it's the bonus path), return it; otherwise, returns
   // an empty string. Note that whether or not this is a dictionary word is not
