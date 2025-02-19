@@ -156,6 +156,20 @@ std::string BongoGameState::GetWord(const std::vector<Point> &path) const {
   return (path_substr.length() >= threshold) ? path_substr : "";
 }
 
+bool BongoGameState::IsChildOf(const BongoGameState &other) const {
+  if (AllLetters() != other.AllLetters() || mult_board_ != other.mult_board() ||
+      values_ != other.values() || bonus_path_ != other.bonus_path())
+    return false;
+
+  for (int row = 0; row < 5; ++row) {
+    for (int col = 0; col < 5; ++col) {
+      char c = other.char_at(row, col);
+      if (std::isalpha(c) && char_at(row, col) != c) return false;
+    }
+  }
+  return true;
+}
+
 bool BongoGameState::IsComplete() const {
   for (const auto &path : PathsToScore()) {
     if (path == bonus_path_) continue;
@@ -176,6 +190,14 @@ int BongoGameState::MostRestrictedWordlessRow() const {
     }
   }
   return row_to_focus;
+}
+
+LetterCount BongoGameState::AllLetters() const {
+  LetterCount all = letter_pool_;
+  for (const auto &str : letter_board_) {
+    all.AddLetters(str);
+  }
+  return all;
 }
 
 int BongoGameState::NumLetters() const {

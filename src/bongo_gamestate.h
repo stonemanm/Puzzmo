@@ -52,6 +52,11 @@ class BongoGameState {
   // validated.
   std::string GetWord(const std::vector<Point> &path) const;
 
+  // Returns true iff `other` could have come from the same starting state and
+  // has placed a subset of the letters that this gamestate has. (On the
+  // same squares, of course.)
+  bool IsChildOf(const BongoGameState &other) const;
+
   // Returns true iff every row has a word.
   bool IsComplete() const;
 
@@ -59,6 +64,7 @@ class BongoGameState {
   // consecutive letters. Breaks ties in favor of the lowest index.
   int MostRestrictedWordlessRow() const;
 
+  LetterCount AllLetters() const;
   int NumLetters() const;
   int NumLettersLeft() const;
   int NumLettersPlaced() const;
@@ -116,8 +122,8 @@ class BongoGameState {
   template <typename H>
   friend H AbslHashValue(H h, const BongoGameState &bgs) {
     return H::combine(std::move(h), bgs.letter_pool_, bgs.letter_board_,
-                      bgs.mult_board_, bgs.bonus_path_, bgs.values_,
-                      bgs.lock_board_);
+                      bgs.mult_board_, bgs.lock_board_, bgs.values_,
+                      bgs.bonus_path_);
   }
 
   // Allows easy conversion of BongoGameState to string.
