@@ -12,6 +12,7 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
   std::vector<Point> bonus_path = starting_state_.bonus_path();
   std::vector<Point> multiplier_squares = starting_state_.MultiplierSquares();
 
+  // // Get the triple multiplier square,,,
   // Point triple_square;
   // for (const Point &p : multiplier_squares) {
   //   if (starting_state_.multiplier_at(p) == 3) {
@@ -20,17 +21,37 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
   //   }
   // }
 
-  // std::string mvl = starting_state_.NMostValuableTiles(1);
-  // BongoGameState current_board = starting_state_;
-  // if (auto s = current_board.PlaceLetter(triple_square, mvl[0]); !s.ok())
-  //   return s;
+  // std::vector<Point> triple_path =
+  // starting_state_.row_path(triple_square.row);
 
+  // // ...and lock the highest-value tile on it...
+  // std::string mvl = starting_state_.NMostValuableTiles(1);
+  // BongoGameState bgs = starting_state_;
+  // if (auto s = bgs.FillSquare(triple_square, mvl[0]); !s.ok()) return s;
+  // bgs.set_is_locked_at(triple_square, true);
+
+  // // ...then get the possible words for that row.
   // absl::flat_hash_set<std::string> triple_words_to_try =
   // dict_.GetMatchingWords(
-  //     {.min_length = 5,
+  //     {.min_length = 3,
   //      .max_length = 5,
-  //      .max_letters = starting_state_.letters_remaining(),
-  //      .matching_regex = current_board.RegexForRow(triple_square.row)});
+  //      .max_letters = starting_state_.letter_pool(),
+  //      .matching_regex =  // bgs.RegexForPath(triple_path)
+  //      ".*w$"});
+
+  // int loops = 0;
+  // for (const auto &triple_word : triple_words_to_try) {
+  //   LOG(INFO) << "Beginning loop " << ++loops << " with bonus word \""
+  //             << triple_word << "\"";
+
+  //   // Place the triple word on the board
+  //   BongoGameState current_board = starting_state_;
+  //   if (auto s = current_board.FillPath(bonus_path, triple_word); !s.ok())
+  //     return s;
+  //   for (const Point &p : triple_path) {
+  //     // curren
+  //   }
+  // }
 
   // To narrow the search space, grab the most valuable tiles and try to
   // make bonus words using three of them.
@@ -53,7 +74,8 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
 
   int loops = 0;
   for (const std::string &bonus_word : bonus_words_to_try) {
-    LOG(INFO) << "Beginning loop " << ++loops << " with bonus word \""
+    LOG(INFO) << "Beginning loop " << ++loops << "/"
+              << bonus_words_to_try.size() << " with bonus word \""
               << bonus_word << "\"";
 
     // Place the bonus word on the board
@@ -97,20 +119,26 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
 absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
   // If all rows are filled, score the board. Update highest_scoring_board_ if
   // appropriate
+  // std::cout << "\r" << "[" << current_board.letter_board()[0] << "]" << "["
+  //           << current_board.letter_board()[1] << "]" << "["
+  //           << current_board.letter_board()[2] << "]" << "["
+  //           << current_board.letter_board()[3] << "]" << "["
+  //           << current_board.letter_board()[4] << "]";
+  if (current_board.NumLetters() < 25) return absl::UnknownError("huh");
   if (current_board.IsComplete()) {
-    if (current_board.CalculateScore(dict_) >
-        highest_scoring_board_.CalculateScore(dict_)) {
-      LOG(INFO) << absl::StrCat("New best score! (",
-                                current_board.CalculateScore(dict_), ")");
+    if (int current_score = Score(current_board);
+        current_score > highest_score_) {
+      LOG(INFO) << absl::StrCat("New best score! (", current_score, ")");
       for (const auto &path : current_board.PathsToScore()) {
         std::string word = current_board.GetWord(path);
-        LOG(INFO) << absl::StrCat(
-            current_board.CalculatePathScore(path, dict_), " - ", word,
-            (dict_.IsCommonWord(word) ? " is" : " isn't"), " a common word.");
+        LOG(INFO) << absl::StrCat(PathScore(current_board, path), " - ", word,
+                                  (dict_.IsCommonWord(word) ? " is" : " isn't"),
+                                  " a common word.");
       }
 
       LOG(INFO) << current_board;
       highest_scoring_board_ = current_board;
+      highest_score_ = current_score;
     }
     return absl::OkStatus();
   }
@@ -129,8 +157,8 @@ absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
        .matching_regex =
            current_board.RegexForPath(current_board.row_path(row))});
 
-  // For each match, if it's possible to place it on the board, do so, recurse,
-  // then backtrack.
+  // For each match, if it's possible to place it on the board, do so,
+  // recurse, then backtrack.
   for (const auto &word : matches) {
     if (auto s = current_board.FillPath(current_board.row_path(row), word);
         !s.ok()) {
@@ -148,6 +176,33 @@ absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
   }
 
   return absl::OkStatus();
+}
+
+int BongoSolver::Score(const BongoGameState &bgs) const {
+  int score = 0;
+  for (const auto &path : bgs.PathsToScore()) {
+    score += PathScore(bgs, path);
+  }
+  return score;
+}
+
+int BongoSolver::PathScore(const BongoGameState &bgs,
+                           const std::vector<Point> &path) const {
+  std::string word = bgs.GetWord(path);
+  if (!dict_.IsValidWord(word)) return 0;
+
+  // Find the index in path where word begins.
+  int offset = 0;
+  while (bgs.path_string(path).substr(offset, word.size()) != word) {
+    ++offset;
+  }
+
+  int score = 0;
+  for (int i = 0; i < word.size(); ++i) {
+    char c = word[i];
+    score += (bgs.values().at(c) * bgs.multiplier_at(path[i + offset]));
+  }
+  return std::ceil(score * (dict_.IsCommonWord(word) ? 1.3 : 1));
 }
 
 }  // namespace puzzmo

@@ -2,7 +2,6 @@
 
 #include <cctype>
 #include <climits>
-#include <cmath>
 #include <string>
 
 #include "absl/strings/str_cat.h"
@@ -140,14 +139,14 @@ absl::Status BongoGameState::ClearBoard() {
   return absl::OkStatus();
 }
 
-absl::flat_hash_set<std::vector<Point>> BongoGameState::PathsToScore() const {
-  absl::flat_hash_set<std::vector<Point>> paths;
-  paths.insert(row_path(0));
-  paths.insert(row_path(1));
-  paths.insert(row_path(2));
-  paths.insert(row_path(3));
-  paths.insert(row_path(4));
-  paths.insert(bonus_path_);
+std::vector<std::vector<Point>> BongoGameState::PathsToScore() const {
+  std::vector<std::vector<Point>> paths;
+  paths.push_back(row_path(0));
+  paths.push_back(row_path(1));
+  paths.push_back(row_path(2));
+  paths.push_back(row_path(3));
+  paths.push_back(row_path(4));
+  paths.push_back(bonus_path_);
   return paths;
 }
 
@@ -177,6 +176,18 @@ int BongoGameState::MostRestrictedWordlessRow() const {
     }
   }
   return row_to_focus;
+}
+
+int BongoGameState::NumLetters() const {
+  return NumLettersLeft() + NumLettersPlaced();
+}
+int BongoGameState::NumLettersLeft() const { return letter_pool_.size(); }
+int BongoGameState::NumLettersPlaced() const {
+  int count = 0;
+  for (const auto &rowstr : letter_board_) {
+    count += LetterCount(rowstr).size();
+  }
+  return count;
 }
 
 std::vector<Point> BongoGameState::MultiplierSquares() const {
@@ -213,33 +224,6 @@ std::string BongoGameState::RegexForPath(const std::vector<Point> &path) const {
                               : letter_pool_.RegexMatchingContents());
   }
   return rgx;
-}
-
-int BongoGameState::CalculateScore(const BongoDictionary &dict) const {
-  int score = 0;
-  for (const auto &path : PathsToScore()) {
-    score += CalculatePathScore(path, dict);
-  }
-  return score;
-}
-
-int BongoGameState::CalculatePathScore(const std::vector<Point> &path,
-                                       const BongoDictionary &dict) const {
-  std::string word = GetWord(path);
-  if (!dict.IsValidWord(word)) return 0;
-
-  // Find the index in path where word begins.
-  int offset = 0;
-  while (path_string(path).substr(offset, word.size()) != word) {
-    ++offset;
-  }
-
-  int score = 0;
-  for (int i = 0; i < word.size(); ++i) {
-    char c = word[i];
-    score += (values_.at(c) * multiplier_at(path[i + offset]));
-  }
-  return std::ceil(score * (dict.IsCommonWord(word) ? 1.3 : 1));
 }
 
 /** * * * * * * * * * * *

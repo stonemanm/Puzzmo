@@ -23,12 +23,12 @@ ABSL_FLAG(std::string, path_to_tile_file, "data/bongo_tiles.txt",
           "number of that letter, and the value of that latter.");
 
 ABSL_FLAG(
-    int, tiles_for_bonus_words, 8,
+    int, tiles_for_bonus_words, 7,
     "The number to pass NMostValuableTiles, from which sets of 3 are chosen to "
     "make possible bonus words. Note that increasing this n scales by O(n^2).");
 
 ABSL_FLAG(
-    int, tiles_for_multiplier_tiles, 5,
+    int, tiles_for_multiplier_tiles, 4,
     "The number to pass NMostValuableTiles, from which sets of 3 are chosen to "
     "make possible bonus words. Note that increasing this n scales by O(n^2).");
 
@@ -60,7 +60,7 @@ absl::StatusOr<BongoGameState> LoadStartingState() {
   if (!board.ok()) return board.status();
 
   absl::flat_hash_map<char, int> letter_values;
-  LetterCount tiles;
+  LetterCount letter_pool;
   auto tile_triples = LoadStringVector(absl::GetFlag(FLAGS_path_to_tile_file));
   if (!tile_triples.ok()) return tile_triples.status();
 
@@ -72,10 +72,10 @@ absl::StatusOr<BongoGameState> LoadStartingState() {
           " not properly formatted: ", triple));
     }
     char c = v[0][0];
-    auto s = tiles.AddLetter(c, std::stoi(v[1]));
+    auto s = letter_pool.AddLetter(c, std::stoi(v[1]));
     letter_values[c] = std::stoi(v[2]);
   }
-  return BongoGameState(*board, letter_values, tiles);
+  return BongoGameState(*board, letter_values, letter_pool);
 }
 
 }  // namespace
@@ -94,13 +94,22 @@ int main(int argc, const char *argv[]) {
     LOG(ERROR) << starting_state.status();
     return 1;
   }
-
-  auto s = starting_state->FillPath({{4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}},
-                                    "alive");
-  if (!s.ok()) {
-    LOG(ERROR) << s;
+  if (starting_state->NumLetters() < 25) {
+    LOG(ERROR) << "Fewer than 25 letters provided in letter pool.";
     return 1;
   }
+
+  // auto s = starting_state->FillPath({{2, 0}, {2, 1}, {2, 2}, {2, 3}, {2, 4}},
+  //                                   "likes");
+  // if (!s.ok()) {
+  //   LOG(ERROR) << s;
+  //   return 1;
+  // }
+  // starting_state->set_is_locked_at({2, 0}, true);
+  // starting_state->set_is_locked_at({2, 1}, true);
+  // starting_state->set_is_locked_at({2, 2}, true);
+  // starting_state->set_is_locked_at({2, 3}, true);
+  // starting_state->set_is_locked_at({2, 4}, true);
 
   BongoSolver bongo_solver(
       dict, *starting_state,

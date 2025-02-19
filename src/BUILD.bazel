@@ -115,7 +115,6 @@ cc_library(
     srcs = ["bongo_gamestate.cc"],
     hdrs = ["bongo_gamestate.h"],
     deps = [
-        ":bongo_dictionary",
         ":letter_count",
         ":point",
         "@abseil-cpp//absl/container:flat_hash_map",

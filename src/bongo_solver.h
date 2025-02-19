@@ -33,10 +33,14 @@ class BongoSolver {
 
  private:
   absl::Status FindWordsRecursively(BongoGameState &current_board);
+  int Score(const BongoGameState &bgs) const;
+  int PathScore(const BongoGameState &bgs,
+                const std::vector<Point> &path) const;
 
   const BongoDictionary dict_;
   const BongoGameState starting_state_;
   BongoGameState highest_scoring_board_;
+  int highest_score_;
 
   // The number to pass NMostValuableTiles, from which sets of 3 are chosen to
   // make possible bonus words. Note that increasing this n scales by O(n^2).

@@ -7,7 +7,6 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "bongo_dictionary.h"
 #include "letter_count.h"
 #include "point.h"
 
@@ -45,7 +44,7 @@ class BongoGameState {
   absl::Status ClearBoard();
 
   // Returns the six paths used to score the board.
-  absl::flat_hash_set<std::vector<Point>> PathsToScore() const;
+  std::vector<std::vector<Point>> PathsToScore() const;
 
   // Grabs the longest consecutive substring of letters from the path. If it is
   // 3+ characters (or 4+ if it's the bonus path), return it; otherwise, returns
@@ -60,6 +59,10 @@ class BongoGameState {
   // consecutive letters. Breaks ties in favor of the lowest index.
   int MostRestrictedWordlessRow() const;
 
+  int NumLetters() const;
+  int NumLettersLeft() const;
+  int NumLettersPlaced() const;
+
   // Returns a vector of the points that have tile multipliers on them.
   std::vector<Point> MultiplierSquares() const;
 
@@ -71,12 +74,6 @@ class BongoGameState {
   // match, and any nonalphabetical characters are replaced with regex matching
   // any of the letters remaining.
   std::string RegexForPath(const std::vector<Point> &path) const;
-
-  // Uses the dictionary to check validity and commonality of words, then
-  // calculates the relative score.
-  int CalculateScore(const BongoDictionary &dict) const;
-  int CalculatePathScore(const std::vector<Point> &path,
-                         const BongoDictionary &dict) const;
 
   /** * * * * * * * * * * *
    * Accessors & mutators *
