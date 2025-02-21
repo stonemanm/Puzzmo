@@ -52,12 +52,6 @@ class SpelltowerBoard {
   // Note: Score does not do any checking on the validity of points on the path.
   int Score(const absl::flat_hash_set<Point> &path) const;
 
-  // Checks the rows (columns on the main board) to see if the letters of `word`
-  // occur in adjacent rows.
-  bool MightHaveWord(absl::string_view word) const;
-  std::vector<std::string> MightHaveWords(
-      const std::vector<std::string> &words) const;
-
   bool MightHaveAllStarWord(absl::string_view word) const;
   std::vector<std::string> MightHaveAllStarWords(
       const std::vector<std::string> &words) const;
@@ -75,6 +69,14 @@ class SpelltowerBoard {
   bool is_star_at(int row, int col) const;
 
  private:
+  bool DFS(absl::string_view word, int i,
+           std::vector<LetterCount> &row_letter_counts,
+           std::vector<Point> &path) const;
+  bool IsPathPossible(std::vector<Point> &path) const;
+  bool UpdatePath(std::vector<Point> &path, int l,
+                  const std::vector<int> &min_col,
+                  const std::vector<std::vector<int>> &row_i_in_order) const;
+
   std::vector<std::string> board_;
   int rows_, cols_ = 0;
   std::vector<Point> stars_;
@@ -82,15 +84,6 @@ class SpelltowerBoard {
 
   static const int max_cols_ = 13;
   static const int max_rows_ = 9;
-
-  bool DFS(absl::string_view word, int i, int row) const;
-  void DFS(absl::string_view word, int i,
-           std::vector<LetterCount> &row_letter_counts,
-           std::vector<Point> &path,
-           std::vector<std::vector<Point>> &paths) const;
-  bool DFS(absl::string_view word, int i, int row, std::vector<Point> &path,
-           std::vector<bool> &used_stars,
-           std::vector<LetterCount> &row_letter_counts) const;
 };
 
 }  // namespace puzzmo

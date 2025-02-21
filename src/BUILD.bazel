@@ -305,6 +305,27 @@ cc_test(
 )
 
 cc_library(
+    name = "spelltower_path",
+    srcs = ["spelltower_path.cc"],
+    hdrs = ["spelltower_path.h"],
+    deps = [
+        ":point",
+    ],
+)
+
+cc_test(
+    name = "spelltower_path_test",
+    size = "small",
+    srcs = ["spelltower_path_test.cc"],
+    deps = [
+        ":spelltower_path",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "spelltower_solver",
     srcs = ["spelltower_solver.cc"],
     hdrs = ["spelltower_solver.h"],
