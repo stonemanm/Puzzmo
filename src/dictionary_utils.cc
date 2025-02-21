@@ -43,20 +43,15 @@ absl::StatusOr<std::vector<std::string>> ReadDictionaryFileToVector(
   while (std::getline(dictfile, line)) {
     int l = line.length();
     if (l < options.min_letters || l > options.max_letters) continue;
-    if (options.letter_count.empty()) {
+    if (options.min_letter_count.empty() && options.max_letter_count.empty()) {
       words.push_back(line);
       continue;
     }
-    LetterCount lc = options.letter_count;
-    bool valid = true;
-    for (char c : line) {
-      auto n = lc.RemoveLetter(c);
-      if (!n.ok()) {
-        valid = false;
-        break;
-      }
-    }
-    if (valid) {
+
+    LetterCount lc(line);
+    if ((options.max_letter_count.empty() ||
+         options.max_letter_count.contains(lc)) &&
+        lc.contains(options.min_letter_count)) {
       words.push_back(line);
     }
   }

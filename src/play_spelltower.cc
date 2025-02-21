@@ -15,11 +15,11 @@
 
 using namespace puzzmo;
 
-ABSL_FLAG(bool, run_regex, false, "Run regex mode instead of the DFS?");
+ABSL_FLAG(bool, run_regex, true, "Run regex mode instead of the DFS?");
 
 int main(int argc, const char *argv[]) {
   // Read in the board
-  std::vector<std::vector<char>> boardvec;
+  std::vector<std::string> boardvec;
   std::ifstream boardfile("data/spelltower_board.txt");
   if (!boardfile.is_open()) {
     LOG(ERROR) << "Error: Could not open spelltower_board.txt";
@@ -28,7 +28,7 @@ int main(int argc, const char *argv[]) {
   std::string line;
   LetterCount letter_count;
   while (std::getline(boardfile, line)) {
-    std::vector<char> row;
+    std::string row;
     std::istringstream iss(line);
     char c;
     while (iss >> c) {
@@ -44,23 +44,29 @@ int main(int argc, const char *argv[]) {
 
   // Read in the dictionary
   auto words = ReadDictionaryFileToVector(
-      {.min_letters = 3, .letter_count = letter_count});
+      {.min_letters = 3, .max_letter_count = letter_count});
   if (!words.ok()) {
     LOG(ERROR) << words.status();
     return 1;
   }
 
   if (absl::GetFlag(FLAGS_run_regex)) {
-    std::vector<std::string> filtered_words =
-        board.MightHaveAllStarWords(*words);
-    LOG(INFO) << filtered_words.size();
-    std::sort(filtered_words.begin(), filtered_words.end(),
+    auto maybe_star_words = ReadDictionaryFileToVector(
+        {.min_letters = 3,
+         .min_letter_count = LetterCount(board.StarLetters())});
+    if (!maybe_star_words.ok()) {
+      LOG(ERROR) << maybe_star_words.status();
+      return 1;
+    }
+    std::sort(maybe_star_words->begin(), maybe_star_words->end(),
               [](std::string a, std::string b) {
                 if (a.length() == b.length()) return a < b;
-                return a.length() < b.length();
+                return a.length() > b.length();
               });
+    std::vector<std::string> filtered_words =
+        board.MightHaveAllStarWords(*maybe_star_words);
 
-    LOG(INFO) << "All words in dictionary, shortest to longest:";
+    LOG(INFO) << "All words in dictionary, longest to shortest:";
     std::string regexmonster =
         absl::StrJoin(board.GetAllStarRegexes(), "|",
                       [](std::string *out, const std::string &in) {

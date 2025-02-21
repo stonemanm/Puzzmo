@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "letter_count.h"
 #include "point.h"
@@ -22,11 +23,7 @@ const int kLetterScores[] = {
 // A board state for Spelltower.
 class SpelltowerBoard {
  public:
-  explicit SpelltowerBoard(const std::vector<std::vector<char>> &board);
-
-  // Returns the letter at a given spot on the board.
-  char At(const Point &p) const;
-  char At(int row, int col) const;
+  explicit SpelltowerBoard(const std::vector<std::string> &board);
 
   // Returns true if the point exists on the board.
   bool HasPoint(const Point &p) const;
@@ -42,6 +39,7 @@ class SpelltowerBoard {
   int NumRows() const;
   int NumCols() const;
   int NumStars() const;
+  std::string StarLetters() const;
 
   absl::flat_hash_set<std::string> GetAllStarRegexes() const;
 
@@ -56,24 +54,41 @@ class SpelltowerBoard {
 
   // Checks the rows (columns on the main board) to see if the letters of `word`
   // occur in adjacent rows.
-  bool MightHaveWord(const std::string &word) const;
+  bool MightHaveWord(absl::string_view word) const;
   std::vector<std::string> MightHaveWords(
       const std::vector<std::string> &words) const;
 
-  bool MightHaveAllStarWord(const std::string &word) const;
+  bool MightHaveAllStarWord(absl::string_view word) const;
   std::vector<std::string> MightHaveAllStarWords(
       const std::vector<std::string> &words) const;
 
+  /** * * * * * * * * * * *
+   * Accessors & mutators *
+   * * * * * * * * * * * **/
+
+  // Returns the letter at a given spot on the board, or
+  char char_at(const Point &p) const;
+  char char_at(int row, int col) const;
+
+  // Returns whether or not a given point has a star on it.
+  bool is_star_at(const Point &p) const;
+  bool is_star_at(int row, int col) const;
+
  private:
-  std::vector<std::vector<char>> board_;
+  std::vector<std::string> board_;
   int rows_, cols_ = 0;
   std::vector<Point> stars_;
+  absl::flat_hash_map<char, std::vector<Point>> letter_map_;
 
   static const int max_cols_ = 13;
   static const int max_rows_ = 9;
 
-  bool DFS(const std::string &word, int i, int row) const;
-  bool DFS(const std::string &word, int i, int row,
+  bool DFS(absl::string_view word, int i, int row) const;
+  void DFS(absl::string_view word, int i,
+           std::vector<LetterCount> &row_letter_counts,
+           std::vector<Point> &path,
+           std::vector<std::vector<Point>> &paths) const;
+  bool DFS(absl::string_view word, int i, int row, std::vector<Point> &path,
            std::vector<bool> &used_stars,
            std::vector<LetterCount> &row_letter_counts) const;
 };

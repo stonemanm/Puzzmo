@@ -140,6 +140,7 @@ cc_library(
     srcs = ["bongo_solver.cc"],
     hdrs = ["bongo_solver.h"],
     deps = [
+        ":bongo_dictionary",
         ":bongo_gamestate",
         ":dictionary_utils",
         ":letter_count",
@@ -254,7 +255,9 @@ cc_library(
     deps = [
         ":letter_count",
         ":point",
+        "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -265,6 +268,37 @@ cc_test(
     srcs = ["spelltower_board_test.cc"],
     deps = [
         ":spelltower_board",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "spelltower_dictionary",
+    srcs = ["spelltower_dictionary.cc"],
+    hdrs = ["spelltower_dictionary.h"],
+    data = [
+        "//data:words_puzzmo.txt",
+    ],
+    deps = [
+        ":letter_count",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@re2",
+    ],
+)
+
+cc_test(
+    name = "spelltower_dictionary_test",
+    size = "small",
+    srcs = ["spelltower_dictionary_test.cc"],
+    deps = [
+        ":spelltower_dictionary",
+        "@abseil-cpp//absl/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

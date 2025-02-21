@@ -23,7 +23,8 @@ struct ReadFileOptions {
   WordSet word_source;  // Defaults to kPuzzmoWords.
   int min_letters = 1;
   int max_letters = INT_MAX;
-  LetterCount letter_count;
+  LetterCount min_letter_count;
+  LetterCount max_letter_count;
 };
 
 // A basic implementation of a node in a Trie.
