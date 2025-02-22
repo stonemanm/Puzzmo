@@ -7,7 +7,6 @@
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_join.h"
-
 #include "dictionary_utils.h"
 
 using namespace puzzmo;
@@ -24,7 +23,7 @@ void DFS(std::shared_ptr<TrieNode> node, int i, const TypeshiftBoard &board,
 
   if (node->word != nullptr) {
     words.push_back(*node->word);
-    return; // All words are of the same length
+    return;  // All words are of the same length
   }
 
   for (const char c : board[i]) {
@@ -43,7 +42,7 @@ int UnusedLetters(const std::string &word, const TypeshiftBoard &board) {
   return new_letters;
 }
 
-} // namespace
+}  // namespace
 
 int main(int argc, const char *argv[]) {
   // Read in the board

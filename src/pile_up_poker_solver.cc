@@ -18,27 +18,23 @@ int ScoreHand(const Card &c1, const Card &c2, const Card &c3, const Card &c4,
   bool straight =
       (hand[1].rank - hand[0].rank == 1 && hand[2].rank - hand[1].rank == 1 &&
        hand[3].rank - hand[2].rank == 1);
-  if (straight && flush)
-    return 450; // Straight Flush
-  if (straight)
-    return 180; // Straight
-  if (flush)
-    return 80; // Flush
-  if (hand[0].rank == hand[3].rank)
-    return 325; // 4 of a Kind
+  if (straight && flush) return 450;             // Straight Flush
+  if (straight) return 180;                      // Straight
+  if (flush) return 80;                          // Flush
+  if (hand[0].rank == hand[3].rank) return 325;  // 4 of a Kind
   if (hand[0].rank == hand[2].rank || hand[1].rank == hand[3].rank)
-    return 125; // 3 of a Kind
+    return 125;  // 3 of a Kind
   if (hand[0].rank == hand[1].rank && hand[2].rank == hand[3].rank)
-    return 60; // 2 Pair
+    return 60;  // 2 Pair
   if (hand[0].rank == hand[1].rank || hand[1].rank == hand[2].rank ||
       hand[2].rank == hand[3].rank)
-    return 5; // Pair
+    return 5;  // Pair
 
   count_discard = false;
-  return 0; // Non-scoring
+  return 0;  // Non-scoring
 }
 
-} // namespace
+}  // namespace
 
 //
 
@@ -54,7 +50,7 @@ std::vector<Card> PileupPokerSolver::Solve() const {
                << absl::StrJoin(cards, ", ",
                                 [](std::string *out, const Card &card) {
                                   absl::StrAppend(out, card.toString());
-                                }); // temp
+                                });  // temp
     score = Score(cards_);
     if (score > best_score) {
       best_layout = cards;
@@ -113,4 +109,4 @@ int PileupPokerSolver::Score(std::vector<Card> cards) const {
   return score;
 }
 
-} // namespace puzzmo
+}  // namespace puzzmo

@@ -5,7 +5,6 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
-
 #include "pile_up_poker_solver.h"
 
 using namespace puzzmo;
@@ -25,57 +24,57 @@ int main(int argc, const char *argv[]) {
     char c;
     while (iss >> c) {
       switch (c) {
-      case 'A':
-        card.rank = kAce;
-        break;
-      case 'K':
-        card.rank = kKing;
-        break;
-      case 'Q':
-        card.rank = kQueen;
-        break;
-      case 'J':
-        card.rank = kJack;
-        break;
-      case 'T':
-        card.rank = kTen;
-        break;
-      case '9':
-        card.rank = kNine;
-        break;
-      case '8':
-        card.rank = kEight;
-        break;
-      case '7':
-        card.rank = kSeven;
-        break;
-      case '6':
-        card.rank = kSix;
-        break;
-      case '5':
-        card.rank = kFive;
-        break;
-      case '4':
-        card.rank = kFour;
-        break;
-      case '3':
-        card.rank = kThree;
-        break;
-      case '2':
-        card.rank = kTwo;
-        break;
-      case 'S':
-        card.suit = kSpades;
-        break;
-      case 'H':
-        card.suit = kHearts;
-        break;
-      case 'C':
-        card.suit = kClubs;
-        break;
-      case 'D':
-        card.suit = kDiamonds;
-        break;
+        case 'A':
+          card.rank = kAce;
+          break;
+        case 'K':
+          card.rank = kKing;
+          break;
+        case 'Q':
+          card.rank = kQueen;
+          break;
+        case 'J':
+          card.rank = kJack;
+          break;
+        case 'T':
+          card.rank = kTen;
+          break;
+        case '9':
+          card.rank = kNine;
+          break;
+        case '8':
+          card.rank = kEight;
+          break;
+        case '7':
+          card.rank = kSeven;
+          break;
+        case '6':
+          card.rank = kSix;
+          break;
+        case '5':
+          card.rank = kFive;
+          break;
+        case '4':
+          card.rank = kFour;
+          break;
+        case '3':
+          card.rank = kThree;
+          break;
+        case '2':
+          card.rank = kTwo;
+          break;
+        case 'S':
+          card.suit = kSpades;
+          break;
+        case 'H':
+          card.suit = kHearts;
+          break;
+        case 'C':
+          card.suit = kClubs;
+          break;
+        case 'D':
+          card.suit = kDiamonds;
+          break;
       }
     }
     cards.push_back(card);

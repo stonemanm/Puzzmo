@@ -12,18 +12,20 @@ absl::flat_hash_set<Point> Point::MooreNeighbors() const {
           {row - 1, col},     {row - 1, col + 1}};
 }
 
-bool Point::operator==(const Point &other) const {
-  return row == other.row && col == other.col;
+Point &Point::operator+=(const Point &rhs) {
+  row += rhs.row;
+  col += rhs.col;
+  return *this;
 }
 
-bool Point::operator<(const Point &other) const {
-  if (row + col == other.row + other.col)
-    return row < other.row;
-  return row + col < other.row + other.col;
+bool operator==(const Point &lhs, const Point &rhs) {
+  return lhs.row == rhs.row && lhs.col == rhs.col;
+}
+bool operator!=(const Point &lhs, const Point &rhs) { return !(lhs == rhs); }
+Point operator+(const Point &lhs, const Point &rhs) {
+  Point result = lhs;
+  result += rhs;
+  return result;
 }
 
-Point Point::operator+(const Point &other) const {
-  return {row + other.row, col + other.col};
-}
-
-} // namespace puzzmo
+}  // namespace puzzmo

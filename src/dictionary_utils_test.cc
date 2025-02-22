@@ -10,5 +10,6 @@ namespace {
 TEST(DictionaryUtilsTest, EmptyConstructor) {
   //
 }
-} // namespace
-} // namespace puzzmo
+
+}  // namespace
+}  // namespace puzzmo

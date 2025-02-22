@@ -140,16 +140,16 @@ int LetterCount::count(char c) const {
  * Overloaded operators *
  * * * * * * * * * * * **/
 
-LetterCount &LetterCount::operator+=(const LetterCount &other) {
+LetterCount &LetterCount::operator+=(const LetterCount &rhs) {
   for (int i = 0; i < 26; ++i) {
-    set_count('a' + i, count('a' + i) + other.count('a' + i));
+    set_count('a' + i, count('a' + i) + rhs.count('a' + i));
   }
   return *this;
 }
 
-LetterCount &LetterCount::operator-=(const LetterCount &other) {
+LetterCount &LetterCount::operator-=(const LetterCount &rhs) {
   for (int i = 0; i < 26; ++i) {
-    set_count('a' + i, std::max(count('a' + i) - other.count('a' + i), 0));
+    set_count('a' + i, std::max(count('a' + i) - rhs.count('a' + i), 0));
   }
   return *this;
 }

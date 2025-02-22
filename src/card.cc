@@ -10,7 +10,7 @@ const std::vector<std::string> kRankStrs = {"A", "2", "3", "4", "5", "6", "7",
 
 const std::vector<std::string> kSuitStrs = {"S", "H", "C", "D"};
 
-} // namespace
+}  // namespace
 
 std::string Card::toString() const {
   return kRankStrs[rank % 13] + kSuitStrs[suit];
@@ -27,4 +27,4 @@ bool Card::operator<(const Card &other) const {
   return suit < other.suit;
 }
 
-} // namespace puzzmo
+}  // namespace puzzmo

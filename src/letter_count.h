@@ -68,16 +68,16 @@ class LetterCount {
   void set_count(char c, int i);
   int count(char c) const;
 
-  LetterCount &operator+=(const LetterCount &other);
-  LetterCount &operator+=(absl::string_view other) {
-    return operator+=(LetterCount(other));
+  LetterCount &operator+=(const LetterCount &rhs);
+  LetterCount &operator+=(absl::string_view rhs) {
+    return operator+=(LetterCount(rhs));
   }
   // To avoid the possibility of invalid states, LetterCount has a floor of 0
   // for any given value. To determine if no values in rhs are greater than
   // their counterparts in lhs, use Contains() rather than operator-=
-  LetterCount &operator-=(const LetterCount &other);
-  LetterCount &operator-=(absl::string_view other) {
-    return operator-=(LetterCount(other));
+  LetterCount &operator-=(const LetterCount &rhs);
+  LetterCount &operator-=(absl::string_view rhs) {
+    return operator-=(LetterCount(rhs));
   }
 
  private:

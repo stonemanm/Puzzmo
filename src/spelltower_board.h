@@ -65,6 +65,11 @@ class SpelltowerBoard {
   char char_at(const Point &p) const;
   char char_at(int row, int col) const;
 
+  char &operator[](Point p);
+  const char &operator[](Point p) const;
+  std::string &operator[](int row);
+  const std::string &operator[](int row) const;
+
   // Returns whether or not a given point has a star on it.
   bool is_star_at(const Point &p) const;
   bool is_star_at(int row, int col) const;

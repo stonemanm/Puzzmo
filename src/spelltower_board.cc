@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
-#include <iostream>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
@@ -52,6 +51,15 @@ char SpelltowerBoard::char_at(const Point &p) const {
 char SpelltowerBoard::char_at(int row, int col) const {
   if (!HasPoint(row, col)) return '*';
   return board_[row][col];
+}
+
+char &SpelltowerBoard::operator[](Point p) { return board_[p.row][p.col]; }
+const char &SpelltowerBoard::operator[](Point p) const {
+  return board_[p.row][p.col];
+}
+std::string &SpelltowerBoard::operator[](int row) { return board_[row]; }
+const std::string &SpelltowerBoard::operator[](int row) const {
+  return board_[row];
 }
 
 bool SpelltowerBoard::HasPoint(const Point &p) const {
@@ -162,8 +170,9 @@ std::vector<std::string> SpelltowerBoard::MightHaveAllStarWords(
 bool SpelltowerBoard::MightHaveAllStarWord(absl::string_view word) const {
   std::vector<LetterCount> row_letter_counts = GetRowLetterCounts();
   SpelltowerPath path;
+  LOG(INFO) << word;
   if (DFS(word, 0, row_letter_counts, path)) {
-    LOG(INFO) << word << path << "\n";
+    // LOG(INFO) << word << path << "\n";
     return true;
   }
   return false;
@@ -172,7 +181,7 @@ bool SpelltowerBoard::MightHaveAllStarWord(absl::string_view word) const {
 bool SpelltowerBoard::DFS(absl::string_view word, int i,
                           std::vector<LetterCount> &row_letter_counts,
                           SpelltowerPath &path) const {
-  std::cout << "\33[2K" << word.substr(0, i) << "\r";
+  // std::cout << "\33[2K" << word.substr(0, i) << "\r";
   // Check if we have a solution
   if (i >= word.length()) {
     for (const Point &star : stars_) {

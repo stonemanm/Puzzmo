@@ -8,15 +8,15 @@
 namespace puzzmo {
 
 class PileupPokerSolver {
-public:
+ public:
   explicit PileupPokerSolver(std::vector<Card> cards) : cards_(cards) {};
   std::vector<Card> Solve() const;
 
-private:
+ private:
   const std::vector<Card> cards_;
   int Score(std::vector<Card> cards) const;
 };
 
-} // namespace puzzmo
+}  // namespace puzzmo
 
 #endif

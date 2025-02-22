@@ -19,11 +19,8 @@ struct Point {
   // Returns the 8 surrounding neighbors of this point.
   absl::flat_hash_set<Point> MooreNeighbors() const;
 
-  bool operator==(const Point &other) const;
-  bool operator<(const Point &other) const;
-  Point operator+(const Point &other) const;
-
-  template <typename H> friend H AbslHashValue(H h, const Point &p) {
+  template <typename H>
+  friend H AbslHashValue(H h, const Point &p) {
     return H::combine(std::move(h), p.row, p.col);
   }
 
@@ -31,8 +28,14 @@ struct Point {
   friend void AbslStringify(Sink &sink, const Point &p) {
     absl::Format(&sink, "(%d, %d)", p.row, p.col);
   }
+
+  Point &operator+=(const Point &rhs);
 };
 
-} // namespace puzzmo
+bool operator==(const Point &lhs, const Point &rhs);
+bool operator!=(const Point &lhs, const Point &rhs);
+Point operator+(const Point &lhs, const Point &rhs);
+
+}  // namespace puzzmo
 
 #endif

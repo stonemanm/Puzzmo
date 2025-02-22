@@ -32,6 +32,6 @@ struct Card {
   bool operator<(const Card &other) const;
 };
 
-} // namespace puzzmo
+}  // namespace puzzmo
 
 #endif
