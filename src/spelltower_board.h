@@ -8,6 +8,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "letter_count.h"
 #include "point.h"
+#include "spelltower_path.h"
 
 namespace puzzmo {
 
@@ -50,7 +51,7 @@ class SpelltowerBoard {
 
   // Calculates the score returned for the word along a given path.
   // Note: Score does not do any checking on the validity of points on the path.
-  int Score(const absl::flat_hash_set<Point> &path) const;
+  int Score(const SpelltowerPath &path) const;
 
   bool MightHaveAllStarWord(absl::string_view word) const;
   std::vector<std::string> MightHaveAllStarWords(
@@ -71,11 +72,9 @@ class SpelltowerBoard {
  private:
   bool DFS(absl::string_view word, int i,
            std::vector<LetterCount> &row_letter_counts,
-           std::vector<Point> &path) const;
-  bool IsPathPossible(std::vector<Point> &path) const;
-  bool UpdatePath(std::vector<Point> &path, int l,
-                  const std::vector<int> &min_col,
-                  const std::vector<std::vector<int>> &row_i_in_order) const;
+           SpelltowerPath &path) const;
+  bool IsPathPossible(SpelltowerPath &path) const;
+  bool UpdatePath(SpelltowerPath &path, int l) const;
 
   std::vector<std::string> board_;
   int rows_, cols_ = 0;

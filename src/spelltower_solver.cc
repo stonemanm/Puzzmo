@@ -27,7 +27,7 @@ void SpelltowerSolver::DFS(std::shared_ptr<TrieNode> node, const Point &p,
   visited[p.row][p.col] = true;
 
   if (child->word != nullptr) {
-    int s = board.Score(path);
+    int s = board.Score({});
     ans[s].insert(*child->word);
   }
 

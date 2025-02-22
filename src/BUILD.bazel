@@ -255,6 +255,7 @@ cc_library(
     deps = [
         ":letter_count",
         ":point",
+        ":spelltower_path",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/log",
@@ -310,6 +311,7 @@ cc_library(
     hdrs = ["spelltower_path.h"],
     deps = [
         ":point",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

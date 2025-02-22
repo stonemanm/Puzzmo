@@ -99,17 +99,19 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  // auto s = starting_state->FillPath({{2, 0}, {2, 1}, {2, 2}, {2, 3}, {2, 4}},
-  //                                   "likes");
-  // if (!s.ok()) {
-  //   LOG(ERROR) << s;
-  //   return 1;
-  // }
-  // starting_state->set_is_locked_at({2, 0}, true);
-  // starting_state->set_is_locked_at({2, 1}, true);
-  // starting_state->set_is_locked_at({2, 2}, true);
-  // starting_state->set_is_locked_at({2, 3}, true);
-  // starting_state->set_is_locked_at({2, 4}, true);
+  std::vector<Point> path;
+  int r = 1;
+  for (int i = 0; i < 5; ++i) {
+    path.push_back({r, i});
+  }
+  auto s = starting_state->FillPath(path, "valor");
+  if (!s.ok()) {
+    LOG(ERROR) << s;
+    return 1;
+  }
+  for (const auto &p : path) {
+    starting_state->set_is_locked_at(p, true);
+  }
 
   BongoSolver bongo_solver(
       dict, *starting_state,

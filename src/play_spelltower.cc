@@ -52,17 +52,17 @@ int main(int argc, const char *argv[]) {
 
   if (absl::GetFlag(FLAGS_run_regex)) {
     auto maybe_star_words = ReadDictionaryFileToVector(
-        {.min_letters = 3,
+        {.min_letters = 15,
          .min_letter_count = LetterCount(board.StarLetters())});
     if (!maybe_star_words.ok()) {
       LOG(ERROR) << maybe_star_words.status();
       return 1;
     }
-    std::sort(maybe_star_words->begin(), maybe_star_words->end(),
-              [](std::string a, std::string b) {
-                if (a.length() == b.length()) return a < b;
-                return a.length() > b.length();
-              });
+    // std::sort(maybe_star_words->begin(), maybe_star_words->end(),
+    //           [](std::string a, std::string b) {
+    //             if (a.length() == b.length()) return a < b;
+    //             return a.length() < b.length();
+    //           });
     std::vector<std::string> filtered_words =
         board.MightHaveAllStarWords(*maybe_star_words);
 

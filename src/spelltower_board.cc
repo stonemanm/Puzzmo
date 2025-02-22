@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <iostream>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
@@ -14,20 +15,6 @@ namespace {
 int EmptyRowsBetween(const Point &p1, const Point &p2) {
   int dist = std::abs(p1.row - p2.row);
   return dist == 0 ? 0 : dist - 1;
-}
-
-std::string StringifyPath(std::vector<Point> &path) {
-  std::vector<std::string> board(9, "");
-  for (int i = 0; i < path.size(); ++i) {
-    Point p = path[i];
-    while (p.col >= board[p.row].length()) board[p.row].push_back('*');
-    board[p.row][p.col] = 'A' + i;
-  }
-  std::string s = "";
-  for (int i = 0; i < board.size(); ++i) {
-    absl::StrAppend(&s, i, "[", board[i], "\n");
-  }
-  return s;
 }
 
 }  // namespace
@@ -131,10 +118,10 @@ std::vector<LetterCount> SpelltowerBoard::GetRowLetterCounts() const {
 
 std::vector<Point> SpelltowerBoard::StarLocations() const { return stars_; }
 
-int SpelltowerBoard::Score(const absl::flat_hash_set<Point> &path) const {
+int SpelltowerBoard::Score(const SpelltowerPath &path) const {
   absl::flat_hash_set<Point> affected;
   int star_tiles = 0;
-  for (const Point p : path) {
+  for (const Point &p : path.points()) {
     affected.insert(p);
     if (absl::c_contains(stars_, p)) ++star_tiles;
 
@@ -167,8 +154,6 @@ std::vector<std::string> SpelltowerBoard::MightHaveAllStarWords(
   for (const auto &wd : words) {
     if (MightHaveAllStarWord(wd)) {
       filtered_words.push_back(wd);
-      // TEMP
-      if (filtered_words.size() >= 10) break;
     }
   }
   return filtered_words;
@@ -176,9 +161,9 @@ std::vector<std::string> SpelltowerBoard::MightHaveAllStarWords(
 
 bool SpelltowerBoard::MightHaveAllStarWord(absl::string_view word) const {
   std::vector<LetterCount> row_letter_counts = GetRowLetterCounts();
-  std::vector<Point> path;
+  SpelltowerPath path;
   if (DFS(word, 0, row_letter_counts, path)) {
-    StringifyPath(path);
+    LOG(INFO) << word << path << "\n";
     return true;
   }
   return false;
@@ -186,11 +171,12 @@ bool SpelltowerBoard::MightHaveAllStarWord(absl::string_view word) const {
 
 bool SpelltowerBoard::DFS(absl::string_view word, int i,
                           std::vector<LetterCount> &row_letter_counts,
-                          std::vector<Point> &path) const {
+                          SpelltowerPath &path) const {
+  std::cout << "\33[2K" << word.substr(0, i) << "\r";
   // Check if we have a solution
   if (i >= word.length()) {
     for (const Point &star : stars_) {
-      if (!absl::c_contains(path, star)) return false;
+      if (!absl::c_contains(path.points(), star)) return false;
     }
     return IsPathPossible(path);
   }
@@ -222,52 +208,33 @@ bool SpelltowerBoard::DFS(absl::string_view word, int i,
   return false;
 }
 
-bool SpelltowerBoard::IsPathPossible(std::vector<Point> &path) const {
-  // Group the points in the path by row
-  std::vector<std::vector<int>> simplified_board(max_rows_);
-  std::vector<int> min_heights(path.size());
-  for (int index = 0; index < path.size(); ++index)
-    simplified_board[path[index].row].push_back(index);
-
-  // Sorts each group by column, then determines the lowest each point can go
-  for (int row = 0; row < simplified_board.size(); ++row) {
-    std::vector<int> &row_vec = simplified_board[row];
-    std::sort(row_vec.begin(), row_vec.end(),
-              [path](int a, int b) { return path[a].col < path[b].col; });
-    for (int i = 0; i < row_vec.size(); ++i) min_heights[row_vec[i]] = i;
-  }
-
+bool SpelltowerBoard::IsPathPossible(SpelltowerPath &path) const {
   // Check for interrupted columns (or "A-C-B columns")
   for (int i = 1; i < path.size(); ++i) {
     if (path[i - 1].row == path[i].row &&
-        std::abs(min_heights[i - 1] - min_heights[i]) > 1)
+        std::abs(path.num_below(i - 1) - path.num_below(i)) > 1)
       return false;
   }
 
-  // Align the path from the bottom up
-  std::vector<int> l_to_h(path.size());
-  std::iota(l_to_h.begin(), l_to_h.end(), 0);
   bool aligned = false;
   while (!aligned) {
     // Start with the lowest point
-    std::sort(l_to_h.begin(), l_to_h.end(),
-              [path](int a, int b) { return path[a].col < path[b].col; });
+    std::vector<int> l_to_h = path.IndicesByColumn();
     for (int i = 0; i < l_to_h.size(); ++i) {
-      int path_idx = l_to_h[i];
-      Point &curr = path[path_idx];
-      if (path_idx > 0) {
-        Point &prev = path[path_idx - 1];
+      // LOG(INFO) << path;
+      int idx = l_to_h[i];
+      Point &curr = path[idx];
+      if (idx > 0) {
+        Point &prev = path[idx - 1];
         if (!curr.MooreNeighbors().contains(prev)) {
-          if (!UpdatePath(path, path_idx - 1, min_heights, simplified_board))
-            return false;
+          if (!UpdatePath(path, idx - 1)) return false;
           break;  // Restarts the for loop.
         }
       }
-      if (path_idx < path.size() - 1) {
-        Point &next = path[path_idx + 1];
+      if (idx < path.size() - 1) {
+        Point &next = path[idx + 1];
         if (!curr.MooreNeighbors().contains(next)) {
-          if (!UpdatePath(path, path_idx, min_heights, simplified_board))
-            return false;
+          if (!UpdatePath(path, idx)) return false;
           break;  // Restarts the for loop.
         }
       }
@@ -281,31 +248,27 @@ bool SpelltowerBoard::IsPathPossible(std::vector<Point> &path) const {
   return true;
 }
 
-bool SpelltowerBoard::UpdatePath(
-    std::vector<Point> &path, int l, const std::vector<int> &min_col,
-    const std::vector<std::vector<int>> &simplified_board) const {
+bool SpelltowerBoard::UpdatePath(SpelltowerPath &path, int l) const {
   int lo = (path[l].col < path[l + 1].col) ? l : l + 1;
   int hi = (path[l + 1].col < path[l].col) ? l : l + 1;
-  if (path[lo].col + 1 < min_col[hi]) return false;
+  if (path[lo].col + 1 < path.num_below(hi)) return false;
 
   // Lower hi to one column above lo. Lowers any points above hi as well.
   int shift = path[hi].col - path[lo].col - 1;
-  std::vector<int> row_items = simplified_board[path[hi].row];
-
-  // Best way to do the shift is highest to lowest, I think.
+  std::vector<int> row_items = path.SimplifiedRow(path[hi].row);
   bool above_hi = true;
   for (int i = row_items.size() - 1; i >= 0; --i) {
-    int cur_idx = row_items[i];
+    int idx = row_items[i];
     // Anything above the point being lowered needs to drop the same amount.
     if (above_hi) {
-      path[cur_idx].col -= shift;
-      if (cur_idx == hi) above_hi = false;
+      path[idx].col -= shift;
+      if (idx == hi) above_hi = false;
       continue;
     }
     // If we're below the point being lowered, we lower it as little as needed
     // to stay below the point above it.
     // It's safe to refer to row_items[i+1].
-    path[cur_idx].col = path[row_items[i + 1]].col - 1;
+    path[idx].col = path[row_items[i + 1]].col - 1;
   }
   return true;
 }

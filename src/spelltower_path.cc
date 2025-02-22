@@ -15,7 +15,7 @@ void SpelltowerPath::pop_back() {
   const int idx = points_.size() - 1;
   Point& p = points_[idx];
 
-  std::string& simplified_row = simplified_board_[p.row];
+  std::vector<int>& simplified_row = simplified_board_[p.row];
 
   for (int i = num_below(idx) + 1; i < simplified_row.size(); ++i) {
     --num_below_[simplified_row[i]];
@@ -29,7 +29,7 @@ void SpelltowerPath::push_back(const Point& p) {
   const int idx = points_.size();
   points_.push_back(p);
 
-  std::string& simplified_row = simplified_board_[p.row];
+  std::vector<int>& simplified_row = simplified_board_[p.row];
   num_below_.push_back(simplified_row.size());
   simplified_row.push_back(idx);
   for (int i = simplified_row.size() - 1; i > 0; --i) {
@@ -43,7 +43,9 @@ void SpelltowerPath::push_back(const Point& p) {
 
 // Functions linked to `points_`
 std::vector<Point> SpelltowerPath::points() const { return points_; }
-Point SpelltowerPath::at(int i) const { return points_[i]; }
+Point& SpelltowerPath::operator[](int i) { return points_[i]; }
+const Point& SpelltowerPath::operator[](int i) const { return points_[i]; }
+Point& SpelltowerPath::back() { return points_.back(); }
 bool SpelltowerPath::empty() const { return points_.empty(); }
 int SpelltowerPath::size() const { return points_.size(); }
 
@@ -52,10 +54,10 @@ int SpelltowerPath::num_below(int i) const { return num_below_[i]; }
 std::vector<int> SpelltowerPath::num_below() const { return num_below_; }
 
 // Functions linked to `simplified_board_`
-std::string SpelltowerPath::SimplifiedRow(int row) const {
+std::vector<int> SpelltowerPath::SimplifiedRow(int row) const {
   return simplified_board_[row];
 }
-std::vector<std::string> SpelltowerPath::simplified_board() const {
+std::vector<std::vector<int>> SpelltowerPath::simplified_board() const {
   return simplified_board_;
 }
 
