@@ -14,6 +14,7 @@ SpelltowerPath::SpelltowerPath(const std::vector<Point>& points)
 void SpelltowerPath::pop_back() {
   const int idx = points_.size() - 1;
   Point& p = points_[idx];
+  if (stars_.back() == idx) stars_.pop_back();
 
   std::vector<int>& simplified_row = simplified_board_[p.row];
 
@@ -25,9 +26,10 @@ void SpelltowerPath::pop_back() {
   points_.pop_back();
 }
 
-void SpelltowerPath::push_back(const Point& p) {
+void SpelltowerPath::push_back(const Point& p, bool is_star) {
   const int idx = points_.size();
   points_.push_back(p);
+  if (is_star) stars_.push_back(idx);
 
   std::vector<int>& simplified_row = simplified_board_[p.row];
   num_below_.push_back(simplified_row.size());
@@ -48,6 +50,13 @@ const Point& SpelltowerPath::operator[](int i) const { return points_[i]; }
 Point& SpelltowerPath::back() { return points_.back(); }
 bool SpelltowerPath::empty() const { return points_.empty(); }
 int SpelltowerPath::size() const { return points_.size(); }
+
+// Functions linked to `stars_`
+std::vector<int> SpelltowerPath::stars() const { return stars_; }
+bool SpelltowerPath::is_star(int i) const {
+  return absl::c_contains(stars_, i);
+}
+int SpelltowerPath::num_stars() const { return stars_.size(); }
 
 // Functions linked to `num_letters_below_`
 int SpelltowerPath::num_below(int i) const { return num_below_[i]; }

@@ -184,9 +184,7 @@ bool SpelltowerBoard::DFS(absl::string_view word, int i,
   // std::cout << "\33[2K" << word.substr(0, i) << "\r";
   // Check if we have a solution
   if (i >= word.length()) {
-    for (const Point &star : stars_) {
-      if (!absl::c_contains(path.points(), star)) return false;
-    }
+    if (path.num_stars() == stars_.size()) return false;
     return IsPathPossible(path);
   }
 

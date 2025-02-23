@@ -20,7 +20,8 @@ class SpelltowerPath {
   void pop_back();
 
   // Adds point p to the end of the path and adjusts data accordingly.
-  void push_back(const Point &p);
+  void push_back(const Point &p) { push_back(p, false); }
+  void push_back(const Point &p, bool is_star);
 
   // Functions linked to `points_`
   std::vector<Point> points() const;
@@ -29,6 +30,11 @@ class SpelltowerPath {
   Point &back();
   bool empty() const;
   int size() const;
+
+  // Functions linked to `stars_`
+  std::vector<int> stars() const;
+  bool is_star(int i) const;
+  int num_stars() const;
 
   // Functions linked to `num_below_`
   std::vector<int> num_below() const;
@@ -44,6 +50,9 @@ class SpelltowerPath {
  private:
   // The vector of points in the path.
   std::vector<Point> points_;
+
+  // The indices in points_ that point to stars.
+  std::vector<int> stars_;
 
   // For the point at the same index in points_, contains the number of points
   // in this path that are below that point in the same column. This can be used
