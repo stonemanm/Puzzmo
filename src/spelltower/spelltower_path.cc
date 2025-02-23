@@ -14,14 +14,14 @@ SpelltowerPath::SpelltowerPath(const std::vector<Point>& points)
 void SpelltowerPath::pop_back() {
   const int idx = points_.size() - 1;
   Point& p = points_[idx];
-  if (stars_.back() == idx) stars_.pop_back();
 
   std::vector<int>& simplified_row = simplified_board_[p.row];
-
   for (int i = num_below(idx) + 1; i < simplified_row.size(); ++i) {
     --num_below_[simplified_row[i]];
   }
   simplified_row.erase(simplified_row.begin() + num_below_[idx]);
+
+  if (!stars_.empty() && stars_.back() == idx) stars_.pop_back();
   num_below_.pop_back();
   points_.pop_back();
 }
