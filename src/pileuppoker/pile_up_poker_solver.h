@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "card.h"
+#include "src/pileuppoker/card.h"
 
 namespace puzzmo {
 

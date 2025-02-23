@@ -11,9 +11,9 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "bongo_dictionary.h"
-#include "bongo_gamestate.h"
-#include "bongo_solver.h"
+#include "bongo/bongo_dictionary.h"
+#include "bongo/bongo_gamestate.h"
+#include "bongo/bongo_solver.h"
 
 ABSL_FLAG(std::string, path_to_board_file, "data/bongo_board.txt",
           "Input file containing a 5x5 char grid.");

@@ -6,9 +6,9 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
-#include "letter_count.h"
-#include "point.h"
 #include "spelltower_path.h"
+#include "src/shared/letter_count.h"
+#include "src/shared/point.h"
 
 namespace puzzmo {
 

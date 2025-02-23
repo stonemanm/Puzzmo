@@ -1,5 +1,5 @@
-#ifndef spelltower_dictionary_h
-#define spelltower_dictionary_h
+#ifndef bongo_dictionary_h
+#define bongo_dictionary_h
 
 #include <string>
 
@@ -7,11 +7,11 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "letter_count.h"
+#include "src/shared/letter_count.h"
 
 namespace puzzmo {
 
-class SpelltowerDictionary {
+class BongoDictionary {
  public:
   using SearchableWords = absl::flat_hash_map<
       int, absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>>;
@@ -24,18 +24,20 @@ class SpelltowerDictionary {
     std::string matching_regex;
   };
 
-  SpelltowerDictionary() {};
+  BongoDictionary() {};
   absl::Status Init();
+
+  bool IsCommonWord(absl::string_view word) const;
+  bool IsValidWord(absl::string_view word) const;
 
   absl::flat_hash_set<std::string> GetMatchingWords(
       const SearchOptions& options) const;
 
-  bool contains(absl::string_view word) const;
-
  private:
   absl::StatusOr<SearchableWords> TryReadingInAndSortingWords() const;
 
-  absl::StatusOr<absl::flat_hash_set<std::string>> TryReadingInWords() const;
+  absl::StatusOr<absl::flat_hash_set<std::string>> TryReadingInWords(
+      bool common) const;
 
   absl::flat_hash_set<std::string> common_words_;
   absl::flat_hash_set<std::string> valid_words_;
@@ -44,4 +46,4 @@ class SpelltowerDictionary {
 
 }  // namespace puzzmo
 
-#endif  // !spelltower_dictionary_h
+#endif

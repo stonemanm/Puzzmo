@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
-#include "point.h"
+#include "src/shared/point.h"
 
 namespace puzzmo {
 

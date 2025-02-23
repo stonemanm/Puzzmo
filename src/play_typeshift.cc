@@ -7,7 +7,7 @@
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_join.h"
-#include "dictionary_utils.h"
+#include "src/shared/dictionary_utils.h"
 
 using namespace puzzmo;
 

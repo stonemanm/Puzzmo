@@ -1,0 +1,21 @@
+# Classes used in finding a solution for Pile-Up Poker.
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "card",
+    srcs = ["card.cc"],
+    hdrs = ["card.h"],
+    deps = [],
+)
+
+cc_library(
+    name = "pile_up_poker_solver",
+    srcs = ["pile_up_poker_solver.cc"],
+    hdrs = ["pile_up_poker_solver.h"],
+    deps = [
+        ":card",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+    ],
+)

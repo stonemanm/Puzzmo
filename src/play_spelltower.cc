@@ -8,10 +8,10 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "dictionary_utils.h"
 #include "re2/re2.h"
-#include "spelltower_board.h"
-#include "spelltower_solver.h"
+#include "src/shared/dictionary_utils.h"
+#include "src/spelltower/spelltower_board.h"
+#include "src/spelltower/spelltower_solver.h"
 
 using namespace puzzmo;
 

@@ -1,0 +1,78 @@
+# Classes used in finding a solution for Bongo.
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "bongo_dictionary",
+    srcs = ["bongo_dictionary.cc"],
+    hdrs = ["bongo_dictionary.h"],
+    data = [
+        "//data:words_bongo.txt",
+        "//data:words_bongo_common.txt",
+    ],
+    deps = [
+        "//src/shared:letter_count",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@re2",
+    ],
+)
+
+cc_test(
+    name = "bongo_dictionary_test",
+    size = "small",
+    srcs = ["bongo_dictionary_test.cc"],
+    deps = [
+        ":bongo_dictionary",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "bongo_gamestate",
+    srcs = ["bongo_gamestate.cc"],
+    hdrs = ["bongo_gamestate.h"],
+    deps = [
+        "//src/shared:letter_count",
+        "//src/shared:point",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "bongo_gamestate_test",
+    size = "small",
+    srcs = ["bongo_gamestate_test.cc"],
+    deps = [
+        ":bongo_gamestate",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "bongo_solver",
+    srcs = ["bongo_solver.cc"],
+    hdrs = ["bongo_solver.h"],
+    deps = [
+        ":bongo_dictionary",
+        ":bongo_gamestate",
+        "//src/shared:dictionary_utils",
+        "//src/shared:letter_count",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+    ],
+)

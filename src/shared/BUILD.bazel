@@ -1,0 +1,80 @@
+# Utility classes used to help solve multiple games.
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "dictionary_utils",
+    srcs = ["dictionary_utils.cc"],
+    hdrs = ["dictionary_utils.h"],
+    data = [
+        "//data:words_bongo.txt",
+        "//data:words_bongo_common.txt",
+        "//data:words_puzzmo.txt",
+    ],
+    deps = [
+        "//src/shared:letter_count",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@re2",
+    ],
+)
+
+cc_test(
+    name = "dictionary_utils_test",
+    size = "small",
+    srcs = ["dictionary_utils_test.cc"],
+    deps = [
+        ":dictionary_utils",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "letter_count",
+    srcs = ["letter_count.cc"],
+    hdrs = ["letter_count.h"],
+    deps = [
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "letter_count_test",
+    size = "small",
+    srcs = ["letter_count_test.cc"],
+    deps = [
+        ":letter_count",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "point",
+    srcs = ["point.cc"],
+    hdrs = ["point.h"],
+    deps = [
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "point_test",
+    size = "small",
+    srcs = ["point_test.cc"],
+    deps = [
+        ":point",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
