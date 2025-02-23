@@ -10,6 +10,10 @@
 namespace puzzmo {
 namespace {
 
+auto point_comparator = [](const Point &lhs, const Point &rhs) {
+  return (lhs.row != rhs.row ? lhs.row < rhs.row : lhs.col < rhs.col);
+};
+
 // Very simple helper method
 int EmptyRowsBetween(const Point &p1, const Point &p2) {
   int dist = std::abs(p1.row - p2.row);
@@ -41,7 +45,7 @@ SpelltowerBoard::SpelltowerBoard(const std::vector<std::string> &board)
       if (std::isalpha(lowercase)) letter_map_[lowercase].push_back({r, c});
     }
   }
-  std::sort(stars_.begin(), stars_.end());
+  std::sort(stars_.begin(), stars_.end(), point_comparator);
 };
 
 char SpelltowerBoard::char_at(const Point &p) const {
@@ -112,7 +116,8 @@ absl::flat_hash_set<std::string> SpelltowerBoard::GetAllStarRegexes() const {
       }
     }
     regex_set.insert(s);
-  } while (std::next_permutation(star_vec.begin(), star_vec.end()));
+  } while (std::next_permutation(star_vec.begin(), star_vec.end(),
+                                 point_comparator));
   return regex_set;
 }
 
@@ -141,13 +146,13 @@ int SpelltowerBoard::Score(const SpelltowerPath &path) const {
     }
     if (path.size() < 5) continue;
 
-    for (const Point n : ValidVonNeumannNeighbors(p)) {
+    for (const Point &n : ValidVonNeumannNeighbors(p)) {
       affected.insert(n);
     }
   }
 
   int score = 0;
-  for (const Point p : affected) {
+  for (const Point &p : affected) {
     char c = char_at(p);
     if (c == ' ' || c == '*') continue;
     score += kLetterScores[c - 'a'];
