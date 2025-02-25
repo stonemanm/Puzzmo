@@ -29,6 +29,9 @@ class BongoSolver {
         tiles_for_bonus_words_(options.tiles_for_bonus_words),
         tiles_for_multiplier_tiles_(options.tiles_for_multiplier_tiles) {}
 
+  int CeilingForScore() const;
+  absl::StatusOr<BongoGameState> FindSolutionWithScore(int score) const;
+
   absl::StatusOr<BongoGameState> Solve();
 
  private:

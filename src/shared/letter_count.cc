@@ -9,7 +9,7 @@ namespace {
 // Recursive function to help all combinations of size k
 void nCk(int start_at, int k, std::string &current, absl::string_view str,
          absl::flat_hash_set<std::string> &combinations) {
-  if (k == 0) {
+  if (k < 0) {
     combinations.insert(current);
     return;
   }

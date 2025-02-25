@@ -8,6 +8,28 @@
 
 namespace puzzmo {
 
+int BongoSolver::CeilingForScore() const {
+  auto values = starting_state_.values();
+  std::string tiles_in_value_order = starting_state_.NMostValuableTiles(25);
+  int score = 0;
+  // 1 tile gets 3x score, 6 get 2x, and the rest get 1x.
+  // Then multiply that all by 1.3.
+  score += values[tiles_in_value_order[0]] * 3;
+  for (int i = 1; i < 8; ++i) {
+    score += values[tiles_in_value_order[i]] * 2;
+  }
+  for (int i = 8; i < tiles_in_value_order.size(); ++i) {
+    score += values[tiles_in_value_order[i]];
+  }
+
+  return std::ceil(1.3 * score);
+}
+
+absl::StatusOr<BongoGameState> BongoSolver::FindSolutionWithScore(
+    int score) const {
+  return absl::UnimplementedError("To do");
+}
+
 absl::StatusOr<BongoGameState> BongoSolver::Solve() {
   std::vector<Point> bonus_path = starting_state_.bonus_path();
   std::vector<Point> multiplier_squares = starting_state_.MultiplierSquares();
@@ -56,16 +78,19 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
   // To narrow the search space, grab the most valuable tiles and try to
   // make bonus words using three of them.
   absl::flat_hash_set<std::string> bonus_words_to_try;
+  // If there are already letters in the bonus path, adjust this phase
+  // accordingly
+  LetterCount bplc(starting_state_.path_string(starting_state_.bonus_path()));
   LetterCount valuable_letters(
       starting_state_.NMostValuableTiles(tiles_for_bonus_words_));
   absl::flat_hash_set<std::string> combos =
-      valuable_letters.CombinationsOfSize(3);
+      valuable_letters.CombinationsOfSize(3 - bplc.size());
   for (const auto &combo : combos) {
     auto words = dict_.GetMatchingWords(
         {.min_length = 4,
          .max_length = 4,
          .min_letters = LetterCount(combo),
-         .max_letters = starting_state_.letter_pool(),
+         .max_letters = starting_state_.letter_pool() + bplc,
          .matching_regex = starting_state_.RegexForPath(bonus_path)});
     bonus_words_to_try.insert(words.begin(), words.end());
   }
