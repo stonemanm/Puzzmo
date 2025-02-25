@@ -51,7 +51,6 @@ cc_binary(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
-        "@re2",
     ],
 )
 

@@ -65,6 +65,7 @@ cc_library(
     hdrs = ["spelltower_path.h"],
     deps = [
         "//src/shared:point",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -90,6 +91,29 @@ cc_library(
         "//src/shared:dictionary_utils",
         "//src/shared:point",
         "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/log",
+        "@re2",
+    ],
+)
+
+cc_library(
+    name = "trie",
+    srcs = ["trie.cc"],
+    hdrs = ["trie.h"],
+    deps = [
         "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "trie_test",
+    size = "small",
+    srcs = ["trie_test.cc"],
+    deps = [
+        ":trie",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )

@@ -28,6 +28,7 @@ class SpelltowerPath {
   Point &operator[](int i);
   const Point &operator[](int i) const;
   Point &back();
+  bool contains(const Point &p) const;
   bool empty() const;
   int size() const;
 

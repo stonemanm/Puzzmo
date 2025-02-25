@@ -8,7 +8,6 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "re2/re2.h"
 #include "src/shared/dictionary_utils.h"
 #include "src/spelltower/spelltower_board.h"
 #include "src/spelltower/spelltower_solver.h"
@@ -49,40 +48,17 @@ int main(int argc, const char *argv[]) {
     LOG(ERROR) << words.status();
     return 1;
   }
-
-  if (absl::GetFlag(FLAGS_run_regex)) {
-    auto maybe_star_words = ReadDictionaryFileToVector(
-        {.min_letters = 15,
-         .min_letter_count = LetterCount(board.StarLetters())});
-    if (!maybe_star_words.ok()) {
-      LOG(ERROR) << maybe_star_words.status();
-      return 1;
-    }
-    // std::sort(maybe_star_words->begin(), maybe_star_words->end(),
-    //           [](std::string a, std::string b) {
-    //             if (a.length() == b.length()) return a < b;
-    //             return a.length() < b.length();
-    //           });
-    std::vector<std::string> filtered_words =
-        board.MightHaveAllStarWords(*maybe_star_words);
-
-    LOG(INFO) << "All words in dictionary, longest to shortest:";
-    std::string regexmonster =
-        absl::StrJoin(board.GetAllStarRegexes(), "|",
-                      [](std::string *out, const std::string &in) {
-                        absl::StrAppend(out, "(", in, ")");
-                      });
-    for (const auto &w : filtered_words) {
-      if (RE2::PartialMatch(w, regexmonster)) LOG(INFO) << w;
-    }
-    return 0;
-  }
-
   std::shared_ptr<TrieNode> dict = CreateDictionaryTrie(*words);
 
   // Create a spelltower and populate it with this data, then solve it
-  SpelltowerSolver spelltower(board, dict);
-  auto results = spelltower.FindWords();
+  SpelltowerSolver solver(board, dict);
+
+  if (absl::GetFlag(FLAGS_run_regex)) {
+    LOG(INFO) << solver.LongestPossibleAllStarWord();
+    return 0;
+  }
+
+  auto results = solver.AllWordsOnBoard(board);
   LOG(INFO) << "All available words, by score:";
   for (const auto &[k, v] : results) {
     LOG(INFO) << absl::StrCat(k, ": ", absl::StrJoin(v, ", "));

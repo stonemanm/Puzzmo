@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "absl/log/log.h"
+
 namespace puzzmo {
 
 SpelltowerPath::SpelltowerPath(const std::vector<Point>& points)
@@ -48,6 +50,9 @@ std::vector<Point> SpelltowerPath::points() const { return points_; }
 Point& SpelltowerPath::operator[](int i) { return points_[i]; }
 const Point& SpelltowerPath::operator[](int i) const { return points_[i]; }
 Point& SpelltowerPath::back() { return points_.back(); }
+bool SpelltowerPath::contains(const Point& p) const {
+  return absl::c_contains(points_, p);
+}
 bool SpelltowerPath::empty() const { return points_.empty(); }
 int SpelltowerPath::size() const { return points_.size(); }
 

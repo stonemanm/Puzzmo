@@ -12,15 +12,6 @@
 
 namespace puzzmo {
 
-// The value of each letter, in an array. Indexed by `c - 'a'`.
-const int kLetterScores[] = {
-    /* a = */ 1, /* b = */ 4,  /* c = */ 4, /* d = */ 3, /* e = */ 1,
-    /* f = */ 5, /* g = */ 3,  /* h = */ 5, /* i = */ 1, /* j = */ 9,
-    /* k = */ 6, /* l = */ 2,  /* m = */ 4, /* n = */ 2, /* o = */ 1,
-    /* p = */ 4, /* q = */ 12, /* r = */ 2, /* s = */ 1, /* t = */ 2,
-    /* u = */ 1, /* v = */ 5,  /* w = */ 5, /* x = */ 9, /* y = */ 5,
-    /* z = */ 11};
-
 // A board state for Spelltower.
 class SpelltowerBoard {
  public:
@@ -51,11 +42,7 @@ class SpelltowerBoard {
 
   // Calculates the score returned for the word along a given path.
   // Note: Score does not do any checking on the validity of points on the path.
-  int Score(const SpelltowerPath &path) const;
-
-  bool MightHaveAllStarWord(absl::string_view word) const;
-  std::vector<std::string> MightHaveAllStarWords(
-      const std::vector<std::string> &words) const;
+  int ScorePath(const SpelltowerPath &path) const;
 
   /** * * * * * * * * * * *
    * Accessors & mutators *
@@ -64,6 +51,10 @@ class SpelltowerBoard {
   // Returns the letter at a given spot on the board, or
   char char_at(const Point &p) const;
   char char_at(int row, int col) const;
+
+  std::vector<Point> column(int col) const;
+  std::vector<Point> row(int row) const;
+  std::vector<Point> points() const;
 
   char &operator[](Point p);
   const char &operator[](Point p) const;
@@ -74,13 +65,11 @@ class SpelltowerBoard {
   bool is_star_at(const Point &p) const;
   bool is_star_at(int row, int col) const;
 
- private:
-  bool DFS(absl::string_view word, int i,
-           std::vector<LetterCount> &row_letter_counts,
-           SpelltowerPath &path) const;
-  bool IsPathPossible(SpelltowerPath &path) const;
-  bool UpdatePath(SpelltowerPath &path, int l) const;
+  absl::flat_hash_map<char, std::vector<Point>> letter_map() const {
+    return letter_map_;
+  }
 
+ private:
   std::vector<std::string> board_;
   int rows_, cols_ = 0;
   std::vector<Point> stars_;

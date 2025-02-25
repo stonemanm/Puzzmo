@@ -24,6 +24,13 @@ class SpelltowerDictionary {
     std::string matching_regex;
   };
 
+  // A basic implementation of a node in a Trie.
+  struct TrieNode {
+    std::vector<std::shared_ptr<TrieNode>> children;
+    const std::string* word = nullptr;
+    TrieNode() : children(26) {}
+  };
+
   SpelltowerDictionary() {};
   absl::Status Init();
 
@@ -40,6 +47,7 @@ class SpelltowerDictionary {
   absl::flat_hash_set<std::string> common_words_;
   absl::flat_hash_set<std::string> valid_words_;
   SearchableWords searchable_words_;
+  const std::shared_ptr<TrieNode> trie_dict_;
 };
 
 }  // namespace puzzmo

@@ -70,21 +70,22 @@ TEST(SpelltowerBoardTest, ScoreOfEmptyPathIsZero) {
   SpelltowerBoard board({{'h', 'h', 'h', 'h', 'h'},
                          {'a', 'e', 'i', 'o', 'u'},
                          {'s', 's', 's', 's', 's'}});
-  EXPECT_EQ(board.Score({}), 0);
+  EXPECT_EQ(board.ScorePath({}), 0);
 }
 
 TEST(SpelltowerBoardTest, ScoreAdjacentCellsWhenAppropriate) {
   SpelltowerBoard board({{'*', '*', '*', '*', '*'}, {'a', 'a', 'a', 'a', 'a'}});
-  EXPECT_EQ(board.Score(SpelltowerPath({{0, 0}, {0, 1}, {0, 2}, {0, 3}})), 0);
+  EXPECT_EQ(board.ScorePath(SpelltowerPath({{0, 0}, {0, 1}, {0, 2}, {0, 3}})),
+            0);
   // 5-long word * 5 points (1 per a)
   EXPECT_EQ(
-      board.Score(SpelltowerPath({{0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}})),
+      board.ScorePath(SpelltowerPath({{0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}})),
       25);
 }
 
 TEST(SpelltowerBoardTest, ValidVonNeumannNeighbors) {
   SpelltowerBoard board({{'h', 'h', 'h', 'h', 'h'},
-                         {'a', 'e', 'i', 'o', 'u'},
+                         {'a', '*', 'i', 'o', 'u'},
                          {'s', 's', 's', 's', 's'}});
 
   absl::flat_hash_set<Point> valid_neighbors = {{1, 3}, {0, 2}, {1, 1}, {2, 2}};
@@ -102,17 +103,17 @@ TEST(SpelltowerBoardTest, ValidVonNeumannNeighbors) {
 
 TEST(SpelltowerBoardTest, ValidMooreNeighbors) {
   SpelltowerBoard board({{'h', 'h', 'h', 'h', 'h'},
-                         {'a', 'e', 'i', 'o', 'u'},
+                         {'a', '*', 'i', 'o', 'u'},
                          {'s', 's', 's', 's', 's'}});
 
   absl::flat_hash_set<Point> valid_neighbors = {{1, 3}, {0, 3}, {0, 2}, {0, 1},
-                                                {1, 1}, {2, 1}, {2, 2}, {2, 3}};
+                                                {2, 1}, {2, 2}, {2, 3}};
   EXPECT_EQ(board.ValidMooreNeighbors({1, 2}), valid_neighbors);
 
-  valid_neighbors = {{0, 1}, {1, 0}, {1, 1}};
+  valid_neighbors = {{0, 1}, {1, 0}};
   EXPECT_EQ(board.ValidMooreNeighbors({0, 0}), valid_neighbors);
 
-  valid_neighbors = {{2, 2}, {1, 2}, {1, 1}, {1, 0}, {2, 0}};
+  valid_neighbors = {{2, 2}, {1, 2}, {1, 0}, {2, 0}};
   EXPECT_EQ(board.ValidMooreNeighbors({2, 1}), valid_neighbors);
 
   valid_neighbors = {{0, 0}, {0, 1}};

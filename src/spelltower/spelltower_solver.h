@@ -4,14 +4,13 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
-#include "absl/container/flat_hash_set.h"
 #include "spelltower_board.h"
 #include "src/shared/dictionary_utils.h"
 #include "src/shared/point.h"
+#include "src/spelltower/spelltower_path.h"
 
 namespace puzzmo {
 using WordMap =
@@ -20,19 +19,35 @@ using WordMap =
 class SpelltowerSolver {
  public:
   SpelltowerSolver(SpelltowerBoard &board, const std::shared_ptr<TrieNode> dict)
-      : starting_board_(board), dict_(dict) {};
+      : board_(board), starting_board_(board), dict_(dict) {};
 
   // Returns a map of all valid words on the board, as well as their score
-  const WordMap FindWords();
+  WordMap AllWordsOnBoard(const SpelltowerBoard &board) const;
+
+  absl::StatusOr<SpelltowerPath> LongestPossibleAllStarWord() const;
+
+  std::vector<std::string> MightHaveAllStarWords(
+      const std::vector<std::string> &words) const;
+
+  bool MightHaveAllStarWord(absl::string_view word) const;
+
+  bool IsPathPossible(SpelltowerPath &path) const;
 
  private:
-  SpelltowerBoard starting_board_;
-  const std::shared_ptr<TrieNode> dict_;
+  void DFSAllWordsOnBoard(const Point &loc,
+                          const std::shared_ptr<TrieNode> &trie_node,
+                          const SpelltowerBoard &board, SpelltowerPath &path,
+                          WordMap &ans) const;
 
-  void DFS(std::shared_ptr<TrieNode> node, const Point &p,
-           const SpelltowerBoard &board,
-           std::vector<std::vector<bool>> &visited,
-           absl::flat_hash_set<Point> &path, WordMap &ans);
+  bool DFSHighScoringWord(const SpelltowerBoard &board, absl::string_view word,
+                          int i, std::vector<LetterCount> &row_letter_counts,
+                          SpelltowerPath &path) const;
+
+  bool UpdatePath(SpelltowerPath &path, int l) const;
+
+  SpelltowerBoard board_;
+  const SpelltowerBoard starting_board_;
+  const std::shared_ptr<TrieNode> dict_;
 };
 
 }  // namespace puzzmo

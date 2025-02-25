@@ -10,6 +10,12 @@
 namespace puzzmo {
 namespace {
 
+const absl::flat_hash_map<char, int> kLetterValueMap(
+    {{'a', 1}, {'b', 4}, {'c', 4},  {'d', 3}, {'e', 1}, {'f', 5}, {'g', 3},
+     {'h', 5}, {'i', 1}, {'j', 9},  {'k', 6}, {'l', 2}, {'m', 4}, {'n', 2},
+     {'o', 1}, {'p', 4}, {'q', 12}, {'r', 2}, {'s', 1}, {'t', 2}, {'u', 1},
+     {'v', 5}, {'w', 5}, {'x', 9},  {'y', 5}, {'z', 11}});
+
 auto point_comparator = [](const Point &lhs, const Point &rhs) {
   return (lhs.row != rhs.row ? lhs.row < rhs.row : lhs.col < rhs.col);
 };
@@ -57,6 +63,40 @@ char SpelltowerBoard::char_at(int row, int col) const {
   return board_[row][col];
 }
 
+std::vector<Point> SpelltowerBoard::column(int col) const {
+  std::vector<Point> v;
+  if (col < 0 || col >= max_cols_) return v;
+  for (int row = 0; row < max_rows_; ++row) {
+    Point p = {row, col};
+    if (char_at(p) == ' ') continue;
+    v.push_back(p);
+  }
+  return v;
+}
+
+std::vector<Point> SpelltowerBoard::row(int row) const {
+  std::vector<Point> v;
+  if (row < 0 || row >= max_rows_) return v;
+  for (int col = 0; col < max_cols_; ++col) {
+    Point p = {row, col};
+    if (char_at(p) == ' ') continue;
+    v.push_back(p);
+  }
+  return v;
+}
+
+std::vector<Point> SpelltowerBoard::points() const {
+  std::vector<Point> v;
+  for (int r = 0; r < max_rows_; ++r) {
+    for (int c = 0; c < max_cols_; ++c) {
+      Point p = {r, c};
+      if (char_at(p) == ' ') continue;
+      v.push_back(p);
+    }
+  }
+  return v;
+}
+
 char &SpelltowerBoard::operator[](Point p) { return board_[p.row][p.col]; }
 const char &SpelltowerBoard::operator[](Point p) const {
   return board_[p.row][p.col];
@@ -84,7 +124,9 @@ absl::flat_hash_set<Point> SpelltowerBoard::ValidVonNeumannNeighbors(
 absl::flat_hash_set<Point> SpelltowerBoard::ValidMooreNeighbors(
     const Point &p) const {
   absl::flat_hash_set<Point> neighbors = p.MooreNeighbors();
-  absl::erase_if(neighbors, [this](Point n) { return !HasPoint(n); });
+  absl::erase_if(neighbors, [this](Point n) {
+    return !HasPoint(n) || !std::isalpha(board_[n.row][n.col]);
+  });
   return neighbors;
 }
 
@@ -131,158 +173,40 @@ std::vector<LetterCount> SpelltowerBoard::GetRowLetterCounts() const {
 
 std::vector<Point> SpelltowerBoard::StarLocations() const { return stars_; }
 
-int SpelltowerBoard::Score(const SpelltowerPath &path) const {
+int SpelltowerBoard::ScorePath(const SpelltowerPath &path) const {
   absl::flat_hash_set<Point> affected;
-  int star_tiles = 0;
+
+  // Determine the points outside of the path that will be removed, as they will
+  // be involved in scoring.
   for (const Point &p : path.points()) {
     affected.insert(p);
-    if (absl::c_contains(stars_, p)) ++star_tiles;
-
     char c = char_at(p);
+
+    // Red tiles
     if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
-      for (int row = 0; row < rows_; ++row) {
-        affected.insert({.row = row, .col = p.col});
+      for (const Point &cleared_pt : column(p.col)) {
+        affected.insert(cleared_pt);
       }
     }
-    if (path.size() < 5) continue;
 
-    for (const Point &n : ValidVonNeumannNeighbors(p)) {
-      affected.insert(n);
+    // Adjacent tiles if path is long enough.
+    if (path.size() >= 5) {
+      for (const Point &vvnn : ValidVonNeumannNeighbors(p)) {
+        affected.insert(vvnn);
+      }
     }
   }
 
+  // Sum the values of all affected points, multiply by path.size(), and
+  // multiply again by the number of stars used (plus one).
   int score = 0;
   for (const Point &p : affected) {
-    char c = char_at(p);
-    if (c == ' ' || c == '*') continue;
-    score += kLetterScores[c - 'a'];
+    if (char c = char_at(p); std::isalpha(c)) {
+      score += kLetterValueMap.at(c);
+    }
   }
   score *= path.size();
-  return score *= (1 + star_tiles);
-}
-
-std::vector<std::string> SpelltowerBoard::MightHaveAllStarWords(
-    const std::vector<std::string> &words) const {
-  std::vector<std::string> filtered_words;
-  for (const auto &wd : words) {
-    if (MightHaveAllStarWord(wd)) {
-      filtered_words.push_back(wd);
-    }
-  }
-  return filtered_words;
-}
-
-bool SpelltowerBoard::MightHaveAllStarWord(absl::string_view word) const {
-  std::vector<LetterCount> row_letter_counts = GetRowLetterCounts();
-  SpelltowerPath path;
-  LOG(INFO) << word;
-  if (DFS(word, 0, row_letter_counts, path)) {
-    // LOG(INFO) << word << path << "\n";
-    return true;
-  }
-  return false;
-}
-
-bool SpelltowerBoard::DFS(absl::string_view word, int i,
-                          std::vector<LetterCount> &row_letter_counts,
-                          SpelltowerPath &path) const {
-  // std::cout << "\33[2K" << word.substr(0, i) << "\r";
-  // Check if we have a solution
-  if (i >= word.length()) {
-    if (path.num_stars() == stars_.size()) return false;
-    return IsPathPossible(path);
-  }
-
-  // For every possible choice in the current position...
-  char c = word[i];
-  for (const Point &p : letter_map_.at(c)) {
-    if ((!path.empty() && std::abs(p.row - path.back().row) > 1) ||
-        !row_letter_counts[p.row].contains(c))
-      continue;
-
-    // Make the choice
-    path.push_back(p);
-    if (auto e = row_letter_counts[p.row].RemoveLetter(c); !e.ok()) {
-      LOG(ERROR) << e.status();
-      return false;
-    }
-
-    // Use recursion to solve from the new position
-    if (DFS(word, i + 1, row_letter_counts, path)) return true;
-
-    // Unmake the choice
-    path.pop_back();
-    if (auto e = row_letter_counts[p.row].AddLetter(c); !e.ok()) {
-      LOG(ERROR) << e.status();
-      return false;
-    }
-  }
-  return false;
-}
-
-bool SpelltowerBoard::IsPathPossible(SpelltowerPath &path) const {
-  // Check for interrupted columns (or "A-C-B columns")
-  for (int i = 1; i < path.size(); ++i) {
-    if (path[i - 1].row == path[i].row &&
-        std::abs(path.num_below(i - 1) - path.num_below(i)) > 1)
-      return false;
-  }
-
-  bool aligned = false;
-  while (!aligned) {
-    // Start with the lowest point
-    std::vector<int> l_to_h = path.IndicesByColumn();
-    for (int i = 0; i < l_to_h.size(); ++i) {
-      // LOG(INFO) << path;
-      int idx = l_to_h[i];
-      Point &curr = path[idx];
-      if (idx > 0) {
-        Point &prev = path[idx - 1];
-        if (!curr.MooreNeighbors().contains(prev)) {
-          if (!UpdatePath(path, idx - 1)) return false;
-          break;  // Restarts the for loop.
-        }
-      }
-      if (idx < path.size() - 1) {
-        Point &next = path[idx + 1];
-        if (!curr.MooreNeighbors().contains(next)) {
-          if (!UpdatePath(path, idx)) return false;
-          break;  // Restarts the for loop.
-        }
-      }
-      // If we've made it here, this point (and all below it) can reach both of
-      // their neighbors! If this is the final loop, set aligned = true so we
-      // can break free
-      if (i == l_to_h.size() - 1) aligned = true;
-    }
-    if (aligned) break;
-  }
-  return true;
-}
-
-bool SpelltowerBoard::UpdatePath(SpelltowerPath &path, int l) const {
-  int lo = (path[l].col < path[l + 1].col) ? l : l + 1;
-  int hi = (path[l + 1].col < path[l].col) ? l : l + 1;
-  if (path[lo].col + 1 < path.num_below(hi)) return false;
-
-  // Lower hi to one column above lo. Lowers any points above hi as well.
-  int shift = path[hi].col - path[lo].col - 1;
-  std::vector<int> row_items = path.SimplifiedRow(path[hi].row);
-  bool above_hi = true;
-  for (int i = row_items.size() - 1; i >= 0; --i) {
-    int idx = row_items[i];
-    // Anything above the point being lowered needs to drop the same amount.
-    if (above_hi) {
-      path[idx].col -= shift;
-      if (idx == hi) above_hi = false;
-      continue;
-    }
-    // If we're below the point being lowered, we lower it as little as needed
-    // to stay below the point above it.
-    // It's safe to refer to row_items[i+1].
-    path[idx].col = path[row_items[i + 1]].col - 1;
-  }
-  return true;
+  return score *= (1 + path.num_stars());
 }
 
 }  // namespace puzzmo
