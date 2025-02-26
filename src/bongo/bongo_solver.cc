@@ -138,6 +138,13 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
       }
     } while (std::next_permutation(top3.begin(), top3.end()));
   }
+  if (highest_score_ == 0) {
+    ++tiles_for_bonus_words_;
+    ++tiles_for_multiplier_tiles_;
+    LOG(INFO) << "No solutions found. Trying again with a broader "
+                 "search.";
+    return Solve();
+  }
   return highest_scoring_board_;
 }
 
