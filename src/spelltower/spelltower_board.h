@@ -17,6 +17,10 @@ class SpelltowerBoard {
  public:
   explicit SpelltowerBoard(const std::vector<std::string> &board);
 
+  void ClearPoint(const Point &p);
+  void ClearPath(const SpelltowerPath &path);
+  absl::flat_hash_set<Point> AffectedSquares(const SpelltowerPath &path) const;
+
   // Returns true if the point exists on the board.
   bool HasPoint(const Point &p) const;
   bool HasPoint(int row, int col) const;
@@ -48,9 +52,11 @@ class SpelltowerBoard {
    * Accessors & mutators *
    * * * * * * * * * * * **/
 
-  // Returns the letter at a given spot on the board, or
+  // Returns the letter at a given spot on the board.
   char char_at(const Point &p) const;
   char char_at(int row, int col) const;
+
+  std::vector<std::string> board() const;
 
   std::vector<Point> column(int col) const;
   std::vector<Point> row(int row) const;
@@ -70,6 +76,9 @@ class SpelltowerBoard {
   }
 
  private:
+  void RegenLetterMap();
+  void JustClearPoint(const Point &p);
+
   std::vector<std::string> board_;
   int rows_, cols_ = 0;
   std::vector<Point> stars_;
@@ -77,6 +86,19 @@ class SpelltowerBoard {
 
   static const int max_cols_ = 13;
   static const int max_rows_ = 9;
+
+  // Allows easy conversion of SpelltowerPath to string.
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const SpelltowerBoard &board) {
+    for (int row = 0; row < 9; ++row) {
+      std::string row_string = board.board()[row];
+      for (int col = 0; col < row_string.size(); ++col) {
+        if (board.is_star_at(row, col))
+          row_string[col] = std::toupper(row_string[col]);
+      }
+      sink.Append(absl::StrCat("\n", row, "[", row_string));
+    }
+  }
 };
 
 }  // namespace puzzmo

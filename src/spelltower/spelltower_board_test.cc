@@ -148,5 +148,36 @@ TEST(SpelltowerBoardTest, GetAllStarRegexes) {
           "d.*c.{4,}a.{2,}b", "d.{5,}a.{2,}b.{1,}c", "d.{5,}a.{4,}c.{1,}b"));
 }
 
+TEST(SpelltowerBoardTest, ClearPoint) {
+  SpelltowerBoard board({"monkey", "paneL", "vines", "fluTe", "finds"});
+
+  EXPECT_THAT(board.board()[3], testing::SizeIs(6));
+  std::vector<Point> stars_before = {{1, 4}, {3, 3}};
+  ASSERT_EQ(board.StarLocations(), stars_before);
+  Point t_before = {3, 3};
+  ASSERT_THAT(board.letter_map()['t'], testing::ElementsAre(t_before));
+
+  board.ClearPoint({3, 1});
+
+  EXPECT_THAT(board.board()[3], testing::SizeIs(6));
+  std::vector<Point> stars_after = {{1, 4}, {3, 2}};
+  EXPECT_EQ(board.StarLocations(), stars_after);
+  Point t_after = {3, 2};
+  EXPECT_THAT(board.letter_map()['t'], testing::ElementsAre(t_after));
+}
+
+TEST(SpelltowerBoardTest, ClearPath) {
+  SpelltowerBoard board({"monkey", "paneL", "vines", "fluTe", "finds"});
+  SpelltowerPath path({{1, 0}, {1, 1}, {1, 2}});  // "pan"
+
+  std::vector<Point> stars_before = {{1, 4}, {3, 3}};
+  ASSERT_EQ(board.StarLocations(), stars_before);
+
+  board.ClearPath(path);
+
+  std::vector<Point> stars_after = {{1, 1}, {3, 3}};
+  EXPECT_EQ(board.StarLocations(), stars_after);
+}
+
 }  // namespace
 }  // namespace puzzmo

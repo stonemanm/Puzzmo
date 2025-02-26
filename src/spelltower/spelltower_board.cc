@@ -4,7 +4,6 @@
 #include <cctype>
 #include <cstdlib>
 
-#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 
 namespace puzzmo {
@@ -16,8 +15,10 @@ const absl::flat_hash_map<char, int> kLetterValueMap(
      {'o', 1}, {'p', 4}, {'q', 12}, {'r', 2}, {'s', 1}, {'t', 2}, {'u', 1},
      {'v', 5}, {'w', 5}, {'x', 9},  {'y', 5}, {'z', 11}});
 
+// We sort the points by row, and within a row, from highest to lowest. This
+// way, if we iterate over them and remove some, the rest won't be altered.
 auto point_comparator = [](const Point &lhs, const Point &rhs) {
-  return (lhs.row != rhs.row ? lhs.row < rhs.row : lhs.col < rhs.col);
+  return (lhs.row != rhs.row ? lhs.row < rhs.row : lhs.col > rhs.col);
 };
 
 // Very simple helper method
@@ -63,6 +64,8 @@ char SpelltowerBoard::char_at(int row, int col) const {
   return board_[row][col];
 }
 
+std::vector<std::string> SpelltowerBoard::board() const { return board_; }
+
 std::vector<Point> SpelltowerBoard::column(int col) const {
   std::vector<Point> v;
   if (col < 0 || col >= max_cols_) return v;
@@ -97,6 +100,13 @@ std::vector<Point> SpelltowerBoard::points() const {
   return v;
 }
 
+bool SpelltowerBoard::is_star_at(const Point &p) const {
+  return absl::c_contains(stars_, p);
+}
+bool SpelltowerBoard::is_star_at(int row, int col) const {
+  return is_star_at({row, col});
+}
+
 char &SpelltowerBoard::operator[](Point p) { return board_[p.row][p.col]; }
 const char &SpelltowerBoard::operator[](Point p) const {
   return board_[p.row][p.col];
@@ -112,6 +122,49 @@ bool SpelltowerBoard::HasPoint(const Point &p) const {
 
 bool SpelltowerBoard::HasPoint(int row, int col) const {
   return (row >= 0 && row < rows_ && col >= 0 && col < cols_);
+}
+
+void SpelltowerBoard::ClearPoint(const Point &p) {
+  JustClearPoint(p);
+  RegenLetterMap();
+}
+
+void SpelltowerBoard::ClearPath(const SpelltowerPath &path) {
+  absl::flat_hash_set<Point> affected = AffectedSquares(path);
+  absl::flat_hash_map<int, std::vector<Point>> affected_in_order;
+  for (const Point &p : affected) affected_in_order[p.row].push_back(p);
+  for (auto &[k, v] : affected_in_order) {
+    std::sort(v.begin(), v.end(), point_comparator);
+    for (const Point &p : v) JustClearPoint(p);
+  }
+  RegenLetterMap();
+}
+
+absl::flat_hash_set<Point> SpelltowerBoard::AffectedSquares(
+    const SpelltowerPath &path) const {
+  absl::flat_hash_set<Point> affected;
+
+  // Determine the points outside of the path that will be removed, as they will
+  // be involved in scoring.
+  for (const Point &p : path.points()) {
+    affected.insert(p);
+    char c = char_at(p);
+
+    // Red tiles
+    if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
+      for (const Point &cleared_pt : column(p.col)) {
+        affected.insert(cleared_pt);
+      }
+    }
+
+    // Adjacent tiles if path is long enough.
+    if (path.size() >= 5) {
+      for (const Point &vvnn : ValidVonNeumannNeighbors(p)) {
+        affected.insert(vvnn);
+      }
+    }
+  }
+  return affected;
 }
 
 absl::flat_hash_set<Point> SpelltowerBoard::ValidVonNeumannNeighbors(
@@ -174,28 +227,7 @@ std::vector<LetterCount> SpelltowerBoard::GetRowLetterCounts() const {
 std::vector<Point> SpelltowerBoard::StarLocations() const { return stars_; }
 
 int SpelltowerBoard::ScorePath(const SpelltowerPath &path) const {
-  absl::flat_hash_set<Point> affected;
-
-  // Determine the points outside of the path that will be removed, as they will
-  // be involved in scoring.
-  for (const Point &p : path.points()) {
-    affected.insert(p);
-    char c = char_at(p);
-
-    // Red tiles
-    if (c == 'j' || c == 'q' || c == 'x' || c == 'z') {
-      for (const Point &cleared_pt : column(p.col)) {
-        affected.insert(cleared_pt);
-      }
-    }
-
-    // Adjacent tiles if path is long enough.
-    if (path.size() >= 5) {
-      for (const Point &vvnn : ValidVonNeumannNeighbors(p)) {
-        affected.insert(vvnn);
-      }
-    }
-  }
+  absl::flat_hash_set<Point> affected = AffectedSquares(path);
 
   // Sum the values of all affected points, multiply by path.size(), and
   // multiply again by the number of stars used (plus one).
@@ -207,6 +239,26 @@ int SpelltowerBoard::ScorePath(const SpelltowerPath &path) const {
   }
   score *= path.size();
   return score *= (1 + path.num_stars());
+}
+
+void SpelltowerBoard::JustClearPoint(const Point &p) {
+  board_[p.row].erase(board_[p.row].begin() + p.col);
+  board_[p.row].push_back(' ');
+  for (int i = stars_.size() - 1; i >= 0; --i) {
+    if (stars_[i].row != p.row) continue;
+    if (stars_[i].col == p.col) stars_.erase(stars_.begin() + i);
+    if (stars_[i].col > p.col) --stars_[i].col;
+  }
+}
+
+void SpelltowerBoard::RegenLetterMap() {
+  letter_map_.clear();
+  for (int r = 0; r < rows_; ++r) {
+    for (int c = 0; c < cols_; ++c) {
+      char l = char_at(r, c);
+      if (std::isalpha(l)) letter_map_[l].push_back({r, c});
+    }
+  }
 }
 
 }  // namespace puzzmo
