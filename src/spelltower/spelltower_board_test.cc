@@ -168,14 +168,16 @@ TEST(SpelltowerBoardTest, ClearPoint) {
 
 TEST(SpelltowerBoardTest, ClearPath) {
   SpelltowerBoard board({"monkey", "paneL", "vines", "fluTe", "finds"});
-  SpelltowerPath path({{1, 0}, {1, 1}, {1, 2}});  // "pan"
+  SpelltowerPath path(
+      {{0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}});  // "monkey"
 
   std::vector<Point> stars_before = {{1, 4}, {3, 3}};
   ASSERT_EQ(board.StarLocations(), stars_before);
 
   board.ClearPath(path);
 
-  std::vector<Point> stars_after = {{1, 1}, {3, 3}};
+  // The L should be erased as an affected tile.
+  std::vector<Point> stars_after = {{3, 3}};
   EXPECT_EQ(board.StarLocations(), stars_after);
 }
 
