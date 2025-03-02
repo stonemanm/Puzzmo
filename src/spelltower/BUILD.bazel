@@ -53,6 +53,32 @@ cc_test(
 )
 
 cc_library(
+    name = "solver",
+    srcs = ["solver.cc"],
+    hdrs = ["solver.h"],
+    deps = [
+        ":grid",
+        ":path",
+        ":trie",
+        "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "solver_test",
+    size = "small",
+    srcs = ["solver_test.cc"],
+    deps = [
+        ":solver",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "tile",
     srcs = ["tile.cc"],
     hdrs = ["tile.h"],
