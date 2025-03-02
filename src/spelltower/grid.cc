@@ -22,15 +22,15 @@ const absl::flat_hash_map<char, int> kLetterValueMap(
 
 Grid::Grid(const std::vector<std::string>& grid)
     : tiles_(num_cols_), column_letter_counts_(num_cols_) {
-  for (int c = 0; c < num_cols_; ++c) {
-    for (int r = 0; r < num_rows_; ++r) {
-      char l = grid[num_rows_ - r - 1][c];
-      if (l == ' ') {
+  for (int r = 0; r < num_rows_; ++r) {
+    int in_r = (grid.size() - 1) - r;
+    for (int c = 0; c < num_cols_; ++c) {
+      if (in_r < 0 || c >= grid[in_r].size() || grid[in_r][c] == ' ') {
         tiles_[c].push_back(nullptr);
         continue;
       }
 
-      std::shared_ptr<Tile> tile = std::make_shared<Tile>(r, c, l);
+      std::shared_ptr<Tile> tile = std::make_shared<Tile>(r, c, grid[in_r][c]);
       tiles_[c].push_back(tile);
       if (tile->is_star()) star_tiles_.push_back(tile);
       if (!tile->is_letter()) continue;

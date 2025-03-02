@@ -11,11 +11,11 @@ namespace puzzmo::spelltower {
 namespace {
 
 TEST(GridTest, Constructor) {
-  Grid grid({"abcdefghi", "jkLmnopqr", "stuvwxyz*", "*zyxwvuts", "rqpOnmlkj",
-             "ihgfedcba", "acegibdfh", "jLnprkmoq", "suwy*tvxz", "jjjjjjjjj",
-             "kkkkkkkkk", "lllllllll", "mmmmmmmmm"});
-  Point p = {0, 0};
-  EXPECT_EQ(grid[p]->letter(), 'm');
+  Grid small_grid({"abc", "b*ac", "cabby"});
+  EXPECT_EQ((small_grid[{0, 0}]->letter()), 'c');
+  EXPECT_EQ((small_grid[{0, 4}]->letter()), 'y');
+  EXPECT_EQ((small_grid[{1, 4}]), nullptr);
+  EXPECT_EQ((small_grid[{0, 5}]), nullptr);
 }
 
 TEST(GridTest, LetterMap) {
