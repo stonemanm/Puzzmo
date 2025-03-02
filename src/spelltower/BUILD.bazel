@@ -3,6 +3,28 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "tile",
+    srcs = ["tile.cc"],
+    hdrs = ["tile.h"],
+    deps = [
+        "//src/shared:point",
+        "@abseil-cpp//absl/status:status",
+    ],
+)
+
+cc_test(
+    name = "tile_test",
+    size = "small",
+    srcs = ["tile_test.cc"],
+    deps = [
+        ":tile",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "spelltower_board",
     srcs = ["spelltower_board.cc"],
     hdrs = ["spelltower_board.h"],
