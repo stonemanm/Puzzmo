@@ -104,13 +104,14 @@ class Grid {
   int ScorePath(const Path &path) const;
 
  private:
-  const int num_rows_ = 13;
-  const int num_cols_ = 9;
   std::vector<std::vector<std::shared_ptr<Tile>>> tiles_;
   std::vector<std::shared_ptr<Tile>> star_tiles_;
   absl::flat_hash_map<char, absl::flat_hash_set<std::shared_ptr<Tile>>>
       letter_map_;
   std::vector<LetterCount> column_letter_counts_;
+
+  static const int num_rows_ = 13;
+  static const int num_cols_ = 9;
 
   //------------------
   // Abseil functions
