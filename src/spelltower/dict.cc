@@ -1,4 +1,4 @@
-#include "spelltower_dictionary.h"
+#include "dict.h"
 
 #include <fstream>
 #include <string>
@@ -13,9 +13,9 @@ ABSL_FLAG(std::string, spelltower_words_path, "data/words_puzzmo.txt",
 
 namespace puzzmo::spelltower {
 
-using SearchableWords = SpelltowerDictionary::SearchableWords;
+using SearchableWords = Dict::SearchableWords;
 
-absl::Status SpelltowerDictionary::Init() {
+static absl::StatusOr<Dict> LoadDictFromFile() {
   // Initialize common_words_
   if (auto common_words = TryReadingInWords(); !common_words.ok()) {
     return common_words.status();
@@ -42,11 +42,11 @@ absl::Status SpelltowerDictionary::Init() {
   return absl::OkStatus();
 }
 
-bool SpelltowerDictionary::contains(absl::string_view word) const {
+bool Dict::contains(absl::string_view word) const {
   return common_words_.contains(word);
 }
 
-absl::flat_hash_set<std::string> SpelltowerDictionary::GetMatchingWords(
+absl::flat_hash_set<std::string> Dict::GetMatchingWords(
     const SearchOptions& options) const {
   absl::flat_hash_set<std::string> matches;
 
@@ -71,8 +71,8 @@ absl::flat_hash_set<std::string> SpelltowerDictionary::GetMatchingWords(
   return matches;
 }
 
-absl::StatusOr<absl::flat_hash_set<std::string>>
-SpelltowerDictionary::TryReadingInWords() const {
+absl::StatusOr<absl::flat_hash_set<std::string>> Dict::TryReadingInWords()
+    const {
   std::string path = absl::GetFlag(FLAGS_spelltower_words_path);
   std::ifstream file(path);
   if (!file.is_open()) {
@@ -88,8 +88,7 @@ SpelltowerDictionary::TryReadingInWords() const {
   return words;
 }
 
-absl::StatusOr<SearchableWords>
-SpelltowerDictionary::TryReadingInAndSortingWords() const {
+absl::StatusOr<SearchableWords> Dict::TryReadingInAndSortingWords() const {
   std::string path = absl::GetFlag(FLAGS_spelltower_words_path);
   std::ifstream file(path);
   if (!file.is_open()) {

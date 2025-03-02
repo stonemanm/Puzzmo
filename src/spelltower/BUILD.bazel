@@ -3,6 +3,38 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "dict",
+    srcs = ["dict.cc"],
+    hdrs = ["dict.h"],
+    data = [
+        "//data:words_puzzmo.txt",
+    ],
+    deps = [
+        ":trie",
+        "//src/shared:letter_count",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@re2",
+    ],
+)
+
+cc_test(
+    name = "dict_test",
+    size = "small",
+    srcs = ["dict_test.cc"],
+    deps = [
+        ":dict",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "grid",
     srcs = ["grid.cc"],
     hdrs = ["grid.h"],
@@ -120,38 +152,6 @@ cc_test(
     srcs = ["spelltower_board_test.cc"],
     deps = [
         ":spelltower_board",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "spelltower_dictionary",
-    srcs = ["spelltower_dictionary.cc"],
-    hdrs = ["spelltower_dictionary.h"],
-    data = [
-        "//data:words_puzzmo.txt",
-    ],
-    deps = [
-        ":trie",
-        "//src/shared:letter_count",
-        "@abseil-cpp//absl/container:flat_hash_map",
-        "@abseil-cpp//absl/container:flat_hash_set",
-        "@abseil-cpp//absl/flags:flag",
-        "@abseil-cpp//absl/status:status",
-        "@abseil-cpp//absl/status:statusor",
-        "@abseil-cpp//absl/strings",
-        "@re2",
-    ],
-)
-
-cc_test(
-    name = "spelltower_dictionary_test",
-    size = "small",
-    srcs = ["spelltower_dictionary_test.cc"],
-    deps = [
-        ":spelltower_dictionary",
-        "@abseil-cpp//absl/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

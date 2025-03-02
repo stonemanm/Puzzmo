@@ -1,4 +1,4 @@
-#include "spelltower_dictionary.h"
+#include "dict.h"
 
 #include "absl/status/status_matchers.h"
 #include "gtest/gtest.h"
@@ -6,8 +6,8 @@
 namespace puzzmo::spelltower {
 namespace {
 
-TEST(SpelltowerDictionaryTest, Init) {
-  SpelltowerDictionary dict;
+TEST(DictTest, Init) {
+  Dict dict;
   EXPECT_THAT(dict.Init(), absl_testing::IsOk());
 }
 

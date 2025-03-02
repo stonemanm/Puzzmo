@@ -1,5 +1,5 @@
-#ifndef spelltower_dictionary_h
-#define spelltower_dictionary_h
+#ifndef dict_h
+#define dict_h
 
 #include <string>
 
@@ -8,31 +8,26 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "src/shared/letter_count.h"
+#include "trie.h"
 
 namespace puzzmo::spelltower {
 
-class SpelltowerDictionary {
+class Dict {
  public:
   using SearchableWords = absl::flat_hash_map<
       int, absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>>;
 
   struct SearchOptions {
-    int min_length = 1;
+    int min_length = 3;
     int max_length = INT_MAX;
     LetterCount min_letters;
     LetterCount max_letters;
     std::string matching_regex;
   };
 
-  // A basic implementation of a node in a Trie.
-  struct TrieNode {
-    std::vector<std::shared_ptr<TrieNode>> children;
-    const std::string* word = nullptr;
-    TrieNode() : children(26) {}
-  };
+  static absl::StatusOr<Dict> LoadDictFromFile();
 
-  SpelltowerDictionary() {};
-  absl::Status Init();
+  absl::Status Init();  // static
 
   absl::flat_hash_set<std::string> GetMatchingWords(
       const SearchOptions& options) const;
@@ -47,9 +42,9 @@ class SpelltowerDictionary {
   absl::flat_hash_set<std::string> common_words_;
   absl::flat_hash_set<std::string> valid_words_;
   SearchableWords searchable_words_;
-  const std::shared_ptr<TrieNode> trie_dict_;
+  const Trie trie_dict_;
 };
 
 }  // namespace puzzmo::spelltower
 
-#endif  // !spelltower_dictionary_h
+#endif  // !dict_h
