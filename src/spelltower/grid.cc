@@ -119,10 +119,15 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
 
   for (const std::shared_ptr<Tile>& tile : path.tiles()) {
     affected_points.insert(tile->coords());
-    if (path.size() >= 5) {
-      absl::flat_hash_set<Point> vnn = tile->coords().VonNeumannNeighbors();
-      affected_points.insert(vnn.begin(), vnn.end());
+    absl::flat_hash_set<Point> vnn = tile->coords().VonNeumannNeighbors();
+    if (path.size() < 5) {
+      // If path size is less than 5, we still want to eliminate adjacent blank
+      // tiles.
+      absl::erase_if(vnn, [*this](Point p) {
+        return !IsPointInRange(p) || tiles_[p.col][p.row]->is_letter();
+      });
     }
+    affected_points.insert(vnn.begin(), vnn.end());
     if (tile->is_rare()) {
       for (int c = 0; c < num_cols_; ++c)
         affected_points.insert({tile->row(), c});
@@ -142,8 +147,9 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
 
 absl::Status Grid::ClearPath(const Path& path) {
   absl::flat_hash_set<std::shared_ptr<Tile>> affected = TilesRemovedBy(path);
-  for (const auto& tile : affected)
+  for (const auto& tile : affected) {
     if (auto s = ClearTile(tile); !s.ok()) return s;
+  }
   return absl::OkStatus();
 }
 
@@ -151,6 +157,8 @@ absl::Status Grid::ClearTile(const std::shared_ptr<Tile>& tile) {
   if (tile == nullptr)
     return absl::InvalidArgumentError(
         "Cannot pass nullptr to Grid::CloseTile().");
+  if (!IsPointInRange(tile->coords()))
+    return absl::InvalidArgumentError("Tile is not on board.");
   auto [row, col] = tile->coords();
 
   // Remove it from the other data members.
@@ -164,7 +172,6 @@ absl::Status Grid::ClearTile(const std::shared_ptr<Tile>& tile) {
   if (tile->is_letter()) {
     char l = tile->letter();
     letter_map_[l].erase(tile);
-
     if (auto s = column_letter_counts_[col].RemoveLetter(l); !s.ok()) {
       return s.status();
     }
@@ -172,8 +179,10 @@ absl::Status Grid::ClearTile(const std::shared_ptr<Tile>& tile) {
 
   // Shift the coordinates of all tiles above it in the column down by one.
   std::vector<std::shared_ptr<Tile>>& column = tiles_[col];
-  for (int r = row + 1; r < num_rows_; ++r)
+  for (int r = row + 1; r < num_rows_; ++r) {
+    if (column[r] == nullptr) break;
     if (auto s = column[r]->Drop(1); !s.ok()) return s;
+  }
 
   // Remove the tile itself, and insert a nullptr at the end of the column.
   column.erase(column.begin() + row);
@@ -189,6 +198,7 @@ int Grid::ScorePath(const Path& path) const {
   // multiply again by the number of stars used (plus one).
   int score = 0;
   for (const std::shared_ptr<Tile>& tile : affected_tiles) {
+    if (tile == nullptr) continue;
     if (tile->is_letter()) score += kLetterValueMap.at(tile->letter());
   }
   score *= path.size();

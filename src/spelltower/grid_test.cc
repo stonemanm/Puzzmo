@@ -142,13 +142,17 @@ TEST(GridTest, TilesRemovedBy) {
 TEST(GridTest, ClearPath) {
   Grid grid({"nnnnnnn n", "mmmmmmm m", "lllllll l", "kkkkkkk k", "iiiijii i",
              "hhhhhhhhh", "ggggggggg", "fffffffff", "eeeeeeeee", "ddddddddd",
-             "ccccccccc", "bbbbbbbbb", "aaaaaaaaa"});
+             "ccccccccc", "b*bbbbbbb", "aaaaaaaaa"});
+
+  Path long_path({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
+                  grid[{12, 6}]});
+  EXPECT_THAT(grid.ClearPath(long_path), absl_testing::IsOk());
 
   Path short_path({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
   EXPECT_THAT(grid.ClearPath(short_path), absl_testing::IsOk());
-  EXPECT_EQ((grid[{0, 1}]->letter()), ('b'));
+  EXPECT_EQ((grid[{0, 1}]->letter()), ('c'));
   EXPECT_EQ((grid[{0, 2}]->letter()), ('a'));
-  EXPECT_EQ((grid[{1, 1}]->letter()), ('c'));
+  EXPECT_EQ((grid[{1, 1}]->letter()), ('d'));
   EXPECT_EQ((grid[{1, 2}]->letter()), ('c'));
 }
 
