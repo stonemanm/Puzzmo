@@ -93,11 +93,11 @@ TEST(GridTest, IsPointInRange) {
 
 TEST(GridTest, PossibleNextTilesForPath) {
   Grid grid({"         ", "         ", "         ", "         ", "        x",
-             "       xx", "      xxx", "     xxxx", "    xxxxx", "   xxxxxx",
+             "       xx", "      xx*", "     xxxx", "    xxxxx", "   xxxxxx",
              "  xxxxxxx", " xxxxxxxx", "xxxxxxxxx"});
   Path path({grid[{6, 7}], grid[{7, 7}], grid[{7, 8}]});
   EXPECT_THAT(grid.PossibleNextTilesForPath(path),
-              testing::UnorderedElementsAre(grid[{8, 8}], grid[{6, 8}]));
+              testing::UnorderedElementsAre(grid[{8, 8}]));
 }
 
 TEST(GridTest, TilesAffectedBy) {

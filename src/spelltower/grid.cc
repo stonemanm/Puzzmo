@@ -91,7 +91,7 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::PossibleNextTilesForPath(
   absl::flat_hash_set<std::shared_ptr<Tile>> accessible_tiles =
       AccessibleTilesFrom(path.tiles().back());
   absl::erase_if(accessible_tiles, [path](std::shared_ptr<Tile> tile) {
-    return path.contains(tile->coords());
+    return tile->is_blank() || path.contains(tile->coords());
   });
   return accessible_tiles;
 }
