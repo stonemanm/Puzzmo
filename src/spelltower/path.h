@@ -39,6 +39,8 @@ class Path {
   // Provides access to the underlying vector of tiles.
   std::vector<std::shared_ptr<Tile>> tiles() const { return tiles_; }
 
+  std::string TilesAsString() const;
+
   // Returns a 2D vector structured the same way a Grid is, but containing no
   // tiles other than those in the path. Used to examine the order of tiles in
   // columns. Tiles are stored by their indices in `tiles_`.

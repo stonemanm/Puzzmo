@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "absl/strings/str_join.h"
 #include "src/shared/point.h"
 
 namespace puzzmo::spelltower {
@@ -66,6 +67,13 @@ bool Path::contains(const Point &p) const {
     if (tile->coords() == p) return true;
   }
   return false;
+}
+
+std::string Path::TilesAsString() const {
+  return absl::StrJoin(tiles_, "",
+                       [](std::string *out, const std::shared_ptr<Tile> &tile) {
+                         absl::StrAppend(out, *tile);
+                       });
 }
 
 void Path::pop_back() {

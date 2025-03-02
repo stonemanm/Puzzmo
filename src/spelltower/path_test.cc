@@ -38,6 +38,15 @@ TEST(PathTest, VectorConstructor) {
   EXPECT_EQ(path.star_count(), 2);
 }
 
+TEST(PathTest, TilesAsString) {
+  std::shared_ptr<Tile> t0 = std::make_shared<Tile>(0, 0, 'A');
+  std::shared_ptr<Tile> t1 = std::make_shared<Tile>(1, 1, 'B');
+  std::shared_ptr<Tile> t2 = std::make_shared<Tile>(0, 1, 'c');
+  Path path({t0, t1, t2});
+
+  EXPECT_EQ(path.TilesAsString(), "ABc");
+}
+
 TEST(PathTest, PushBack) {
   std::shared_ptr<Tile> t0 = std::make_shared<Tile>(0, 0, 'A');
   std::shared_ptr<Tile> t1 = std::make_shared<Tile>(1, 1, 'B');
