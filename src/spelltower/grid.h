@@ -84,6 +84,11 @@ class Grid {
   // Returns true iff the point refers to a tile on the grid.
   bool IsPointInRange(const Point &p) const;
 
+  // Calls `Path::AccessibleTilesFrom()` on `path.back()`, removing any tiles
+  // already in the path.
+  absl::flat_hash_set<std::shared_ptr<Tile>> PossibleNextTilesForPath(
+      const Path &path) const;
+
   // Returns `tile`'s von Neumann neighbors.
   absl::flat_hash_set<std::shared_ptr<Tile>> TilesAffectedBy(
       const std::shared_ptr<Tile> &tile) const;

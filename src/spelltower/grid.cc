@@ -86,6 +86,16 @@ bool Grid::IsPointInRange(const Point& p) const {
   return tiles_[p.col][p.row] != nullptr;
 }
 
+absl::flat_hash_set<std::shared_ptr<Tile>> Grid::PossibleNextTilesForPath(
+    const Path& path) const {
+  absl::flat_hash_set<std::shared_ptr<Tile>> accessible_tiles =
+      AccessibleTilesFrom(path.tiles().back());
+  absl::erase_if(accessible_tiles, [path](std::shared_ptr<Tile> tile) {
+    return path.contains(tile->coords());
+  });
+  return accessible_tiles;
+}
+
 absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesAffectedBy(
     const std::shared_ptr<Tile>& tile) const {
   if (tile == nullptr) return {};
