@@ -3,6 +3,34 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "grid",
+    srcs = ["grid.cc"],
+    hdrs = ["grid.h"],
+    deps = [
+        ":path",
+        ":tile",
+        "//src/shared:letter_count",
+        "//src/shared:point",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/status:status",
+    ],
+)
+
+cc_test(
+    name = "grid_test",
+    size = "small",
+    srcs = ["grid_test.cc"],
+    deps = [
+        ":grid",
+        "//src/shared:letter_count",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "path",
     srcs = ["path.cc"],
     hdrs = ["path.h"],
