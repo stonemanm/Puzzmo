@@ -3,6 +3,16 @@
 #include <algorithm>
 
 namespace puzzmo::spelltower {
+namespace {
+
+// Returns the number of non-nullptr entries before the first nullptr.
+int NumTilesInColumn(const std::vector<std::shared_ptr<Tile>>& column) {
+  int n = 0;
+  while (n < column.size() && column[n] != nullptr) ++n;
+  return n;
+}
+
+}  // namespace
 
 const absl::flat_hash_map<char, int> kLetterValueMap(
     {{'a', 1}, {'b', 4}, {'c', 4},  {'d', 3}, {'e', 1}, {'f', 5}, {'g', 3},
@@ -38,6 +48,20 @@ std::vector<std::shared_ptr<Tile>> Grid::row(int row) const {
     v.push_back(IsPointInRange(p) ? tiles_[col][row] : nullptr);
   }
   return v;
+}
+
+bool Grid::AlmostThere() const {
+  for (int c = 0; c < num_cols_; ++c) {
+    if (NumTilesInColumn(tiles_[c]) > 2) return false;
+  }
+  return true;
+}
+
+bool Grid::FullClear() const {
+  for (int c = 0; c < num_cols_; ++c) {
+    if (NumTilesInColumn(tiles_[c]) > 0) return false;
+  }
+  return true;
 }
 
 absl::flat_hash_set<std::shared_ptr<Tile>> Grid::AccessibleTilesFrom(

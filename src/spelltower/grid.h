@@ -65,6 +65,15 @@ class Grid {
     return column_letter_counts_;
   }
 
+  //---------
+  // Bonuses
+
+  // True iff no column has more than two tiles left in it.
+  bool AlmostThere() const;
+
+  // True iff all tiles have been cleared from the grid.
+  bool FullClear() const;
+
   //---------------
   // Grid movement
 
@@ -102,6 +111,9 @@ class Grid {
   // does not call `Path::IsPossible()` itself, as it is comparatively intensive
   // to compute.
   int ScorePath(const Path &path) const;
+
+  // Returns the points from the bonuses this grid has qualified for.
+  int ScoreBonuses() const { return 1000 * AlmostThere() + 1000 * FullClear(); }
 
  private:
   std::vector<std::vector<std::shared_ptr<Tile>>> tiles_;

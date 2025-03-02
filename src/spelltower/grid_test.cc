@@ -45,6 +45,31 @@ TEST(GridTest, ColumnLetterCounts) {
                   LetterCount("iiiiiiiijlkm")));
 }
 
+TEST(GridTest, ScoreBonuses) {
+  Grid neither({"         ", "         ", "         ", "         ", "         ",
+                "         ", "         ", "         ", "         ", "         ",
+                "  x      ", "  x      ", "  x      "});
+  EXPECT_FALSE(neither.AlmostThere());
+  EXPECT_FALSE(neither.FullClear());
+  EXPECT_EQ(neither.ScoreBonuses(), 0);
+
+  Grid almost_there({"         ", "         ", "         ", "         ",
+                     "         ", "         ", "         ", "         ",
+                     "         ", "         ", "         ", "xxxxxxxxx",
+                     "xxxxxxxxx"});
+  EXPECT_TRUE(almost_there.AlmostThere());
+  EXPECT_FALSE(almost_there.FullClear());
+  EXPECT_EQ(almost_there.ScoreBonuses(), 1000);
+
+  Grid full_clear({"         ", "         ", "         ", "         ",
+                   "         ", "         ", "         ", "         ",
+                   "         ", "         ", "         ", "         ",
+                   "         "});
+  EXPECT_TRUE(full_clear.AlmostThere());
+  EXPECT_TRUE(full_clear.FullClear());
+  EXPECT_EQ(full_clear.ScoreBonuses(), 2000);
+}
+
 TEST(GridTest, AccessibleTilesFrom) {
   Grid grid({"xxxxxxx x", "xxxxxxxxx", "xxxxxxxxx", "xxxxxxxxx", "xxxxxxxxx",
              "xxxxxxxxx", "xxxxxxxxx", "xxxxxxxxx", "xxxxxxxxx", "xxxxxxxxx",
