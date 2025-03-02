@@ -4,7 +4,7 @@
 
 #include "absl/log/log.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 
 SpelltowerPath::SpelltowerPath(const std::vector<Point>& points)
     : simplified_board_(9) {
@@ -84,4 +84,4 @@ std::vector<int> SpelltowerPath::IndicesByColumn() const {
   return indices;
 }
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower

@@ -6,7 +6,7 @@
 #include "absl/log/log.h"
 #include "re2/re2.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 
 WordMap SpelltowerSolver::AllWordsOnBoard(const SpelltowerBoard &board) const {
   SpelltowerPath path;
@@ -216,4 +216,4 @@ bool SpelltowerSolver::UpdatePath(SpelltowerPath &path, int l) const {
   return true;
 }
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower

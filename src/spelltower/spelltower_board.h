@@ -10,7 +10,7 @@
 #include "src/shared/letter_count.h"
 #include "src/shared/point.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 
 // A board state for Spelltower.
 class SpelltowerBoard {
@@ -101,6 +101,6 @@ class SpelltowerBoard {
   }
 };
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower
 
 #endif

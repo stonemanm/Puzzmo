@@ -9,7 +9,7 @@
 #include "absl/strings/string_view.h"
 #include "src/shared/letter_count.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 
 class SpelltowerDictionary {
  public:
@@ -50,6 +50,6 @@ class SpelltowerDictionary {
   const std::shared_ptr<TrieNode> trie_dict_;
 };
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower
 
 #endif  // !spelltower_dictionary_h

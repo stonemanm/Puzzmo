@@ -13,6 +13,8 @@
 #include "src/spelltower/spelltower_solver.h"
 
 using namespace puzzmo;
+using ::spelltower::SpelltowerBoard;
+using ::spelltower::SpelltowerSolver;
 
 ABSL_FLAG(bool, run_regex, true, "Run regex mode instead of the DFS?");
 

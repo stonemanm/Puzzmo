@@ -11,7 +11,7 @@
 ABSL_FLAG(std::string, spelltower_words_path, "data/words_puzzmo.txt",
           "Input file containing all legal words for Spellotwer.");
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 
 using SearchableWords = SpelltowerDictionary::SearchableWords;
 
@@ -106,4 +106,4 @@ SpelltowerDictionary::TryReadingInAndSortingWords() const {
   return words;
 }
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower

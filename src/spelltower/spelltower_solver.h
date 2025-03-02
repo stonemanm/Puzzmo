@@ -12,7 +12,7 @@
 #include "src/shared/point.h"
 #include "src/spelltower/spelltower_path.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 using WordMap =
     absl::btree_map<int, absl::btree_set<std::string>, std::less<int>>;
 
@@ -50,6 +50,6 @@ class SpelltowerSolver {
   const std::shared_ptr<TrieNode> dict_;
 };
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower
 
 #endif

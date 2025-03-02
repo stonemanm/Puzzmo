@@ -6,7 +6,7 @@
 
 #include "absl/strings/str_cat.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 namespace {
 
 const absl::flat_hash_map<char, int> kLetterValueMap(
@@ -261,4 +261,4 @@ void SpelltowerBoard::RegenLetterMap() {
   }
 }
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower

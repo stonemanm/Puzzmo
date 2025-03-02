@@ -7,7 +7,7 @@
 #include "absl/strings/str_cat.h"
 #include "src/shared/point.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 
 // Manages a vector of points, calculating things like num_below in the process.
 // Does NOT require that adjacent points be Moore neighbors.
@@ -92,6 +92,6 @@ class SpelltowerPath {
   }
 };
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower
 
 #endif  // !spelltower_path_h

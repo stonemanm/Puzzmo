@@ -5,7 +5,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 namespace {
 
 constexpr Point p00 = {0, 0};
@@ -87,4 +87,4 @@ TEST(SpelltowerPathTest, PopBack) {
 }
 
 }  // namespace
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower

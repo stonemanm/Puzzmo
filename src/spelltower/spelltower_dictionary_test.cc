@@ -3,7 +3,7 @@
 #include "absl/status/status_matchers.h"
 #include "gtest/gtest.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 namespace {
 
 TEST(SpelltowerDictionaryTest, Init) {
@@ -12,4 +12,4 @@ TEST(SpelltowerDictionaryTest, Init) {
 }
 
 }  // namespace
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower

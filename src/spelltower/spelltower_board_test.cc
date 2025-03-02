@@ -5,7 +5,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 namespace {
 
 TEST(SpelltowerBoardTest, EmptyConstructor) {
@@ -182,4 +182,4 @@ TEST(SpelltowerBoardTest, ClearPath) {
 }
 
 }  // namespace
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower
