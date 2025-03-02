@@ -89,8 +89,8 @@ TEST(GridTest, TilesRemovedBy) {
       grid.TilesRemovedBy(short_path),
       testing::UnorderedElementsAre(grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]));
 
-  Path short_path_crossing_j({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
-  EXPECT_THAT(grid.TilesRemovedBy(short_path_crossing_j),
+  Path path_with_rare_tile({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
+  EXPECT_THAT(grid.TilesRemovedBy(path_with_rare_tile),
               testing::UnorderedElementsAre(
                   grid[{8, 4}], grid[{7, 4}], grid[{6, 4}], grid[{8, 0}],
                   grid[{8, 1}], grid[{8, 2}], grid[{8, 3}], grid[{8, 5}],
@@ -138,8 +138,8 @@ TEST(GridTest, ScorePath) {
   EXPECT_EQ(grid.ScorePath(short_path), 36);
 
   // j+h+g + i+i+i+i+i+i+i (24) * length (3) * stars + 1 (1) = 72
-  Path short_path_crossing_j({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
-  EXPECT_EQ(grid.ScorePath(short_path_crossing_j), 72);
+  Path path_with_rare_tile({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
+  EXPECT_EQ(grid.ScorePath(path_with_rare_tile), 72);
 
   // i+k+l+m+n + j+h+i+k+n+m+l (44) * length (5) * stars + 1 (1) = 220
   Path long_path({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],

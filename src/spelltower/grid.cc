@@ -85,13 +85,11 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
 
   for (const std::shared_ptr<Tile>& tile : path.tiles()) {
     affected_points.insert(tile->coords());
-
-    char l = tile->letter();
     if (path.size() >= 5) {
       absl::flat_hash_set<Point> vnn = tile->coords().VonNeumannNeighbors();
       affected_points.insert(vnn.begin(), vnn.end());
     }
-    if (l == 'j' || l == 'q' || l == 'x' || l == 'z') {
+    if (tile->is_rare()) {
       for (int c = 0; c < num_cols_; ++c)
         affected_points.insert({tile->coords().row, c});
     }

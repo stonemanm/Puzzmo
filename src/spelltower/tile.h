@@ -34,6 +34,9 @@ class Tile {
 
   bool is_blank() const { return letter_ == '*'; }
   bool is_letter() const { return std::isalpha(letter_); }
+  bool is_rare() const {
+    return letter_ == 'j' || letter_ == 'q' || letter_ == 'x' || letter_ == 'z';
+  }
   bool is_star() const { return is_star_; }
 
   // Returns the letter on this tile. If tile is blank, returns an asterisk. If
