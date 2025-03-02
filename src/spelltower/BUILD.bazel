@@ -198,6 +198,7 @@ cc_library(
     name = "trie",
     srcs = ["trie.cc"],
     hdrs = ["trie.h"],
+    data = ["//data:serialized_trie"],
     deps = [
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/log",

@@ -5,7 +5,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 namespace {
 
 TEST(TrieTest, Serialize) {
@@ -27,4 +27,4 @@ TEST(TrieTest, Deserialize) {
 }
 
 }  // namespace
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower

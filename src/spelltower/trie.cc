@@ -5,7 +5,7 @@
 
 #include "absl/log/log.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 
 constexpr char kNodeIsWord = '!';
 constexpr char kEndOfNode = ']';
@@ -120,4 +120,4 @@ std::ostream& operator<<(std::ostream& os, const Trie& trie) {
   return os;
 }
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower

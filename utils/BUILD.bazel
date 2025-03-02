@@ -7,6 +7,20 @@ package(default_visibility = ["//visibility:public"])
 ############
 
 cc_binary(
+    name = "trie_serializer",
+    srcs = ["trie_serializer.cc"],
+    data = [
+        "//utils:in.txt",
+        "//utils:out.txt",
+    ],
+    deps = [
+        "//src/spelltower:trie",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cc_binary(
     name = "word_decompressor",
     srcs = ["word_decompressor.cc"],
     data = [

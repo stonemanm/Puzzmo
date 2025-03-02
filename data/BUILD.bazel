@@ -6,6 +6,8 @@ exports_files(["bongo_tiles.txt"])
 
 exports_files(["pile_up_poker_cards.txt"])
 
+exports_files(["serialized_trie.txt"])
+
 exports_files(["spelltower_board.txt"])
 
 exports_files(["typeshift_board.txt"])

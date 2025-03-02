@@ -9,7 +9,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
-namespace puzzmo {
+namespace puzzmo::spelltower {
 
 // A basic implementation of a node in a Trie.
 struct TrieNode {
@@ -51,6 +51,6 @@ class Trie {
 std::ostream& operator<<(std::ostream& os, const Trie& trie);
 std::ostream& operator<<(std::ostream& os, const TrieNode& node);
 
-}  // namespace puzzmo
+}  // namespace puzzmo::spelltower
 
 #endif
