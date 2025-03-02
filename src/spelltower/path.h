@@ -99,6 +99,10 @@ class Path {
 
 bool operator==(const Path &lhs, const Path &rhs);
 bool operator!=(const Path &lhs, const Path &rhs);
+bool operator<(const Path &lhs, const Path &rhs);
+bool operator<=(const Path &lhs, const Path &rhs);
+bool operator>(const Path &lhs, const Path &rhs);
+bool operator>=(const Path &lhs, const Path &rhs);
 
 }  // namespace puzzmo::spelltower
 

@@ -175,4 +175,16 @@ bool operator==(const Path &lhs, const Path &rhs) {
 
 bool operator!=(const Path &lhs, const Path &rhs) { return !(lhs == rhs); }
 
+bool operator<(const Path &lhs, const Path &rhs) {
+  return lhs.TilesAsString() < rhs.TilesAsString();
+}
+
+bool operator<=(const Path &lhs, const Path &rhs) {
+  return lhs < rhs || lhs == rhs;
+}
+
+bool operator>(const Path &lhs, const Path &rhs) { return rhs < lhs; }
+
+bool operator>=(const Path &lhs, const Path &rhs) { return rhs <= lhs; }
+
 }  // namespace puzzmo::spelltower
