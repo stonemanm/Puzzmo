@@ -29,8 +29,10 @@ class Tile {
   //-----------
   // Accessors
 
-  // Returns the coordinates at which this tile can be found in the grid.
+  // Return the coordinates at which this tile can be found in the grid.
   Point coords() const { return coords_; }
+  int row() const { return coords_.row; }
+  int col() const { return coords_.col; }
 
   bool is_blank() const { return letter_ == '*'; }
   bool is_letter() const { return std::isalpha(letter_); }

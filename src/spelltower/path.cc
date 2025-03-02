@@ -75,7 +75,7 @@ void Path::pop_back() {
 
   // Decrement `path_tiles_under_` for values above `tile`, then remove it from
   // `simple_col`.
-  std::vector<int> &simple_col = simple_board_[tile->coords().col];
+  std::vector<int> &simple_col = simple_board_[tile->col()];
   int idx_in_simple_col = min_possible_row_[idx];
   for (int i = idx_in_simple_col + 1; i < simple_col.size(); ++i) {
     --min_possible_row_[simple_col[i]];
@@ -95,16 +95,14 @@ void Path::push_back(const std::shared_ptr<Tile> &tile) {
 
   // Set the number of tiles under `tile` to the number currently in
   // `simple_col`, then add it to `simple_col`.
-  std::vector<int> &simple_col = simple_board_[tile->coords().col];
+  std::vector<int> &simple_col = simple_board_[tile->col()];
   min_possible_row_.push_back(simple_col.size());
   simple_col.push_back(idx);
 
   // Swap `idx` into its proper place in `simple_col`, updating
   // `path_tiles_under_` as we go.
   for (int t = simple_col.size() - 1; t > 0; --t) {
-    if (tiles_[simple_col[t - 1]]->coords().row <
-        tiles_[simple_col[t]]->coords().row)
-      break;
+    if (tiles_[simple_col[t - 1]]->row() < tiles_[simple_col[t]]->row()) break;
     std::swap(min_possible_row_[simple_col[t - 1]],
               min_possible_row_[simple_col[t]]);
     std::swap(simple_col[t - 1], simple_col[t]);

@@ -115,7 +115,7 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
     }
     if (tile->is_rare()) {
       for (int c = 0; c < num_cols_; ++c)
-        affected_points.insert({tile->coords().row, c});
+        affected_points.insert({tile->row(), c});
     }
   }
   absl::erase_if(affected_points,

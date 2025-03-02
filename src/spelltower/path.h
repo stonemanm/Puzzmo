@@ -87,7 +87,7 @@ class Path {
     std::vector<std::string> board(13, std::string(9, '*'));
     for (const std::shared_ptr<Tile> &tile : path.tiles_) {
       if (tile == nullptr) continue;
-      board[tile->coords().row][tile->coords().col] = tile->letter();
+      board[tile->row()][tile->col()] = tile->letter();
     }
     for (const std::string &row : board) {
       sink.Append(absl::StrCat("\n", row));
