@@ -3,6 +3,28 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "path",
+    srcs = ["path.cc"],
+    hdrs = ["path.h"],
+    deps = [
+        ":tile",
+        "//src/shared:point",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "path_test",
+    size = "small",
+    srcs = ["path_test.cc"],
+    deps = [
+        ":path",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "tile",
     srcs = ["tile.cc"],
     hdrs = ["tile.h"],
