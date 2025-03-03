@@ -86,15 +86,10 @@ class Solver {
 
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const Solver& solver) {
-    sink.Append(absl::StrCat(
-        absl::StrJoin(solver.solution(), ", ",
-                      [](std::string* out, const Path& path) {
-                        absl::StrAppend(out, "\"", path.TilesAsString(), "\"");
-                      }),
-        " (", solver.score(), ")"));
-    for (const Path& path : solver.solution()) {
-      sink.Append(absl::StrCat("\n\n", path));
+    for (int i = 0; i < solver.solution().size(); ++i) {
+      sink.Append(absl::StrCat(i + 1, ". ", solver.solution()[i], "\n\n"));
     }
+    absl::Format(&sink, "%v", solver.grid_);
   }
 };
 

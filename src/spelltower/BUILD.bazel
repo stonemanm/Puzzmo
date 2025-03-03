@@ -154,6 +154,7 @@ cc_test(
     srcs = ["trie_test.cc"],
     deps = [
         ":trie",
+        "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

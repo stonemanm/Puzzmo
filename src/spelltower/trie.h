@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -19,6 +20,8 @@ struct TrieNode {
   int words_with_prefix = 0;
   TrieNode() : children(26) {}
 };
+
+std::string SerializeTrieNode(const std::shared_ptr<TrieNode>& node);
 
 class Trie {
  public:
@@ -48,10 +51,19 @@ class Trie {
                                      absl::string_view path) const;
 
   std::shared_ptr<TrieNode> root_ = std::make_shared<TrieNode>();
+
+  //------------------
+  // Abseil functions
+
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const Trie& trie) {
+    sink.Append(SerializeTrieNode(trie.root_));
+  }
 };
 
+std::ostream& operator<<(std::ostream& os,
+                         const std::shared_ptr<TrieNode>& node);
 std::ostream& operator<<(std::ostream& os, const Trie& trie);
-std::ostream& operator<<(std::ostream& os, const TrieNode& node);
 
 }  // namespace puzzmo::spelltower
 

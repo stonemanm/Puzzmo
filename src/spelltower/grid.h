@@ -21,6 +21,8 @@
 
 namespace puzzmo::spelltower {
 
+constexpr char kEmptySpaceLetter = ' ';
+
 class Grid {
  public:
   explicit Grid(const std::vector<std::string> &grid);
@@ -143,8 +145,13 @@ class Grid {
   friend void AbslStringify(Sink &sink, const Grid &grid) {
     for (int r = grid.num_rows_ - 1; r >= 0; --r) {
       std::vector<std::shared_ptr<Tile>> row = grid.row(r);
-      sink.Append("\n");
-      for (const std::shared_ptr<Tile> &tile : row) sink.Append(*tile);
+      if (r < grid.num_rows_ - 1) sink.Append("\n");
+      for (const std::shared_ptr<Tile> &tile : row) {
+        if (tile == nullptr)
+          sink.Append(std::string(1, kEmptySpaceLetter));
+        else
+          absl::Format(&sink, "%v", *tile);
+      }
     }
   }
 };

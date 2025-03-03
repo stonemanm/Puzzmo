@@ -5,7 +5,6 @@
 #include <stack>
 
 #include "absl/flags/flag.h"
-#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 
 ABSL_FLAG(std::string, serialized_dict_path, "data/serialized_trie.txt",
@@ -16,6 +15,20 @@ namespace puzzmo::spelltower {
 
 constexpr char kNodeIsWord = '!';
 constexpr char kEndOfNode = ']';
+
+std::string SerializeTrieNode(const std::shared_ptr<TrieNode>& node) {
+  std::string s = "";
+  if (node == nullptr) return s;
+  if (int wds = node->words_with_prefix; wds > 0) absl::StrAppend(&s, wds);
+  if (node->is_word) absl::StrAppend(&s, std::string(1, kNodeIsWord));
+  for (int i = 0; i < 26; ++i) {
+    std::shared_ptr<TrieNode> child = node->children[i];
+    if (child != nullptr) absl::StrAppend(&s, std::string(1, 'a' + i));
+    absl::StrAppend(&s, SerializeTrieNode(child));
+  }
+  absl::StrAppend(&s, std::string(1, kEndOfNode));
+  return s;
+}
 
 Trie::Trie(const std::vector<std::string>& words) { insert(words); }
 
@@ -124,21 +137,14 @@ Trie::Trie(absl::string_view serialized_trie) {
   }
 }
 
-std::ostream& operator<<(std::ostream& os, std::shared_ptr<TrieNode> node) {
-  if (node == nullptr) return os;
-  if (int wds = node->words_with_prefix; wds > 0) os << wds;
-  if (node->is_word) os << kNodeIsWord;
-  for (int i = 0; i < 26; ++i) {
-    std::shared_ptr<TrieNode> child = node->children[i];
-    if (child != nullptr) os << (char)('a' + i);
-    os << child;
-  }
-  os << kEndOfNode;
+std::ostream& operator<<(std::ostream& os,
+                         const std::shared_ptr<TrieNode>& node) {
+  os << SerializeTrieNode(node);
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const Trie& trie) {
-  os << trie.root();
+  os << SerializeTrieNode(trie.root());
   return os;
 }
 

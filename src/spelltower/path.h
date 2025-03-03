@@ -12,7 +12,7 @@
 #include <memory>
 #include <vector>
 
-#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "tile.h"
 
 namespace puzzmo::spelltower {
@@ -84,16 +84,18 @@ class Path {
                       path.min_possible_row_, path.star_count_);
   }
 
+  // TODO: swap in TilesAsString here, and make TilesOnGrid or something?
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Path &path) {
-    std::vector<std::string> board(13, std::string(9, '*'));
+    std::vector<std::string> board(13, std::string(9, kBlankTileLetter));
     for (const std::shared_ptr<Tile> &tile : path.tiles_) {
       if (tile == nullptr) continue;
-      board[tile->row()][tile->col()] = tile->letter();
+      board[12 - tile->row()][tile->col()] =
+          tile->is_star() ? std::toupper(tile->letter()) : tile->letter();
     }
-    for (const std::string &row : board) {
-      sink.Append(absl::StrCat("\n", row));
-    }
+
+    sink.Append(absl::StrCat("\"", path.TilesAsString(), "\"\n",
+                             absl::StrJoin(board, "\n")));
   }
 };
 

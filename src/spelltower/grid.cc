@@ -25,7 +25,8 @@ Grid::Grid(const std::vector<std::string>& grid)
   for (int r = 0; r < num_rows_; ++r) {
     int in_r = (grid.size() - 1) - r;
     for (int c = 0; c < num_cols_; ++c) {
-      if (in_r < 0 || c >= grid[in_r].size() || grid[in_r][c] == ' ') {
+      if (in_r < 0 || c >= grid[in_r].size() ||
+          grid[in_r][c] == kEmptySpaceLetter) {
         tiles_[c].push_back(nullptr);
         continue;
       }

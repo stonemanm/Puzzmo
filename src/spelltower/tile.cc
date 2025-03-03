@@ -4,6 +4,11 @@
 
 namespace puzzmo::spelltower {
 
+Tile::Tile(int row, int col, char letter, bool is_star)
+    : coords_({.row = row, .col = col}), letter_(letter), is_star_(is_star) {
+  if (!std::isalpha(letter)) letter_ = kBlankTileLetter;
+}
+
 absl::Status Tile::Drop(int rows) {
   if (rows > coords_.row)
     return absl::OutOfRangeError(absl::StrCat("Tile ", *this, " at ", coords_,

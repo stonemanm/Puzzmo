@@ -185,5 +185,14 @@ TEST(GridTest, ScorePath) {
   EXPECT_EQ(grid.ScorePath(long_path), 220);
 }
 
+TEST(GridTest, AbslStringify) {
+  const std::vector<std::string> grid_string = {
+      "     A   ", "         ", "   ..    ", "         ", "  b      ",
+      "       xx", "      xxx", "     xxxx", "    xxxxx", "   xxxxxx",
+      "  xxxxxxx", " xxxxxxxx", "xxxxxxxxx"};
+  Grid grid(grid_string);
+  EXPECT_EQ(absl::StrFormat("%v", grid), absl::StrJoin(grid_string, "\n"));
+}
+
 }  // namespace
 }  // namespace puzzmo::spelltower

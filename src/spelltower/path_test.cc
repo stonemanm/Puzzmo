@@ -174,5 +174,20 @@ TEST(PathTest, IsPossible) {
   EXPECT_FALSE(complicated_and_false.IsPossible());
 }
 
+TEST(PathTest, AbslStringify) {
+  Path path(
+      {std::make_shared<Tile>(0, 0, 'q'), std::make_shared<Tile>(1, 1, 'r'),
+       std::make_shared<Tile>(2, 0, 'S'), std::make_shared<Tile>(2, 1, 'T'),
+       std::make_shared<Tile>(3, 2, 'u')});
+  EXPECT_EQ(absl::StrFormat("%v", path),
+            absl::StrCat("\"qrSTu\"", "\n",
+                         absl::StrJoin({".........", ".........", ".........",
+                                        ".........", ".........", ".........",
+                                        ".........", ".........", ".........",
+                                        "..u......", "ST.......", ".r.......",
+                                        "q........"},
+                                       "\n")));
+}
+
 }  // namespace
 }  // namespace puzzmo::spelltower
