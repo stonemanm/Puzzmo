@@ -1,6 +1,19 @@
 #include "solver.h"
-
 namespace puzzmo::spelltower {
+
+absl::StatusOr<Solver> Solver::CreateSolverWithSerializedTrie(
+    const Grid& grid) {
+  absl::StatusOr<Trie> trie = Trie::LoadFromSerializedTrie();
+  if (!trie.ok()) return trie.status();
+  return Solver(*trie, grid);
+}
+
+absl::StatusOr<Solver> Solver::CreateSolverWithSerializedTrie(
+    const std::vector<std::string>& grid) {
+  absl::StatusOr<Trie> trie = Trie::LoadFromSerializedTrie();
+  if (!trie.ok()) return trie.status();
+  return Solver(*trie, Grid(grid));
+}
 
 void Solver::FillWordCache() {
   if (!word_cache_.empty()) return;
@@ -10,7 +23,7 @@ void Solver::FillWordCache() {
     for (const std::shared_ptr<Tile>& tile : column) {
       if (tile == nullptr || tile->is_blank()) continue;
       path.push_back(tile);
-      FillWordsCacheDFS(dict_.root()->children[tile->letter() - 'a'], path);
+      FillWordCacheDFS(trie_.root()->children[tile->letter() - 'a'], path);
       path.pop_back();
     }
   }
@@ -43,8 +56,8 @@ absl::Status Solver::SolveGreedily() {
   return absl::OkStatus();
 }
 
-void Solver::FillWordsCacheDFS(const std::shared_ptr<TrieNode>& trie_node,
-                               Path& path) {
+void Solver::FillWordCacheDFS(const std::shared_ptr<TrieNode>& trie_node,
+                              Path& path) {
   // Check for failure.
   if (trie_node == nullptr) return;
 
@@ -55,7 +68,7 @@ void Solver::FillWordsCacheDFS(const std::shared_ptr<TrieNode>& trie_node,
       grid_.PossibleNextTilesForPath(path);
   for (const std::shared_ptr<Tile>& next : options) {
     path.push_back(next);
-    FillWordsCacheDFS(trie_node->children[next->letter() - 'a'], path);
+    FillWordCacheDFS(trie_node->children[next->letter() - 'a'], path);
     path.pop_back();
   }
 }

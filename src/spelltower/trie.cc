@@ -1,9 +1,16 @@
 #include "trie.h"
 
 #include <cctype>
+#include <fstream>
 #include <stack>
 
+#include "absl/flags/flag.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
+
+ABSL_FLAG(std::string, serialized_dict_path, "data/serialized_trie.txt",
+          "Input file containing all legal words for Spelltower, serialized "
+          "for ease of loading.");
 
 namespace puzzmo::spelltower {
 
@@ -11,6 +18,21 @@ constexpr char kNodeIsWord = '!';
 constexpr char kEndOfNode = ']';
 
 Trie::Trie(const std::vector<std::string>& words) { insert(words); }
+
+absl::StatusOr<Trie> Trie::LoadFromSerializedTrie() {
+  std::string path = absl::GetFlag(FLAGS_serialized_dict_path);
+  std::ifstream file(path);
+  if (!file.is_open())
+    return absl::InvalidArgumentError(
+        absl::StrCat("Error: Could not open ", path));
+
+  std::string serialized_trie_string;
+  std::getline(file, serialized_trie_string);
+  Trie trie(serialized_trie_string);
+  file.close();
+
+  return trie;
+}
 
 void Trie::insert(const std::vector<std::string>& words) {
   for (const std::string& word : words) insert(word);

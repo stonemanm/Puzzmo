@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 namespace puzzmo::spelltower {
@@ -24,6 +25,7 @@ class Trie {
   Trie() {}
   explicit Trie(const std::vector<std::string>& words);
   explicit Trie(absl::string_view serialized_trie);
+  static absl::StatusOr<Trie> LoadFromSerializedTrie();
 
   void insert(const std::vector<std::string>& words);
   void insert(absl::string_view word);

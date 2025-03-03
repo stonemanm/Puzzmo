@@ -9,11 +9,13 @@
 #ifndef solver_h
 #define solver_h
 
+#include <string>
 #include <vector>
 
 #include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "grid.h"
 #include "path.h"
 #include "trie.h"
@@ -23,12 +25,18 @@ namespace puzzmo::spelltower {
 class Solver {
  public:
   Solver(const Trie& trie, const Grid& grid)
-      : dict_(trie), starting_grid_(grid), grid_(grid), words_score_(0) {}
+      : trie_(trie), starting_grid_(grid), grid_(grid), words_score_(0) {}
+  Solver(const Trie& trie, const std::vector<std::string>& grid)
+      : Solver(trie, Grid(grid)) {}
+  static absl::StatusOr<Solver> CreateSolverWithSerializedTrie(
+      const Grid& grid);
+  static absl::StatusOr<Solver> CreateSolverWithSerializedTrie(
+      const std::vector<std::string>& grid);
 
   //-----------
   // Accessors
 
-  const Trie dict() const { return dict_; }
+  const Trie trie() const { return trie_; }
   const Grid starting_grid() const { return starting_grid_; }
   Grid grid() const { return grid_; }
   absl::btree_map<int, absl::btree_set<Path>, std::greater<int>> word_cache()
@@ -62,17 +70,32 @@ class Solver {
   absl::Status SolveGreedily();
 
  private:
-  // In parallel, searches `dict_` and `grid_` depth-first from the node and the
+  // In parallel, searches `trie_` and `grid_` depth-first from the node and the
   // last tile in `path`.
-  void FillWordsCacheDFS(const std::shared_ptr<TrieNode>& trie_node,
-                         Path& path);
+  void FillWordCacheDFS(const std::shared_ptr<TrieNode>& trie_node, Path& path);
 
-  const Trie dict_;
+  const Trie trie_;
   const Grid starting_grid_;
   Grid grid_;
   absl::btree_map<int, absl::btree_set<Path>, std::greater<int>> word_cache_;
   std::vector<Path> solution_;
   int words_score_;
+
+  //------------------
+  // Abseil functions
+
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const Solver& solver) {
+    sink.Append(absl::StrCat(
+        absl::StrJoin(solver.solution(), ", ",
+                      [](std::string* out, const Path& path) {
+                        absl::StrAppend(out, "\"", path.TilesAsString(), "\"");
+                      }),
+        " (", solver.score(), ")"));
+    for (const Path& path : solver.solution()) {
+      sink.Append(absl::StrCat("\n\n", path));
+    }
+  }
 };
 
 }  // namespace puzzmo::spelltower
