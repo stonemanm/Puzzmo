@@ -6,9 +6,9 @@
 namespace puzzmo::spelltower {
 namespace {
 
-TEST(DictTest, Init) {
-  Dict dict;
-  EXPECT_THAT(dict.Init(), absl_testing::IsOk());
+TEST(DictTest, LoadDictFromSerializedTrie) {
+  auto dict = Dict::LoadDictFromSerializedTrie();
+  EXPECT_THAT(dict.status(), absl_testing::IsOk());
 }
 
 }  // namespace

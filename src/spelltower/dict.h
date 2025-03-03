@@ -5,7 +5,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "src/shared/letter_count.h"
 #include "trie.h"
@@ -25,24 +25,25 @@ class Dict {
     std::string matching_regex;
   };
 
-  static absl::StatusOr<Dict> LoadDictFromFile();
+  static absl::StatusOr<Dict> LoadDictFromSerializedTrie();
 
-  absl::Status Init();  // static
+  bool contains(absl::string_view word) const { return trie_.contains(word); }
 
-  absl::flat_hash_set<std::string> GetMatchingWords(
-      const SearchOptions& options) const;
+  // absl::Status Init();
 
-  bool contains(absl::string_view word) const;
+  // absl::flat_hash_set<std::string> GetMatchingWords(
+  //     const SearchOptions& options) const;
 
  private:
-  absl::StatusOr<SearchableWords> TryReadingInAndSortingWords() const;
+  Dict(const Trie& trie) : trie_(trie) {}
 
-  absl::StatusOr<absl::flat_hash_set<std::string>> TryReadingInWords() const;
+  const Trie trie_;
 
-  absl::flat_hash_set<std::string> common_words_;
-  absl::flat_hash_set<std::string> valid_words_;
-  SearchableWords searchable_words_;
-  const Trie trie_dict_;
+  // absl::StatusOr<SearchableWords> TryReadingInAndSortingWords() const;
+  // absl::StatusOr<absl::flat_hash_set<std::string>> TryReadingInWords() const;
+  // absl::flat_hash_set<std::string> common_words_;
+  // absl::flat_hash_set<std::string> valid_words_;
+  // SearchableWords searchable_words_;
 };
 
 }  // namespace puzzmo::spelltower

@@ -7,6 +7,7 @@ cc_library(
     srcs = ["dict.cc"],
     hdrs = ["dict.h"],
     data = [
+        "//data:serialized_trie.txt",
         "//data:words_puzzmo.txt",
     ],
     deps = [
@@ -15,7 +16,6 @@ cc_library(
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/flags:flag",
-        "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
         "@re2",
@@ -198,7 +198,6 @@ cc_library(
     name = "trie",
     srcs = ["trie.cc"],
     hdrs = ["trie.h"],
-    data = ["//data:serialized_trie"],
     deps = [
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/log",
