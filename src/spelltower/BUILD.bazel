@@ -133,6 +133,35 @@ cc_test(
 )
 
 cc_library(
+    name = "trie",
+    srcs = ["trie.cc"],
+    hdrs = ["trie.h"],
+    data = [
+        "//data:serialized_trie.txt",
+    ],
+    deps = [
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "trie_test",
+    size = "small",
+    srcs = ["trie_test.cc"],
+    deps = [
+        ":trie",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+##############
+
+cc_library(
     name = "spelltower_board",
     srcs = ["spelltower_board.cc"],
     hdrs = ["spelltower_board.h"],
@@ -191,31 +220,5 @@ cc_library(
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/log",
         "@re2",
-    ],
-)
-
-cc_library(
-    name = "trie",
-    srcs = ["trie.cc"],
-    hdrs = ["trie.h"],
-    data = [
-        "//data:serialized_trie.txt",
-    ],
-    deps = [
-        "@abseil-cpp//absl/container:flat_hash_set",
-        "@abseil-cpp//absl/flags:flag",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
-    ],
-)
-
-cc_test(
-    name = "trie_test",
-    size = "small",
-    srcs = ["trie_test.cc"],
-    deps = [
-        ":trie",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
