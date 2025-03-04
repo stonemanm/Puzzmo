@@ -129,8 +129,8 @@ class Grid {
       letter_map_;
   std::vector<LetterCount> column_letter_counts_;
 
-  static const int num_rows_ = 13;
-  static const int num_cols_ = 9;
+  static constexpr int num_rows_ = 13;
+  static constexpr int num_cols_ = 9;
 
   //------------------
   // Abseil functions

@@ -43,19 +43,13 @@ class Tile {
 
   // If initialized with only a row and column, Tile will default to being
   // blank.
-  Tile(int row, int col)
-      : coords_({.row = row, .col = col}),
-        letter_(kBlankTileLetter),
-        is_star_(false) {}
+  Tile(int row, int col) : Tile(row, col, kBlankTileLetter) {}
 
   // If also passed a letter, that letter will be stored. If the letter is
   // capitalized, the lowercase letter will be scored, but the tile created will
   // be a star tile. If passed a non-alphabetical character, a blank tile will
   // be created.
-  Tile(int row, int col, char letter)
-      : coords_({.row = row, .col = col}),
-        letter_(std::isalpha(letter) ? std::tolower(letter) : kBlankTileLetter),
-        is_star_(std::isalpha(letter)) {}
+  Tile(int row, int col, char letter);
 
   //-----------
   // Accessors
@@ -100,6 +94,12 @@ class Tile {
   // score is multiplied by (1 + #_of_star_tiles_in_that_word).
   bool is_star() const { return is_star_; }
 
+  // Tile::value()
+  //
+  // Returns the value of the tile when calculating the score. The value of each
+  // letter is hardcoded into the game data.
+  int value() const { return value_; }
+
   //-----------
   // Mutators
 
@@ -109,22 +109,11 @@ class Tile {
   // `coords_.row` below 0.
   absl::Status Drop(int rows);
 
-  // Tile::set_is_star()
-  //
-  // Modifies the data member `is_star_`. Should never need use after
-  // construction, save for in testing.
-  void set_is_star(bool is_star) { is_star_ = is_star; }
-
-  // Tile::set_letter()
-  //
-  // Modifies the data member `letter_`. Should never need use after
-  // construction, save for in testing.
-  void set_letter(char letter) { letter_ = letter; }
-
  private:
   Point coords_;
-  char letter_;
-  bool is_star_;
+  const char letter_;
+  const bool is_star_;
+  const int value_;
 
   //------------------
   // Abseil functions

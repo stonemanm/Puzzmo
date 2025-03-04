@@ -14,12 +14,6 @@ int NumTilesInColumn(const std::vector<std::shared_ptr<Tile>>& column) {
 
 }  // namespace
 
-const absl::flat_hash_map<char, int> kLetterValueMap(
-    {{'a', 1}, {'b', 4}, {'c', 4},  {'d', 3}, {'e', 1}, {'f', 5}, {'g', 3},
-     {'h', 5}, {'i', 1}, {'j', 9},  {'k', 6}, {'l', 2}, {'m', 4}, {'n', 2},
-     {'o', 1}, {'p', 4}, {'q', 12}, {'r', 2}, {'s', 1}, {'t', 2}, {'u', 1},
-     {'v', 5}, {'w', 5}, {'x', 9},  {'y', 5}, {'z', 11}});
-
 Grid::Grid(const std::vector<std::string>& grid)
     : tiles_(num_cols_), column_letter_counts_(num_cols_) {
   for (int r = 0; r < num_rows_; ++r) {
@@ -200,7 +194,7 @@ int Grid::ScorePath(const Path& path) const {
   int score = 0;
   for (const std::shared_ptr<Tile>& tile : affected_tiles) {
     if (tile == nullptr || tile->is_blank()) continue;
-    score += kLetterValueMap.at(tile->letter());
+    score += tile->value();
   }
   score *= path.size();
   return score *= (1 + path.star_count());
