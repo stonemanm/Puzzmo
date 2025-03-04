@@ -34,7 +34,7 @@ Grid::Grid(const std::vector<std::string>& grid)
       std::shared_ptr<Tile> tile = std::make_shared<Tile>(r, c, grid[in_r][c]);
       tiles_[c].push_back(tile);
       if (tile->is_star()) star_tiles_.push_back(tile);
-      if (!tile->is_letter()) continue;
+      if (tile->is_blank()) continue;
 
       letter_map_[tile->letter()].insert(tile);
       (void)column_letter_counts_[c].AddLetter(tile->letter());
@@ -125,7 +125,7 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
       // If path size is less than 5, we still want to eliminate adjacent blank
       // tiles.
       absl::erase_if(vnn, [*this](Point p) {
-        return !IsPointInRange(p) || tiles_[p.col][p.row]->is_letter();
+        return !IsPointInRange(p) || !tiles_[p.col][p.row]->is_blank();
       });
     }
     affected_points.insert(vnn.begin(), vnn.end());
@@ -170,7 +170,7 @@ absl::Status Grid::ClearTile(const std::shared_ptr<Tile>& tile) {
           "tile is a star tile, but is not contained in star_tiles_.");
     star_tiles_.erase(it);
   }
-  if (tile->is_letter()) {
+  if (!tile->is_blank()) {
     char l = tile->letter();
     letter_map_[l].erase(tile);
     if (auto s = column_letter_counts_[col].RemoveLetter(l); !s.ok()) {
@@ -199,8 +199,8 @@ int Grid::ScorePath(const Path& path) const {
   // multiply again by the number of stars used (plus one).
   int score = 0;
   for (const std::shared_ptr<Tile>& tile : affected_tiles) {
-    if (tile == nullptr) continue;
-    if (tile->is_letter()) score += kLetterValueMap.at(tile->letter());
+    if (tile == nullptr || tile->is_blank()) continue;
+    score += kLetterValueMap.at(tile->letter());
   }
   score *= path.size();
   return score *= (1 + path.star_count());

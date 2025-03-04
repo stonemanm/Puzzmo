@@ -12,31 +12,26 @@ namespace {
 TEST(TileTest, Constructor) {
   Tile nonalpha_tile(0, 0, '$');
   EXPECT_THAT(nonalpha_tile.is_blank(), testing::IsTrue());
-  EXPECT_THAT(nonalpha_tile.is_letter(), testing::IsFalse());
   EXPECT_THAT(nonalpha_tile.is_rare(), testing::IsFalse());
   EXPECT_THAT(nonalpha_tile.is_star(), testing::IsFalse());
 
   Tile letter_tile(0, 1, 'a');
   EXPECT_THAT(letter_tile.is_blank(), testing::IsFalse());
-  EXPECT_THAT(letter_tile.is_letter(), testing::IsTrue());
   EXPECT_THAT(letter_tile.is_rare(), testing::IsFalse());
   EXPECT_THAT(letter_tile.is_star(), testing::IsFalse());
 
   Tile rare_tile(0, 2, 'j');
   EXPECT_THAT(rare_tile.is_blank(), testing::IsFalse());
-  EXPECT_THAT(rare_tile.is_letter(), testing::IsTrue());
   EXPECT_THAT(rare_tile.is_rare(), testing::IsTrue());
   EXPECT_THAT(rare_tile.is_star(), testing::IsFalse());
 
   Tile star_tile(0, 3, 'A');
   EXPECT_THAT(star_tile.is_blank(), testing::IsFalse());
-  EXPECT_THAT(star_tile.is_letter(), testing::IsTrue());
   EXPECT_THAT(star_tile.is_rare(), testing::IsFalse());
   EXPECT_THAT(star_tile.is_star(), testing::IsTrue());
 
   Tile rare_star_tile(0, 4, 'J');
   EXPECT_THAT(rare_star_tile.is_blank(), testing::IsFalse());
-  EXPECT_THAT(rare_star_tile.is_letter(), testing::IsTrue());
   EXPECT_THAT(rare_star_tile.is_rare(), testing::IsTrue());
   EXPECT_THAT(rare_star_tile.is_star(), testing::IsTrue());
 }
