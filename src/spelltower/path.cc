@@ -69,6 +69,15 @@ bool Path::contains(const Point &p) const {
   return false;
 }
 
+std::string Path::TilesAsGrid() const {
+  std::vector<std::string> board(13, std::string(9, kBlankTileLetter));
+  for (const std::shared_ptr<Tile> &tile : tiles_) {
+    board[12 - tile->row()][tile->col()] =
+        tile->is_star() ? std::toupper(tile->letter()) : tile->letter();
+  }
+  return absl::StrJoin(board, "\n");
+}
+
 std::string Path::TilesAsString() const {
   return absl::StrJoin(tiles_, "",
                        [](std::string *out, const std::shared_ptr<Tile> &tile) {

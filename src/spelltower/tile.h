@@ -109,10 +109,10 @@ class Tile {
   // `coords_.row` below 0.
   absl::Status Drop(int rows);
 
- private:
   //---------
   // Members
 
+ private:
   Point coords_;
   const char letter_;
   const bool is_star_;
