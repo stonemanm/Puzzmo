@@ -1,4 +1,4 @@
-#include "dictionary.h"
+#include "dict.h"
 
 #include <fstream>
 #include <string>
@@ -16,9 +16,9 @@ ABSL_FLAG(std::string, common_bongo_words_path, "data/words_bongo_common.txt",
 
 namespace puzzmo::bongo {
 
-using SearchableWords = Dictionary::SearchableWords;
+using SearchableWords = Dict::SearchableWords;
 
-absl::Status Dictionary::Init() {
+absl::Status Dict::Init() {
   // Initialize common_words_
   if (auto common_words = TryReadingInWords(true); !common_words.ok()) {
     return common_words.status();
@@ -45,15 +45,15 @@ absl::Status Dictionary::Init() {
   return absl::OkStatus();
 }
 
-bool Dictionary::IsCommonWord(absl::string_view word) const {
+bool Dict::IsCommonWord(absl::string_view word) const {
   return common_words_.contains(word);
 }
 
-bool Dictionary::IsValidWord(absl::string_view word) const {
+bool Dict::IsValidWord(absl::string_view word) const {
   return valid_words_.contains(word);
 }
 
-absl::flat_hash_set<std::string> Dictionary::GetMatchingWords(
+absl::flat_hash_set<std::string> Dict::GetMatchingWords(
     const SearchOptions& options) const {
   absl::flat_hash_set<std::string> matches;
 
@@ -78,7 +78,7 @@ absl::flat_hash_set<std::string> Dictionary::GetMatchingWords(
   return matches;
 }
 
-absl::StatusOr<absl::flat_hash_set<std::string>> Dictionary::TryReadingInWords(
+absl::StatusOr<absl::flat_hash_set<std::string>> Dict::TryReadingInWords(
     bool common) const {
   std::string path = absl::GetFlag(common ? FLAGS_common_bongo_words_path
                                           : FLAGS_bongo_words_path);
@@ -96,8 +96,7 @@ absl::StatusOr<absl::flat_hash_set<std::string>> Dictionary::TryReadingInWords(
   return words;
 }
 
-absl::StatusOr<SearchableWords> Dictionary::TryReadingInAndSortingWords()
-    const {
+absl::StatusOr<SearchableWords> Dict::TryReadingInAndSortingWords() const {
   std::string path = absl::GetFlag(FLAGS_bongo_words_path);
   std::ifstream file(path);
   if (!file.is_open()) {

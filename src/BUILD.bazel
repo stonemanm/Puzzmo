@@ -12,7 +12,7 @@ cc_binary(
         "//data:bongo_tiles.txt",
     ],
     deps = [
-        "//src/bongo:dictionary",
+        "//src/bongo:dict",
         "//src/bongo:gamestate",
         "//src/bongo:solver",
         "@abseil-cpp//absl/container:flat_hash_map",

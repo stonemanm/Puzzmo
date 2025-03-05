@@ -11,7 +11,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "bongo/dictionary.h"
+#include "bongo/dict.h"
 #include "bongo/gamestate.h"
 #include "bongo/solver.h"
 
@@ -33,7 +33,7 @@ ABSL_FLAG(
     "make possible bonus words. Note that increasing this n scales by O(n^2).");
 
 using namespace puzzmo;
-using ::bongo::Dictionary;
+using ::bongo::Dict;
 using ::bongo::Gamestate;
 using ::bongo::Solver;
 
@@ -87,7 +87,7 @@ absl::StatusOr<Gamestate> LoadStartingState() {
 // "childof"
 int main(int argc, const char *argv[]) {
   // Load the dictionary and the starting game state
-  Dictionary dict;
+  Dict dict;
   if (absl::Status s = dict.Init(); !s.ok()) {
     LOG(ERROR) << s;
     return 1;

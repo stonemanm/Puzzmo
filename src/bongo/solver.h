@@ -3,7 +3,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "dictionary.h"
+#include "dict.h"
 #include "gamestate.h"
 
 namespace puzzmo::bongo {
@@ -21,8 +21,7 @@ class Solver {
     int tiles_for_multiplier_tiles = 4;
   };
 
-  Solver(const Dictionary &dict, const Gamestate &bgs,
-         BongoSolverOptions options)
+  Solver(const Dict &dict, const Gamestate &bgs, BongoSolverOptions options)
       : dict_(dict),
         starting_state_(bgs),
         highest_scoring_board_(bgs),
@@ -39,7 +38,7 @@ class Solver {
   int Score(const Gamestate &bgs) const;
   int PathScore(const Gamestate &bgs, const std::vector<Point> &path) const;
 
-  const Dictionary dict_;
+  const Dict dict_;
   const Gamestate starting_state_;
   Gamestate highest_scoring_board_;
   int highest_score_;

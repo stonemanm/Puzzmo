@@ -3,9 +3,9 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "dictionary",
-    srcs = ["dictionary.cc"],
-    hdrs = ["dictionary.h"],
+    name = "dict",
+    srcs = ["dict.cc"],
+    hdrs = ["dict.h"],
     data = [
         "//data:words_bongo.txt",
         "//data:words_bongo_common.txt",
@@ -23,11 +23,11 @@ cc_library(
 )
 
 cc_test(
-    name = "dictionary_test",
+    name = "dict_test",
     size = "small",
-    srcs = ["dictionary_test.cc"],
+    srcs = ["dict_test.cc"],
     deps = [
-        ":dictionary",
+        ":dict",
         "@abseil-cpp//absl/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -64,7 +64,7 @@ cc_library(
     srcs = ["solver.cc"],
     hdrs = ["solver.h"],
     deps = [
-        ":dictionary",
+        ":dict",
         ":gamestate",
         "//src/shared:dictionary_utils",
         "//src/shared:letter_count",
