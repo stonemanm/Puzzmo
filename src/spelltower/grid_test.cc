@@ -156,16 +156,6 @@ TEST(GridTest, ClearPath) {
   EXPECT_EQ((grid[{1, 2}]->letter()), ('c'));
 }
 
-TEST(GridTest, ClearTile) {
-  Grid grid({"nnnnnnn n", "mmmmmmm m", "lllllll l", "kkkkkkk k", "iiiijii i",
-             "hhhhhhhhh", "ggggggggg", "fffffffff", "eeeeeeeee", "ddddddddd",
-             "ccccccccc", "bbbbbbbbb", "aaaaaaaaa"});
-  EXPECT_THAT(grid[4], testing::SizeIs(13));
-  EXPECT_THAT(grid.ClearTile(grid[{8, 4}]), absl_testing::IsOk());
-  EXPECT_EQ((grid[{8, 4}]->letter()), ('k'));
-  EXPECT_THAT(grid[4], testing::SizeIs(13));
-}
-
 TEST(GridTest, ScorePath) {
   Grid grid({"nnnnnNn n", "mmmmmmm m", "lllllll l", "kkkkkkk k", "Iiiijii i",
              "hhhhhhhhh", "ggggggggg", "fffffffff", "eeeeeeeee", "ddddddddd",

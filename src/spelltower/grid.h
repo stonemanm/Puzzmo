@@ -21,17 +21,55 @@
 
 namespace puzzmo::spelltower {
 
-constexpr char kEmptySpaceLetter = ' ';
-
+// spelltower::Grid
+//
+// The `Grid` class represents the state of the Spelltower board at any given
+// point in play. At its most basic level, it is a two-dimensional matrix of
+// `Tile` objects, which are stored as `std::shared_ptr<Tile>` for performance
+// and convenience reasons.
+//
+// In addition, a `Grid` object holds data about the tiles that comprise it,
+// which can be used when solving it. This includes a separate list of its star
+// tiles, a `LetterCount` for each column, and a map from every letter on the
+// board to all of the tiles that contain it.
 class Grid {
  public:
-  explicit Grid(const std::vector<std::string> &grid);
+  //-------------
+  // Constructor
+
+  // `Grid`s are created from a vector of strings. Each string represents a row,
+  // with each character falling into each column. For each character, a `Tile`
+  // object is created, with that character passed as its letter. If the
+  // character is `kEmptySpaceLetter`, then a nullptr will be inserted instead.
+  //
+  // If `grid_strings` has more rows than `num_rows_`, only the bottommost rows
+  // will be saved into the resulting object. If instead it has fewer rows, the
+  // topmost rows will be left blank. Similarly, if any of the strings have
+  // length above `num_cols_`, only the leftmost characters will be saved, and
+  // if it has fewer columns, empty columns will be added at the right.
+  //
+  // If the input data is properly formatted, there should never be an empty
+  // space underneath a tile. There are no built-in checks for this, and it will
+  // cause unexpected issues.
+  explicit Grid(const std::vector<std::string> &grid_strings);
 
   //-----------
   // Accessors
 
-  // Overloaded subscript operators. If given a point, returns the corresponding
-  // Tile. If given an int, returns a column vector.
+  // Grid::tiles()
+  //
+  // Returns a 2D vector of tiles. The inner vectors each contain a column, with
+  // rows ordered from lowest row to highest. This will always contain the same
+  // number of rows and columns; empty spaces will contain nullptr.
+  std::vector<std::vector<std::shared_ptr<Tile>>> tiles() const {
+    return tiles_;
+  }
+
+  // operator[]
+  //
+  // `Grid` has two separate overloaded subscript operators. If provided an int,
+  // it treats it as the index of a column and returns that column. If provided
+  // a `Point` instead, it returns the pointer at that row and column.
   std::shared_ptr<Tile> &operator[](Point p) { return tiles_[p.col][p.row]; }
   const std::shared_ptr<Tile> &operator[](Point p) const {
     return tiles_[p.col][p.row];
@@ -43,94 +81,129 @@ class Grid {
     return tiles_[col];
   }
 
+  // Grid::row()
+  //
   // Constructs and returns a vector of the tiles in a row.
   std::vector<std::shared_ptr<Tile>> row(int row) const;
 
-  // Returns a 2D vector of tiles. The inner vectors each contain a column, from
-  // lowest row to highest. This will always contain the same number of rows and
-  // columns; empty spaces will contain nullptr.
-  std::vector<std::vector<std::shared_ptr<Tile>>> tiles() const {
-    return tiles_;
-  }
-
-  // Returns the proper subset of tiles that are starred.
+  // Grid::star_tiles()
+  //
+  // Returns a vector of pointers to the tiles in the grid that are star tiles.
   std::vector<std::shared_ptr<Tile>> star_tiles() const { return star_tiles_; }
 
-  // Returns a map to all the tiles with a given letter.
+  // Grid::letter_map()
+  //
+  // Returns a map from each letter to all the tiles with a given letter. This
+  // map does not track blank tiles or empty spaces.
   absl::flat_hash_map<char, absl::flat_hash_set<std::shared_ptr<Tile>>>
   letter_map() const {
     return letter_map_;
   }
 
+  // Grid::column_letter_counts()
+  //
   // Returns a vector of LetterCounts, one for each column.
   std::vector<LetterCount> column_letter_counts() const {
     return column_letter_counts_;
   }
 
   //---------
-  // Bonuses
+  // Scoring
 
-  // True iff no column has more than two tiles left in it.
+  // Grid::ScorePath()
+  //
+  // Calculates the score from submitting the given path.
+  //
+  // Critically, ScorePath does not call `Path::IsPossible()` itself due to
+  // computational expense. Ensure that `path` has been validated prior to
+  // calling this method.
+  int ScorePath(const Path &path) const;
+
+  // Grid::AlmostThere()
+  //
+  // Returns `true` if no column in the grid has any tile in row 2 or above.
   bool AlmostThere() const;
 
-  // True iff all tiles have been cleared from the grid.
+  // Grid::FullClear()
+  //
+  // Returns `true` if all tiles have been cleared from the grid.
   bool FullClear() const;
+
+  // Grid::ScoreBonuses()
+  //
+  // Returns the bonus points that this grid qualifies for in its current state.
+  int ScoreBonuses() const { return 1000 * AlmostThere() + 1000 * FullClear(); }
 
   //---------------
   // Grid movement
 
-  // Returns `tile`'s Moore neighbors.
+  // Grid::AccessibleTilesFrom()
+  //
+  // Returns the Moore neighbors of `tile` in the grid. Empty spaces are not
+  // included,
   absl::flat_hash_set<std::shared_ptr<Tile>> AccessibleTilesFrom(
       const std::shared_ptr<Tile> &tile) const;
 
-  // Returns true iff the point refers to a tile on the grid.
+  // Grid::IsPointInRange()
+  //
+  // Returns `true` if the point refers to a tile on the grid.
   bool IsPointInRange(const Point &p) const;
 
-  // Calls `Path::AccessibleTilesFrom()` on `path.back()`, removing any blank
-  // tiles or tiles already in the path.
+  // Grid::PossibleNextTilesForPath()
+  //
+  // Passes the Tile at `path.back()` to `Grid::AccessibleTilesFrom()`, then,
+  // prior to returning, removes from the set all blank tiles and tiles already
+  // in the path.
   absl::flat_hash_set<std::shared_ptr<Tile>> PossibleNextTilesForPath(
       const Path &path) const;
 
-  // Returns `tile`'s von Neumann neighbors.
+  // Grid::TilesAffectedBy()
+  //
+  // Returns `tile`'s von Neumann neighbors. Empty spaces are not included.
   absl::flat_hash_set<std::shared_ptr<Tile>> TilesAffectedBy(
       const std::shared_ptr<Tile> &tile) const;
 
-  // Returns all tiles that will be removed if `path` is played, including
-  // `Grid::TilesAffectedBy` for every point in  `path` if it has 5 or more
-  // tiles, and including anything in the same row as a 'j', 'q', 'x', or 'z'
-  // that is in the path.
+  // Grid::TilesRemovedBy()
+  //
+  // Returns every `Tile` that will be removed if `path` is played. This
+  // includes:
+  //
+  // - Every tile contained in `path`.
+  // - For any rare tile in `path`, every other tile in that row.
+  // - Every blank tile that is a von Neumann neighbor of a tile in `path`.
+  // - If `path.size() >= 5`, every non-blank tile that is a von Neumann
+  //   neighbor of a tile in `path`, as well.
   absl::flat_hash_set<std::shared_ptr<Tile>> TilesRemovedBy(
       const Path &path) const;
 
   //----------
   // Mutators
 
-  // Removes all tiles removed by the path from the grid.
+  // Grid::ClearPath()
+  //
+  // Removes all `TilesRemovedBy()` `path` from the grid, dropping tiles above
+  // them into the empty spaces created.
   absl::Status ClearPath(const Path &path);
 
-  // Removes the tile from the grid.
+ private:
+  // Grid::ClearTile()
+  //
+  // Removes `tile` from the grid, dropping any tiles above it into the empty
+  // space created.
   absl::Status ClearTile(const std::shared_ptr<Tile> &tile);
 
   //---------
-  // Scoring
+  // Members
 
-  // Calculates the score from submitting the given path. Critically, ScorePath
-  // does not call `Path::IsPossible()` itself, as it is comparatively intensive
-  // to compute.
-  int ScorePath(const Path &path) const;
-
-  // Returns the points from the bonuses this grid has qualified for.
-  int ScoreBonuses() const { return 1000 * AlmostThere() + 1000 * FullClear(); }
-
- private:
   std::vector<std::vector<std::shared_ptr<Tile>>> tiles_;
   std::vector<std::shared_ptr<Tile>> star_tiles_;
   absl::flat_hash_map<char, absl::flat_hash_set<std::shared_ptr<Tile>>>
       letter_map_;
   std::vector<LetterCount> column_letter_counts_;
 
-  static constexpr int num_rows_ = 13;
-  static constexpr int num_cols_ = 9;
+  static constexpr int kNumRows = 13;
+  static constexpr int kNumCols = 9;
+  static constexpr char kEmptySpaceLetter = ' ';
 
   //------------------
   // Abseil functions
@@ -143,9 +216,9 @@ class Grid {
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Grid &grid) {
-    for (int r = grid.num_rows_ - 1; r >= 0; --r) {
+    for (int r = grid.kNumRows - 1; r >= 0; --r) {
       std::vector<std::shared_ptr<Tile>> row = grid.row(r);
-      if (r < grid.num_rows_ - 1) sink.Append("\n");
+      if (r < grid.kNumRows - 1) sink.Append("\n");
       for (const std::shared_ptr<Tile> &tile : row) {
         if (tile == nullptr)
           sink.Append(std::string(1, kEmptySpaceLetter));
