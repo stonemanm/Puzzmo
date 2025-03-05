@@ -163,7 +163,7 @@ std::vector<std::string> Grid::AsStringVector() const {
     std::vector<std::shared_ptr<Tile>> grid_row = row(r);
 
     int last_c = grid_row.size();
-    while (last_c > 0 && grid_row[--last_c] == nullptr);
+    while (grid_row[last_c - 1] == nullptr && last_c > 0) --last_c;
     if (last_c == 0) break;
 
     std::string s;

@@ -51,6 +51,12 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
+  solver->FillWordCache();
+  auto wc = solver->word_cache();
+  for (const auto &[score, wds] : wc) {
+    LOG(INFO) << absl::StrCat(score, ": ", absl::StrJoin(wds, ", "));
+  }
+
   if (absl::Status s = solver->SolveGreedily(); !s.ok()) {
     LOG(ERROR) << s;
     return 1;
