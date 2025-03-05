@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "absl/status/status_matchers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -110,6 +111,22 @@ TEST(PathTest, PopBack) {
   EXPECT_THAT(path.min_possible_row(), testing::IsEmpty());
   EXPECT_THAT(path.simple_board()[0], testing::IsEmpty());
   EXPECT_EQ(path.star_count(), 0);
+}
+
+TEST(PathTest, IsContinuous) {
+  Path path(
+      {std::make_shared<Tile>(0, 0, 'a'), std::make_shared<Tile>(1, 0, 'b'),
+       std::make_shared<Tile>(2, 0, 'b'), std::make_shared<Tile>(3, 0, 'e'),
+       std::make_shared<Tile>(5, 1, 'y')});
+  EXPECT_THAT(path.IsContinuous(), testing::IsFalse());  // row 5
+  ASSERT_THAT(path[4]->Drop(1), absl_testing::IsOk());
+  EXPECT_THAT(path.IsContinuous(), testing::IsTrue());  // row 4
+  ASSERT_THAT(path[4]->Drop(1), absl_testing::IsOk());
+  EXPECT_THAT(path.IsContinuous(), testing::IsTrue());  // row 3
+  ASSERT_THAT(path[4]->Drop(1), absl_testing::IsOk());
+  EXPECT_THAT(path.IsContinuous(), testing::IsTrue());  // row 2
+  ASSERT_THAT(path[4]->Drop(1), absl_testing::IsOk());
+  EXPECT_THAT(path.IsContinuous(), testing::IsFalse());  // row 1
 }
 
 TEST(PathTest, IsPossible) {

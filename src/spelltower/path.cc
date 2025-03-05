@@ -117,6 +117,14 @@ void Path::push_back(const std::shared_ptr<Tile> &tile) {
   }
 }
 
+bool Path::IsContinuous() const {
+  for (int i = 0; i < tiles_.size() - 1; ++i) {
+    if (!tiles_[i]->coords().MooreNeighbors().contains(tiles_[i + 1]->coords()))
+      return false;
+  }
+  return true;
+}
+
 bool Path::IsPossible() const {
   if (size() < 2) return true;
   // Make a vector of the coordinates of each point. We can modify this without

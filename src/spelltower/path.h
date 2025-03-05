@@ -65,6 +65,11 @@ class Path {
   //----------
   // Validity
 
+  // Path::IsContinuous()
+  //
+  // Returns `true` if each pair of adjacent tiles are Moore neighbors.
+  bool IsContinuous() const;
+
   // Checks whether or not it is possible to make this path on a grid by
   // removing tiles not in this path.
   bool IsPossible() const;

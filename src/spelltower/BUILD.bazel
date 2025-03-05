@@ -76,6 +76,7 @@ cc_test(
     srcs = ["path_test.cc"],
     deps = [
         ":path",
+        "@abseil-cpp//absl/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
