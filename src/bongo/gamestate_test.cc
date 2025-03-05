@@ -1,4 +1,4 @@
-#include "bongo_gamestate.h"
+#include "gamestate.h"
 
 #include <vector>
 
@@ -22,18 +22,17 @@ const absl::flat_hash_map<char, int> kLetterValues = {
     {'o', 15}, {'p', 16}, {'q', 17}, {'r', 18}, {'s', 19}, {'t', 20}, {'u', 21},
     {'v', 22}, {'w', 23}, {'x', 24}, {'y', 25}, {'z', 26}};
 
-TEST(BongoGameStateTest, Constructor) {
-  BongoGameState bgs(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"));
+TEST(GameStateTest, Constructor) {
+  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"));
   EXPECT_EQ(bgs.values(), kLetterValues);
   EXPECT_EQ(bgs.letter_board(), kEmptyBoard);
   EXPECT_EQ(bgs.letter_pool().CharsInOrder(), "aaaabbbcdefgh");
 }
 
-TEST(BongoGameStateTest, FillAndClear) {
-  BongoGameState bgs(
-      kDummyBoard, kLetterValues,
-      LetterCount("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbcdefghi"),
-      kEmptyBoard);
+TEST(GameStateTest, FillAndClear) {
+  Gamestate bgs(kDummyBoard, kLetterValues,
+                LetterCount("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbcdefghi"),
+                kEmptyBoard);
   Point p1 = {1, 1};
   Point p2 = {2, 2};
   Point p3 = {3, 3};
@@ -157,9 +156,9 @@ TEST(BongoGameStateTest, FillAndClear) {
   EXPECT_EQ(bgs.char_at(path[1]), 'a');
 }
 
-TEST(BongoGameStateTest, LowercasePathMethods) {
-  BongoGameState bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
-                     {"abc_e", "fghi_", "kl_no", "_qrst", "u_wxy"});
+TEST(GamestateTest, LowercasePathMethods) {
+  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
+                {"abc_e", "fghi_", "kl_no", "_qrst", "u_wxy"});
   EXPECT_EQ(bgs.path_string(bgs.row_path(0)), "abc_e");
   EXPECT_EQ(bgs.path_string(bgs.row_path(1)), "fghi_");
   EXPECT_EQ(bgs.path_string(bgs.row_path(2)), "kl_no");
@@ -168,9 +167,9 @@ TEST(BongoGameStateTest, LowercasePathMethods) {
   EXPECT_EQ(bgs.path_string(bgs.bonus_path()), "ag_s");
 }
 
-TEST(BongoGameStateTest, GetWord) {
-  BongoGameState bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
-                     {"abc_e", "fghi_", "kl_no", "_qrst", "u_wxy"});
+TEST(GamestateTest, GetWord) {
+  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
+                {"abc_e", "fghi_", "kl_no", "_qrst", "u_wxy"});
   EXPECT_EQ(bgs.GetWord(bgs.row_path(0)), "abc");
   EXPECT_EQ(bgs.GetWord(bgs.row_path(1)), "fghi");
   EXPECT_EQ(bgs.GetWord(bgs.row_path(2)), "");
@@ -181,18 +180,18 @@ TEST(BongoGameStateTest, GetWord) {
   EXPECT_EQ(bgs.GetWord(bgs.bonus_path()), "agms");
 }
 
-TEST(BongoGameStateTest, IsComplete) {
-  BongoGameState bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
-                     {"abc_e", "fghi_", "kl_no", "pqr_t", "u_wxy"});
+TEST(GamestateTest, IsComplete) {
+  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
+                {"abc_e", "fghi_", "kl_no", "pqr_t", "u_wxy"});
   EXPECT_FALSE(bgs.IsComplete());
   ASSERT_THAT(bgs.FillSquare({2, 2}, 'm'), IsOk());
   // Now every row has a word, even though the bonus does not
   EXPECT_TRUE(bgs.IsComplete());
 }
 
-TEST(BongoGameStateTest, MostRestrictedWordlessRow) {
-  BongoGameState bgs(kDummyBoard, kLetterValues,
-                     LetterCount("abcdefghijklmnopqrstuvwxy"));
+TEST(GamestateTest, MostRestrictedWordlessRow) {
+  Gamestate bgs(kDummyBoard, kLetterValues,
+                LetterCount("abcdefghijklmnopqrstuvwxy"));
   // All else equal, defaults to the lowest index
   EXPECT_EQ(bgs.MostRestrictedWordlessRow(), 0);
 
@@ -211,17 +210,16 @@ TEST(BongoGameStateTest, MostRestrictedWordlessRow) {
   EXPECT_EQ(bgs.MostRestrictedWordlessRow(), 3);
 }
 
-TEST(BongoGameStateTest, MultiplierSquares) {
-  BongoGameState bgs(kDummyBoard, kLetterValues, LetterCount(""));
+TEST(GamestateTest, MultiplierSquares) {
+  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount(""));
   Point p0 = {0, 4};
   Point p1 = {1, 4};
   Point p2 = {2, 4};
   EXPECT_THAT(bgs.MultiplierSquares(), ::testing::ElementsAre(p0, p1, p2));
 }
 
-TEST(BongoGameStateTest, NMostValuableTiles) {
-  BongoGameState bgs(kDummyBoard, kLetterValues, LetterCount("afggh"),
-                     kEmptyBoard);
+TEST(GamestateTest, NMostValuableTiles) {
+  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("afggh"), kEmptyBoard);
   EXPECT_EQ(bgs.NMostValuableTiles(0), "");
   EXPECT_EQ(bgs.NMostValuableTiles(1), "h");
   EXPECT_EQ(bgs.NMostValuableTiles(2), "hg");
@@ -231,9 +229,9 @@ TEST(BongoGameStateTest, NMostValuableTiles) {
   EXPECT_EQ(bgs.NMostValuableTiles(6), "hggfa");
 }
 
-TEST(BongoGameStateTest, RegexForPath) {
-  BongoGameState bgs(kDummyBoard, kLetterValues, LetterCount("jsmmmmmmmmmm"),
-                     {"abcde", "fghi_", "_____", "pqr_t", "_____"});
+TEST(GamestateTest, RegexForPath) {
+  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("jsmmmmmmmmmm"),
+                {"abcde", "fghi_", "_____", "pqr_t", "_____"});
   EXPECT_EQ(bgs.RegexForPath(bgs.row_path(0)), "abcde");
   EXPECT_EQ(bgs.RegexForPath(bgs.row_path(1)), "fghi[jms]");
   EXPECT_EQ(bgs.RegexForPath(bgs.row_path(2)), "");
@@ -241,9 +239,9 @@ TEST(BongoGameStateTest, RegexForPath) {
   EXPECT_EQ(bgs.RegexForPath(bgs.bonus_path()), "ag[jms][jms]");
 }
 
-TEST(BongoGameStateTest, AllOrNumLetters) {
+TEST(GamestateTest, AllOrNumLetters) {
   const LetterCount all_letters("aaaabbbcdefgh");
-  BongoGameState bgs(kDummyBoard, kLetterValues, all_letters);
+  Gamestate bgs(kDummyBoard, kLetterValues, all_letters);
   EXPECT_EQ(bgs.AllLetters(), all_letters);
   EXPECT_EQ(bgs.NumLetters(), 13);
   EXPECT_EQ(bgs.NumLettersLeft(), 13);
@@ -256,14 +254,14 @@ TEST(BongoGameStateTest, AllOrNumLetters) {
   EXPECT_EQ(bgs.NumLettersPlaced(), 4);
 }
 
-TEST(BongoGameStateTest, IsChildOf) {
-  BongoGameState start(kDummyBoard, kLetterValues,
-                       LetterCount("abcdefghijklmnopqrstuvwxy"));
-  BongoGameState partial(kDummyBoard, kLetterValues,
-                         LetterCount("bcdefhijklnopqrtuvwxy"),
-                         {"a____", "_g___", "__m__", "___s_", "_____"});
-  BongoGameState end(kDummyBoard, kLetterValues, LetterCount(),
-                     {"abcde", "fghij", "klmno", "pqrst", "uvwxy"});
+TEST(GamestateTest, IsChildOf) {
+  Gamestate start(kDummyBoard, kLetterValues,
+                  LetterCount("abcdefghijklmnopqrstuvwxy"));
+  Gamestate partial(kDummyBoard, kLetterValues,
+                    LetterCount("bcdefhijklnopqrtuvwxy"),
+                    {"a____", "_g___", "__m__", "___s_", "_____"});
+  Gamestate end(kDummyBoard, kLetterValues, LetterCount(),
+                {"abcde", "fghij", "klmno", "pqrst", "uvwxy"});
 
   // True if passed a copy of itself
   EXPECT_TRUE(start.IsChildOf(start));
@@ -279,34 +277,34 @@ TEST(BongoGameStateTest, IsChildOf) {
   EXPECT_FALSE(partial.IsChildOf(end));
 
   // Incompatible placed letters returns false.
-  BongoGameState partial_alternate(
-      kDummyBoard, kLetterValues, LetterCount("abcdfghiklmnpqrstuvwxy"),
-      {"____e", "____j", "____o", "_____", "_____"});
+  Gamestate partial_alternate(kDummyBoard, kLetterValues,
+                              LetterCount("abcdfghiklmnpqrstuvwxy"),
+                              {"____e", "____j", "____o", "_____", "_____"});
   EXPECT_FALSE(partial.IsChildOf(partial_alternate));
   EXPECT_FALSE(partial_alternate.IsChildOf(partial));
 
   // Different starting letters returns false.
-  BongoGameState different_letters(kDummyBoard, kLetterValues,
-                                   LetterCount("zzzzzzzzzz"));
+  Gamestate different_letters(kDummyBoard, kLetterValues,
+                              LetterCount("zzzzzzzzzz"));
   EXPECT_FALSE(start.IsChildOf(different_letters));
   EXPECT_FALSE(different_letters.IsChildOf(start));
 
   // Different mult boards returns false.
-  BongoGameState different_multipliers(
-      {"*____", "_*___", "__*__", "___*_", "223__"}, kLetterValues,
-      LetterCount("abcdefghijklmnopqrstuvwxy"));
+  Gamestate different_multipliers({"*____", "_*___", "__*__", "___*_", "223__"},
+                                  kLetterValues,
+                                  LetterCount("abcdefghijklmnopqrstuvwxy"));
   EXPECT_FALSE(start.IsChildOf(different_multipliers));
   EXPECT_FALSE(different_multipliers.IsChildOf(start));
 
   // Different bonus path returns false.
-  BongoGameState different_bonus_path(
-      {"___*2", "__*_2", "_*__3", "*____", "_____"}, kLetterValues,
-      LetterCount("abcdefghijklmnopqrstuvwxy"));
+  Gamestate different_bonus_path({"___*2", "__*_2", "_*__3", "*____", "_____"},
+                                 kLetterValues,
+                                 LetterCount("abcdefghijklmnopqrstuvwxy"));
   EXPECT_FALSE(start.IsChildOf(different_bonus_path));
   EXPECT_FALSE(different_bonus_path.IsChildOf(start));
 
   // Different values returns false.
-  BongoGameState different_values(
+  Gamestate different_values(
       kDummyBoard,
       {{'a', 1}, {'b', 1}, {'c', 1}, {'d', 1}, {'e', 1}, {'f', 1}, {'g', 1},
        {'h', 1}, {'i', 1}, {'j', 1}, {'k', 1}, {'l', 1}, {'m', 1}, {'n', 1},

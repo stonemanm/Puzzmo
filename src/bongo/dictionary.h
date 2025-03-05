@@ -1,5 +1,5 @@
-#ifndef bongo_dictionary_h
-#define bongo_dictionary_h
+#ifndef dictionary_h
+#define dictionary_h
 
 #include <string>
 
@@ -11,7 +11,7 @@
 
 namespace puzzmo::bongo {
 
-class BongoDictionary {
+class Dictionary {
  public:
   using SearchableWords = absl::flat_hash_map<
       int, absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>>;
@@ -24,7 +24,7 @@ class BongoDictionary {
     std::string matching_regex;
   };
 
-  BongoDictionary() {};
+  Dictionary() {};
   absl::Status Init();
 
   bool IsCommonWord(absl::string_view word) const;

@@ -1,5 +1,5 @@
-#ifndef bongo_gamestate_h
-#define bongo_gamestate_h
+#ifndef gamestate_h
+#define gamestate_h
 
 #include <string>
 #include <vector>
@@ -12,20 +12,19 @@
 
 namespace puzzmo::bongo {
 
-class BongoGameState {
+class Gamestate {
  public:
   // board and letter_grid should be vector of length 5, containing 5-long
   // strings. If vectors or strings have length > 5, only the first 5 will be
   // saved. If vectors or strings have length < 5, empty spaces will fill what
   // remains.
-  BongoGameState(const std::vector<std::string> board,
-                 absl::flat_hash_map<char, int> letter_values,
-                 LetterCount letter_pool,
-                 std::vector<std::string> letter_board);
-  BongoGameState(const std::vector<std::string> board,
-                 absl::flat_hash_map<char, int> letter_values,
-                 LetterCount letter_pool)
-      : BongoGameState(board, letter_values, letter_pool, {}) {};
+  Gamestate(const std::vector<std::string> board,
+            absl::flat_hash_map<char, int> letter_values,
+            LetterCount letter_pool, std::vector<std::string> letter_board);
+  Gamestate(const std::vector<std::string> board,
+            absl::flat_hash_map<char, int> letter_values,
+            LetterCount letter_pool)
+      : Gamestate(board, letter_values, letter_pool, {}) {};
 
   // Clears the letter from unlocked square p, if present.
   absl::Status ClearSquare(const Point &p);
@@ -55,7 +54,7 @@ class BongoGameState {
   // Returns true iff `other` could have come from the same starting state and
   // has placed a subset of the letters that this gamestate has. (On the
   // same squares, of course.)
-  bool IsChildOf(const BongoGameState &other) const;
+  bool IsChildOf(const Gamestate &other) const;
 
   // Returns true iff every row has a word.
   bool IsComplete() const;
@@ -120,7 +119,7 @@ class BongoGameState {
 
   // Allows hashing of BongoGameState.
   template <typename H>
-  friend H AbslHashValue(H h, const BongoGameState &bgs) {
+  friend H AbslHashValue(H h, const Gamestate &bgs) {
     return H::combine(std::move(h), bgs.letter_pool_, bgs.letter_board_,
                       bgs.mult_board_, bgs.lock_board_, bgs.values_,
                       bgs.bonus_path_);
@@ -128,7 +127,7 @@ class BongoGameState {
 
   // Allows easy conversion of BongoGameState to string.
   template <typename Sink>
-  friend void AbslStringify(Sink &sink, const BongoGameState &bgs) {
+  friend void AbslStringify(Sink &sink, const Gamestate &bgs) {
     absl::Format(&sink, "%v\n[%s]\n[%s]\n[%s]\n[%s]\n[%s]", bgs.letter_pool_,
                  bgs.letter_board_[0], bgs.letter_board_[1],
                  bgs.letter_board_[2], bgs.letter_board_[3],
@@ -136,8 +135,8 @@ class BongoGameState {
   }
 };
 
-bool operator==(const BongoGameState &lhs, const BongoGameState &rhs);
-bool operator!=(const BongoGameState &lhs, const BongoGameState &rhs);
+bool operator==(const Gamestate &lhs, const Gamestate &rhs);
+bool operator!=(const Gamestate &lhs, const Gamestate &rhs);
 
 }  // namespace puzzmo::bongo
 

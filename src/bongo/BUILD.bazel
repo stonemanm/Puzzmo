@@ -3,9 +3,9 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "bongo_dictionary",
-    srcs = ["bongo_dictionary.cc"],
-    hdrs = ["bongo_dictionary.h"],
+    name = "dictionary",
+    srcs = ["dictionary.cc"],
+    hdrs = ["dictionary.h"],
     data = [
         "//data:words_bongo.txt",
         "//data:words_bongo_common.txt",
@@ -23,11 +23,11 @@ cc_library(
 )
 
 cc_test(
-    name = "bongo_dictionary_test",
+    name = "dictionary_test",
     size = "small",
-    srcs = ["bongo_dictionary_test.cc"],
+    srcs = ["dictionary_test.cc"],
     deps = [
-        ":bongo_dictionary",
+        ":dictionary",
         "@abseil-cpp//absl/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -35,9 +35,9 @@ cc_test(
 )
 
 cc_library(
-    name = "bongo_gamestate",
-    srcs = ["bongo_gamestate.cc"],
-    hdrs = ["bongo_gamestate.h"],
+    name = "gamestate",
+    srcs = ["gamestate.cc"],
+    hdrs = ["gamestate.h"],
     deps = [
         "//src/shared:letter_count",
         "//src/shared:point",
@@ -48,11 +48,11 @@ cc_library(
 )
 
 cc_test(
-    name = "bongo_gamestate_test",
+    name = "gamestate_test",
     size = "small",
-    srcs = ["bongo_gamestate_test.cc"],
+    srcs = ["gamestate_test.cc"],
     deps = [
-        ":bongo_gamestate",
+        ":gamestate",
         "@abseil-cpp//absl/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -60,12 +60,12 @@ cc_test(
 )
 
 cc_library(
-    name = "bongo_solver",
-    srcs = ["bongo_solver.cc"],
-    hdrs = ["bongo_solver.h"],
+    name = "solver",
+    srcs = ["solver.cc"],
+    hdrs = ["solver.h"],
     deps = [
-        ":bongo_dictionary",
-        ":bongo_gamestate",
+        ":dictionary",
+        ":gamestate",
         "//src/shared:dictionary_utils",
         "//src/shared:letter_count",
         "@abseil-cpp//absl/container:flat_hash_map",

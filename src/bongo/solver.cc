@@ -1,4 +1,4 @@
-#include "bongo_solver.h"
+#include "solver.h"
 
 #include <string>
 
@@ -8,7 +8,7 @@
 
 namespace puzzmo::bongo {
 
-int BongoSolver::CeilingForScore() const {
+int Solver::CeilingForScore() const {
   auto values = starting_state_.values();
   std::string tiles_in_value_order = starting_state_.NMostValuableTiles(25);
   int score = 0;
@@ -25,12 +25,11 @@ int BongoSolver::CeilingForScore() const {
   return std::ceil(1.3 * score);
 }
 
-absl::StatusOr<BongoGameState> BongoSolver::FindSolutionWithScore(
-    int score) const {
+absl::StatusOr<Gamestate> Solver::FindSolutionWithScore(int score) const {
   return absl::UnimplementedError("To do");
 }
 
-absl::StatusOr<BongoGameState> BongoSolver::Solve() {
+absl::StatusOr<Gamestate> Solver::Solve() {
   std::vector<Point> bonus_path = starting_state_.bonus_path();
   std::vector<Point> multiplier_squares = starting_state_.MultiplierSquares();
 
@@ -104,7 +103,7 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
               << bonus_word << "\"";
 
     // Place the bonus word on the board
-    BongoGameState current_board = starting_state_;
+    Gamestate current_board = starting_state_;
     if (auto s = current_board.FillPath(bonus_path, bonus_word); !s.ok())
       return s;
     for (const Point &p : bonus_path) {
@@ -148,7 +147,7 @@ absl::StatusOr<BongoGameState> BongoSolver::Solve() {
   return highest_scoring_board_;
 }
 
-absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
+absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
   // If all rows are filled, score the board. Update highest_scoring_board_ if
   // appropriate
   // std::cout << "\r" << "[" << current_board.letter_board()[0] << "]" << "["
@@ -210,7 +209,7 @@ absl::Status BongoSolver::FindWordsRecursively(BongoGameState &current_board) {
   return absl::OkStatus();
 }
 
-int BongoSolver::Score(const BongoGameState &bgs) const {
+int Solver::Score(const Gamestate &bgs) const {
   int score = 0;
   for (const auto &path : bgs.PathsToScore()) {
     score += PathScore(bgs, path);
@@ -218,8 +217,8 @@ int BongoSolver::Score(const BongoGameState &bgs) const {
   return score;
 }
 
-int BongoSolver::PathScore(const BongoGameState &bgs,
-                           const std::vector<Point> &path) const {
+int Solver::PathScore(const Gamestate &bgs,
+                      const std::vector<Point> &path) const {
   std::string word = bgs.GetWord(path);
   if (!dict_.IsValidWord(word)) return 0;
 

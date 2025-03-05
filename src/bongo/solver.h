@@ -1,14 +1,14 @@
-#ifndef bongo_solver_h
-#define bongo_solver_h
+#ifndef solver_h
+#define solver_h
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "bongo_dictionary.h"
-#include "bongo_gamestate.h"
+#include "dictionary.h"
+#include "gamestate.h"
 
 namespace puzzmo::bongo {
 
-class BongoSolver {
+class Solver {
  public:
   struct BongoSolverOptions {
     // The number to pass NMostValuableTiles, from which sets of 3 are chosen to
@@ -21,8 +21,8 @@ class BongoSolver {
     int tiles_for_multiplier_tiles = 4;
   };
 
-  BongoSolver(const BongoDictionary &dict, const BongoGameState &bgs,
-              BongoSolverOptions options)
+  Solver(const Dictionary &dict, const Gamestate &bgs,
+         BongoSolverOptions options)
       : dict_(dict),
         starting_state_(bgs),
         highest_scoring_board_(bgs),
@@ -30,19 +30,18 @@ class BongoSolver {
         tiles_for_multiplier_tiles_(options.tiles_for_multiplier_tiles) {}
 
   int CeilingForScore() const;
-  absl::StatusOr<BongoGameState> FindSolutionWithScore(int score) const;
+  absl::StatusOr<Gamestate> FindSolutionWithScore(int score) const;
 
-  absl::StatusOr<BongoGameState> Solve();
+  absl::StatusOr<Gamestate> Solve();
 
  private:
-  absl::Status FindWordsRecursively(BongoGameState &current_board);
-  int Score(const BongoGameState &bgs) const;
-  int PathScore(const BongoGameState &bgs,
-                const std::vector<Point> &path) const;
+  absl::Status FindWordsRecursively(Gamestate &current_board);
+  int Score(const Gamestate &bgs) const;
+  int PathScore(const Gamestate &bgs, const std::vector<Point> &path) const;
 
-  const BongoDictionary dict_;
-  const BongoGameState starting_state_;
-  BongoGameState highest_scoring_board_;
+  const Dictionary dict_;
+  const Gamestate starting_state_;
+  Gamestate highest_scoring_board_;
   int highest_score_;
 
   // The number to pass NMostValuableTiles, from which sets of 3 are chosen to

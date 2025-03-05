@@ -1,4 +1,4 @@
-#include "bongo_dictionary.h"
+#include "dictionary.h"
 
 #include "absl/status/status_matchers.h"
 #include "gtest/gtest.h"
@@ -6,13 +6,13 @@
 namespace puzzmo::bongo {
 namespace {
 
-TEST(BongoDictionaryTest, Init) {
-  BongoDictionary dict;
+TEST(DictionaryTest, Init) {
+  Dictionary dict;
   EXPECT_THAT(dict.Init(), absl_testing::IsOk());
 }
 
-TEST(BongoDictionaryTest, IsCommonOrValidWord) {
-  BongoDictionary dict;
+TEST(DictionaryTest, IsCommonOrValidWord) {
+  Dictionary dict;
   EXPECT_THAT(dict.Init(), absl_testing::IsOk());
 
   EXPECT_FALSE(dict.IsCommonWord(""));
@@ -25,8 +25,8 @@ TEST(BongoDictionaryTest, IsCommonOrValidWord) {
   EXPECT_TRUE(dict.IsCommonWord("wraps"));
 }
 
-TEST(BongoDictionaryTest, GetMatchingWords) {
-  BongoDictionary dict;
+TEST(DictionaryTest, GetMatchingWords) {
+  Dictionary dict;
   EXPECT_THAT(dict.Init(), absl_testing::IsOk());
 
   EXPECT_TRUE(dict.GetMatchingWords({}).contains("flute"));

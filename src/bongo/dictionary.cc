@@ -1,4 +1,4 @@
-#include "bongo_dictionary.h"
+#include "dictionary.h"
 
 #include <fstream>
 #include <string>
@@ -16,9 +16,9 @@ ABSL_FLAG(std::string, common_bongo_words_path, "data/words_bongo_common.txt",
 
 namespace puzzmo::bongo {
 
-using SearchableWords = BongoDictionary::SearchableWords;
+using SearchableWords = Dictionary::SearchableWords;
 
-absl::Status BongoDictionary::Init() {
+absl::Status Dictionary::Init() {
   // Initialize common_words_
   if (auto common_words = TryReadingInWords(true); !common_words.ok()) {
     return common_words.status();
@@ -45,15 +45,15 @@ absl::Status BongoDictionary::Init() {
   return absl::OkStatus();
 }
 
-bool BongoDictionary::IsCommonWord(absl::string_view word) const {
+bool Dictionary::IsCommonWord(absl::string_view word) const {
   return common_words_.contains(word);
 }
 
-bool BongoDictionary::IsValidWord(absl::string_view word) const {
+bool Dictionary::IsValidWord(absl::string_view word) const {
   return valid_words_.contains(word);
 }
 
-absl::flat_hash_set<std::string> BongoDictionary::GetMatchingWords(
+absl::flat_hash_set<std::string> Dictionary::GetMatchingWords(
     const SearchOptions& options) const {
   absl::flat_hash_set<std::string> matches;
 
@@ -78,8 +78,8 @@ absl::flat_hash_set<std::string> BongoDictionary::GetMatchingWords(
   return matches;
 }
 
-absl::StatusOr<absl::flat_hash_set<std::string>>
-BongoDictionary::TryReadingInWords(bool common) const {
+absl::StatusOr<absl::flat_hash_set<std::string>> Dictionary::TryReadingInWords(
+    bool common) const {
   std::string path = absl::GetFlag(common ? FLAGS_common_bongo_words_path
                                           : FLAGS_bongo_words_path);
   std::ifstream file(path);
@@ -96,7 +96,7 @@ BongoDictionary::TryReadingInWords(bool common) const {
   return words;
 }
 
-absl::StatusOr<SearchableWords> BongoDictionary::TryReadingInAndSortingWords()
+absl::StatusOr<SearchableWords> Dictionary::TryReadingInAndSortingWords()
     const {
   std::string path = absl::GetFlag(FLAGS_bongo_words_path);
   std::ifstream file(path);
