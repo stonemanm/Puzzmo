@@ -9,7 +9,7 @@
 #include "absl/strings/string_view.h"
 #include "src/shared/letter_count.h"
 
-namespace puzzmo {
+namespace puzzmo::bongo {
 
 class BongoDictionary {
  public:
@@ -44,6 +44,6 @@ class BongoDictionary {
   SearchableWords searchable_words_;
 };
 
-}  // namespace puzzmo
+}  // namespace puzzmo::bongo
 
 #endif

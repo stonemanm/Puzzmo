@@ -6,7 +6,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 
-namespace puzzmo {
+namespace puzzmo::bongo {
 
 int BongoSolver::CeilingForScore() const {
   auto values = starting_state_.values();
@@ -237,4 +237,4 @@ int BongoSolver::PathScore(const BongoGameState &bgs,
   return std::ceil(score * (dict_.IsCommonWord(word) ? 1.3 : 1));
 }
 
-}  // namespace puzzmo
+}  // namespace puzzmo::bongo

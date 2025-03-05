@@ -10,7 +10,7 @@
 #include "src/shared/letter_count.h"
 #include "src/shared/point.h"
 
-namespace puzzmo {
+namespace puzzmo::bongo {
 
 class BongoGameState {
  public:
@@ -139,6 +139,6 @@ class BongoGameState {
 bool operator==(const BongoGameState &lhs, const BongoGameState &rhs);
 bool operator!=(const BongoGameState &lhs, const BongoGameState &rhs);
 
-}  // namespace puzzmo
+}  // namespace puzzmo::bongo
 
 #endif

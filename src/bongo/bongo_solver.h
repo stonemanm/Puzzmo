@@ -6,7 +6,7 @@
 #include "bongo_dictionary.h"
 #include "bongo_gamestate.h"
 
-namespace puzzmo {
+namespace puzzmo::bongo {
 
 class BongoSolver {
  public:
@@ -54,6 +54,6 @@ class BongoSolver {
   int tiles_for_multiplier_tiles_;
 };
 
-}  // namespace puzzmo
+}  // namespace puzzmo::bongo
 
 #endif

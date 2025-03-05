@@ -7,7 +7,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace puzzmo {
+namespace puzzmo::bongo {
 namespace {
 
 using ::absl_testing::IsOk;
@@ -318,4 +318,4 @@ TEST(BongoGameStateTest, IsChildOf) {
 }
 
 }  // namespace
-}  // namespace puzzmo
+}  // namespace puzzmo::bongo

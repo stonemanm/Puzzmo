@@ -6,7 +6,7 @@
 
 #include "absl/strings/str_cat.h"
 
-namespace puzzmo {
+namespace puzzmo::bongo {
 
 constexpr char kBonusSpace = '*';
 constexpr char kDoubleMultiplier = '2';
@@ -329,4 +329,4 @@ bool operator!=(const BongoGameState &lhs, const BongoGameState &rhs) {
   return !(lhs == rhs);
 }
 
-}  // namespace puzzmo
+}  // namespace puzzmo::bongo

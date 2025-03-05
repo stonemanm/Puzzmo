@@ -3,7 +3,7 @@
 #include "absl/status/status_matchers.h"
 #include "gtest/gtest.h"
 
-namespace puzzmo {
+namespace puzzmo::bongo {
 namespace {
 
 TEST(BongoDictionaryTest, Init) {
@@ -54,4 +54,4 @@ TEST(BongoDictionaryTest, GetMatchingWords) {
 }
 
 }  // namespace
-}  // namespace puzzmo
+}  // namespace puzzmo::bongo

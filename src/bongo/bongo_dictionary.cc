@@ -14,7 +14,7 @@ ABSL_FLAG(std::string, common_bongo_words_path, "data/words_bongo_common.txt",
           "Input file containing all \"common\" words in Bongo. (Common words "
           "are worth 1.3x when scored.)");
 
-namespace puzzmo {
+namespace puzzmo::bongo {
 
 using SearchableWords = BongoDictionary::SearchableWords;
 
@@ -114,4 +114,4 @@ absl::StatusOr<SearchableWords> BongoDictionary::TryReadingInAndSortingWords()
   return words;
 }
 
-}  // namespace puzzmo
+}  // namespace puzzmo::bongo

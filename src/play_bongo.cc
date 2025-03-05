@@ -33,6 +33,9 @@ ABSL_FLAG(
     "make possible bonus words. Note that increasing this n scales by O(n^2).");
 
 using namespace puzzmo;
+using ::bongo::BongoDictionary;
+using ::bongo::BongoGameState;
+using ::bongo::BongoSolver;
 
 using LettersToWordsMap =
     absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>;
@@ -99,19 +102,19 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  // std::vector<Point> path;
-  // int r = 1;
-  // for (int i = 0; i < 5; ++i) {
-  //   path.push_back({r, i});
-  // }
-  // auto s = starting_state->FillPath(path, "valor");
-  // if (!s.ok()) {
-  //   LOG(ERROR) << s;
-  //   return 1;
-  // }
-  // for (const auto &p : path) {
-  //   starting_state->set_is_locked_at(p, true);
-  // }
+  std::vector<Point> path;
+  int r = 4;
+  for (int i = 1; i < 5; ++i) {
+    path.push_back({r, i});
+  }
+  auto s = starting_state->FillPath(path, "show");
+  if (!s.ok()) {
+    LOG(ERROR) << s;
+    return 1;
+  }
+  for (const auto &p : path) {
+    starting_state->set_is_locked_at(p, true);
+  }
 
   BongoSolver bongo_solver(
       dict, *starting_state,
