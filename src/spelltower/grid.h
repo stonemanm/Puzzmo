@@ -15,6 +15,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_join.h"
 #include "path.h"
 #include "src/shared/letter_count.h"
 #include "tile.h"
@@ -108,6 +109,19 @@ class Grid {
   }
 
   //---------
+  // Strings
+
+  // Grid::VisualizePath()
+  //
+  // Returns a string that is formatted the same way that the grid would be
+  // logged, except:
+  // - Replace all letters that will be removed by the path, but are not part of
+  //   it, with `kAffectedSpaceLetter`.
+  // - Replace all letters neither in nor affected by the path with
+  //   `kBlankTileLetter`.
+  std::string VisualizePath(const Path &path) const;
+
+  //---------
   // Scoring
 
   // Grid::ScorePath()
@@ -192,6 +206,16 @@ class Grid {
   // space created.
   absl::Status ClearTile(const std::shared_ptr<Tile> &tile);
 
+  // Grid::AsStringVector()
+  //
+  // A helper method for `Grid::VisualizePath()` and `AbslStringify()`.
+  std::vector<std::string> AsStringVector() const;
+
+  // Grid::PointsRemovedBy()
+  //
+  // A helper method for `Grid::VisualizePath()` and `Grid::TilesRemovedBy()`.
+  absl::flat_hash_set<Point> PointsRemovedBy(const Path &path) const;
+
   //---------
   // Members
 
@@ -204,6 +228,7 @@ class Grid {
   static constexpr int kNumRows = 13;
   static constexpr int kNumCols = 9;
   static constexpr char kEmptySpaceLetter = ' ';
+  static constexpr char kAffectedSpaceLetter = '#';
 
   //------------------
   // Abseil functions
@@ -216,16 +241,9 @@ class Grid {
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Grid &grid) {
-    for (int r = grid.kNumRows - 1; r >= 0; --r) {
-      std::vector<std::shared_ptr<Tile>> row = grid.row(r);
-      if (r < grid.kNumRows - 1) sink.Append("\n");
-      for (const std::shared_ptr<Tile> &tile : row) {
-        if (tile == nullptr)
-          sink.Append(std::string(1, kEmptySpaceLetter));
-        else
-          absl::Format(&sink, "%v", *tile);
-      }
-    }
+    std::vector<std::string> board = grid.AsStringVector();
+    std::reverse(board.begin(), board.end());
+    sink.Append(absl::StrJoin(board, "\n"));
   }
 };
 

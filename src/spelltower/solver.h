@@ -79,6 +79,7 @@ class Solver {
   Grid grid_;
   absl::btree_map<int, absl::btree_set<Path>, std::greater<int>> word_cache_;
   std::vector<Path> solution_;
+  std::vector<std::string> snapshots_;
   int words_score_;
 
   //------------------
@@ -87,7 +88,8 @@ class Solver {
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const Solver& solver) {
     for (int i = 0; i < solver.solution().size(); ++i) {
-      sink.Append(absl::StrCat(i + 1, ". ", solver.solution()[i], "\n\n"));
+      sink.Append(absl::StrCat(i + 1, ". \"", solver.solution()[i], "\"\n",
+                               solver.snapshots_[i], "\n\n"));
     }
     absl::Format(&sink, "%v", solver.grid_);
   }

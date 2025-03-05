@@ -1,7 +1,5 @@
 #include "solver.h"
 
-#include <memory>
-
 #include "absl/status/status_matchers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -49,16 +47,20 @@ TEST(SolverTest, AbslStringify) {
 
   Path scat({solver.grid()[{2, 0}], solver.grid()[{2, 1}],
              solver.grid()[{2, 2}], solver.grid()[{1, 3}]});
+  std::string scat_str =
+      absl::StrCat("1. \"scat\"\n", solver.grid().VisualizePath(scat));
   ASSERT_THAT(solver.PlayWord(scat), absl_testing::IsOk());
   EXPECT_EQ(
       absl::StrFormat("%v", solver),
-      absl::StrCat("1. ", scat, "\n\n", absl::StrFormat("%v", solver.grid())));
+      absl::StrCat(scat_str, "\n\n", absl::StrFormat("%v", solver.grid())));
 
   Path carb({solver.grid()[{1, 0}], solver.grid()[{1, 1}],
              solver.grid()[{0, 2}], solver.grid()[{1, 2}]});
+  std::string carb_str =
+      absl::StrCat("2. \"carb\"\n", solver.grid().VisualizePath(carb));
   ASSERT_THAT(solver.PlayWord(carb), absl_testing::IsOk());
   EXPECT_EQ(absl::StrFormat("%v", solver),
-            absl::StrCat("1. ", scat, "\n\n", "2. ", carb, "\n\n",
+            absl::StrCat(scat_str, "\n\n", carb_str, "\n\n",
                          absl::StrFormat("%v", solver.grid())));
 }
 

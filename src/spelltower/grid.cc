@@ -2,22 +2,25 @@
 
 #include <algorithm>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
+
 namespace puzzmo::spelltower {
 
 Grid::Grid(const std::vector<std::string>& grid_strings)
-    : tiles_(kNumCols), column_letter_counts_(kNumCols) {
-  for (int r = 0; r < kNumRows; ++r) {
-    int in_r = (grid_strings.size() - 1) - r;
-    for (int c = 0; c < kNumCols; ++c) {
-      if (in_r < 0 || c >= grid_strings[in_r].size() ||
-          grid_strings[in_r][c] == kEmptySpaceLetter) {
-        tiles_[c].push_back(nullptr);
-        continue;
-      }
+    : tiles_(kNumCols, std::vector<std::shared_ptr<Tile>>(kNumRows, nullptr)),
+      column_letter_counts_(kNumCols) {
+  const int max_row = std::min((int)grid_strings.size(), kNumRows);
+  for (int r = 0; r < max_row; ++r) {
+    int idx = grid_strings.size() - 1 - r;  // Start at the last string.
 
-      std::shared_ptr<Tile> tile =
-          std::make_shared<Tile>(r, c, grid_strings[in_r][c]);
-      tiles_[c].push_back(tile);
+    const int max_col = std::min((int)grid_strings[idx].size(), kNumCols);
+    for (int c = 0; c < max_col; ++c) {
+      const char l = grid_strings[idx][c];
+      if (l == kEmptySpaceLetter) continue;
+
+      std::shared_ptr<Tile> tile = std::make_shared<Tile>(r, c, l);
+      tiles_[c][r] = tile;
       if (tile->is_star()) star_tiles_.push_back(tile);
       if (tile->is_blank()) continue;
 
@@ -116,8 +119,7 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesAffectedBy(
   return accessible_tiles;
 }
 
-absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
-    const Path& path) const {
+absl::flat_hash_set<Point> Grid::PointsRemovedBy(const Path& path) const {
   absl::flat_hash_set<Point> affected_points;
 
   for (const std::shared_ptr<Tile>& tile : path.tiles()) {
@@ -139,14 +141,63 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
   }
   absl::erase_if(affected_points,
                  [*this](Point p) { return !IsPointInRange(p); });
+  return affected_points;
+}
 
+absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
+    const Path& path) const {
   absl::flat_hash_set<std::shared_ptr<Tile>> accessible_tiles;
+
+  absl::flat_hash_set<Point> affected_points = PointsRemovedBy(path);
   for (const Point& p : affected_points) {
     std::shared_ptr<Tile> tile = tiles_[p.col][p.row];
     if (tile == nullptr) continue;
     accessible_tiles.insert(tile);
   }
   return accessible_tiles;
+}
+
+std::vector<std::string> Grid::AsStringVector() const {
+  std::vector<std::string> v;
+  for (int r = 0; r < kNumRows; ++r) {
+    std::vector<std::shared_ptr<Tile>> grid_row = row(r);
+
+    int last_c = grid_row.size();
+    while (last_c > 0 && grid_row[--last_c] == nullptr);
+    if (last_c == 0) break;
+
+    std::string s;
+    for (int c = 0; c <= last_c; ++c) {
+      std::shared_ptr<Tile> tile = tiles_[c][r];
+      if (tile == nullptr)
+        absl::StrAppend(&s, std::string(1, kEmptySpaceLetter));
+      else
+        absl::StrAppend(&s, *tile);
+    }
+    v.push_back(s);
+  }
+  return v;
+}
+
+std::string Grid::VisualizePath(const Path& path) const {
+  absl::flat_hash_set<Point> points_removed_by = PointsRemovedBy(path);
+  std::vector<std::string> board = AsStringVector();
+  for (int r = 0; r < board.size(); ++r) {
+    for (int c = 0; c < kNumCols; ++c) {
+      if (board[r][c] == kEmptySpaceLetter) continue;
+
+      Point p = {r, c};
+      if (path.contains(p)) continue;
+
+      if (points_removed_by.contains(p)) {
+        board[r][c] = kAffectedSpaceLetter;
+      } else {
+        board[r][c] = kBlankTileLetter;
+      }
+    }
+  }
+  std::reverse(board.begin(), board.end());
+  return absl::StrJoin(board, "\n");
 }
 
 absl::Status Grid::ClearPath(const Path& path) {

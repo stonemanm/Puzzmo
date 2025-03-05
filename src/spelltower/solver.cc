@@ -38,7 +38,11 @@ void Solver::reset() {
 
 absl::Status Solver::PlayWord(const Path& word) {
   int n = grid_.ScorePath(word);
-  if (absl::Status s = grid_.ClearPath(word); !s.ok()) return s;
+  snapshots_.push_back(grid_.VisualizePath(word));
+  if (absl::Status s = grid_.ClearPath(word); !s.ok()) {
+    snapshots_.pop_back();
+    return s;
+  }
   solution_.push_back(word);
   word_cache_.clear();
   words_score_ += n;

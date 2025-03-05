@@ -175,11 +175,18 @@ TEST(GridTest, ScorePath) {
   EXPECT_EQ(grid.ScorePath(long_path), 220);
 }
 
+TEST(GridTest, VisualizePath) {
+  Grid grid({"   e", "   vi", "  iatp", " kd.dcHc", "enkolgscr", "ssrsaamfq"});
+  Path path({grid[{2, 2}], grid[{3, 2}], grid[{4, 3}], grid[{3, 3}]});
+  EXPECT_EQ(grid.VisualizePath(path),
+            absl::StrJoin({"   .", "   v.", "  ia..", " .d#....", ".........",
+                           "........."},
+                          "\n"));
+}
+
 TEST(GridTest, AbslStringify) {
   const std::vector<std::string> grid_string = {
-      "     A   ", "         ", "   ..    ", "         ", "  b      ",
-      "       xx", "      xxx", "     xxxx", "    xxxxx", "   xxxxxx",
-      "  xxxxxxx", " xxxxxxxx", "xxxxxxxxx"};
+      "   e", "   vi", "  iatp", " kd.dcHc", "enkolgscr", "ssrsaamfq"};
   Grid grid(grid_string);
   EXPECT_EQ(absl::StrFormat("%v", grid), absl::StrJoin(grid_string, "\n"));
 }

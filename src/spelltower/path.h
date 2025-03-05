@@ -14,7 +14,6 @@
 #include <memory>
 #include <vector>
 
-#include "absl/strings/str_cat.h"
 #include "tile.h"
 
 namespace puzzmo::spelltower {
@@ -98,23 +97,6 @@ class Path {
   // Returns the number of star tiles contained in this path.
   int star_count() const { return star_count_; }
 
-  //---------
-  // Strings
-
-  // Path::TilesAsGrid()
-  //
-  // Returns a string formatted the same way that a `Grid` is formatted, but
-  // with `kBlankTileLetter` in every space that is not a tile in the path.
-  // Useful for visualizing the path.
-  std::string TilesAsGrid() const;
-
-  // Path::TilesAsString()
-  //
-  // Much in the same way that a string can be seen as an array of characters, a
-  // path can be considered an array of tiles. This returns a string containing
-  // each tile's character in order.
-  std::string TilesAsString() const;
-
   //----------
   // Validity
 
@@ -162,8 +144,8 @@ class Path {
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Path &path) {
-    sink.Append(
-        absl::StrCat("\"", path.TilesAsString(), "\"\n", path.TilesAsGrid()));
+    for (const std::shared_ptr<Tile> &tile : path.tiles())
+      absl::Format(&sink, "%v", *tile);
   }
 };
 

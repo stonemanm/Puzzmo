@@ -39,15 +39,6 @@ TEST(PathTest, VectorConstructor) {
   EXPECT_EQ(path.star_count(), 2);
 }
 
-TEST(PathTest, TilesAsString) {
-  std::shared_ptr<Tile> t0 = std::make_shared<Tile>(0, 0, 'A');
-  std::shared_ptr<Tile> t1 = std::make_shared<Tile>(1, 1, 'B');
-  std::shared_ptr<Tile> t2 = std::make_shared<Tile>(0, 1, 'c');
-  Path path({t0, t1, t2});
-
-  EXPECT_EQ(path.TilesAsString(), "ABc");
-}
-
 TEST(PathTest, PushBack) {
   std::shared_ptr<Tile> t0 = std::make_shared<Tile>(0, 0, 'A');
   std::shared_ptr<Tile> t1 = std::make_shared<Tile>(1, 1, 'B');
@@ -196,14 +187,7 @@ TEST(PathTest, AbslStringify) {
       {std::make_shared<Tile>(0, 0, 'q'), std::make_shared<Tile>(1, 1, 'r'),
        std::make_shared<Tile>(2, 0, 'S'), std::make_shared<Tile>(2, 1, 'T'),
        std::make_shared<Tile>(3, 2, 'u')});
-  EXPECT_EQ(absl::StrFormat("%v", path),
-            absl::StrCat("\"qrSTu\"", "\n",
-                         absl::StrJoin({".........", ".........", ".........",
-                                        ".........", ".........", ".........",
-                                        ".........", ".........", ".........",
-                                        "..u......", "ST.......", ".r.......",
-                                        "q........"},
-                                       "\n")));
+  EXPECT_EQ(absl::StrFormat("%v", path), "qrSTu");
 }
 
 }  // namespace

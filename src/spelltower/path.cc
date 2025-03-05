@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "absl/strings/str_join.h"
+#include "absl/strings/str_format.h"
 #include "src/shared/point.h"
 
 namespace puzzmo::spelltower {
@@ -67,22 +67,6 @@ bool Path::contains(const Point &p) const {
     if (tile->coords() == p) return true;
   }
   return false;
-}
-
-std::string Path::TilesAsGrid() const {
-  std::vector<std::string> board(13, std::string(9, kBlankTileLetter));
-  for (const std::shared_ptr<Tile> &tile : tiles_) {
-    board[12 - tile->row()][tile->col()] =
-        tile->is_star() ? std::toupper(tile->letter()) : tile->letter();
-  }
-  return absl::StrJoin(board, "\n");
-}
-
-std::string Path::TilesAsString() const {
-  return absl::StrJoin(tiles_, "",
-                       [](std::string *out, const std::shared_ptr<Tile> &tile) {
-                         absl::StrAppend(out, *tile);
-                       });
 }
 
 void Path::pop_back() {
@@ -193,7 +177,13 @@ bool operator==(const Path &lhs, const Path &rhs) {
 bool operator!=(const Path &lhs, const Path &rhs) { return !(lhs == rhs); }
 
 bool operator<(const Path &lhs, const Path &rhs) {
-  return lhs.TilesAsString() < rhs.TilesAsString();
+  int size = std::min(lhs.size(), rhs.size());
+  for (int i = 0; i < size; ++i) {
+    std::string l = absl::StrFormat("%v", *lhs[i]);
+    std::string r = absl::StrFormat("%v", *rhs[i]);
+    if (l != r) return l < r;
+  }
+  return lhs.size() < rhs.size();
 }
 
 bool operator<=(const Path &lhs, const Path &rhs) {
