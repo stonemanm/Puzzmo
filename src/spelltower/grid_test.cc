@@ -179,7 +179,7 @@ TEST(GridTest, VisualizePath) {
   Grid grid({"   e", "   vi", "  iatp", " kd.dcHc", "enkolgscr", "ssrsaamfq"});
   Path path({grid[{2, 2}], grid[{3, 2}], grid[{4, 3}], grid[{3, 3}]});
   EXPECT_EQ(grid.VisualizePath(path),
-            absl::StrJoin({"   .", "   v.", "  ia..", " .d#....", ".........",
+            absl::StrJoin({"   .", "   v.", "  ia..", " .d+....", ".........",
                            "........."},
                           "\n"));
 }

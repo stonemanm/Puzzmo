@@ -228,7 +228,7 @@ class Grid {
   static constexpr int kNumRows = 13;
   static constexpr int kNumCols = 9;
   static constexpr char kEmptySpaceLetter = ' ';
-  static constexpr char kAffectedSpaceLetter = '#';
+  static constexpr char kAffectedSpaceLetter = '+';
 
   //------------------
   // Abseil functions

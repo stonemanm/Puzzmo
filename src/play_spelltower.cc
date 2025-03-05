@@ -56,6 +56,6 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  LOG(INFO) << absl::StrCat("Greedy solution: ", *solver);
+  LOG(INFO) << absl::StrCat("Greedy solution: \n", *solver);
   return 0;
 }
