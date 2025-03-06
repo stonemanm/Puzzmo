@@ -56,11 +56,6 @@ bool UpdatePoints(std::vector<Point> &points, int l,
 
 }  // namespace
 
-Path::Path(const std::vector<std::shared_ptr<Tile>> &tiles)
-    : simple_board_(9), star_count_(0) {
-  for (const std::shared_ptr<Tile> &tile : tiles) push_back(tile);
-}
-
 bool Path::contains(const Point &p) const {
   for (const std::shared_ptr<Tile> &tile : tiles_) {
     if (tile == nullptr) continue;
@@ -108,6 +103,10 @@ void Path::push_back(const std::shared_ptr<Tile> &tile) {
               min_possible_row_[simple_col[t]]);
     std::swap(simple_col[t - 1], simple_col[t]);
   }
+}
+
+void Path::push_back(const std::vector<std::shared_ptr<Tile>> &tiles) {
+  for (const std::shared_ptr<Tile> &tile : tiles) push_back(tile);
 }
 
 bool Path::IsContinuous() const {

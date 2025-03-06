@@ -95,7 +95,8 @@ TEST(GridTest, PossibleNextTilesForPath) {
   Grid grid({"         ", "         ", "         ", "         ", "        x",
              "       xx", "      xx*", "     xxxx", "    xxxxx", "   xxxxxx",
              "  xxxxxxx", " xxxxxxxx", "xxxxxxxxx"});
-  Path path({grid[{6, 7}], grid[{7, 7}], grid[{7, 8}]});
+  Path path;
+  path.push_back({grid[{6, 7}], grid[{7, 7}], grid[{7, 8}]});
   EXPECT_THAT(grid.PossibleNextTilesForPath(path),
               testing::UnorderedElementsAre(grid[{8, 8}]));
 }
@@ -118,20 +119,23 @@ TEST(GridTest, TilesRemovedBy) {
              "hhhhhhhhh", "ggggggggg", "fffffffff", "eeeeeeeee", "ddddddddd",
              "ccccccccc", "bbbbbbbbb", "aaaaaaaaa"});
 
-  Path short_path({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
+  Path short_path;
+  short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
   EXPECT_THAT(
       grid.TilesRemovedBy(short_path),
       testing::UnorderedElementsAre(grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]));
 
-  Path path_with_rare_tile({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
+  Path path_with_rare_tile;
+  path_with_rare_tile.push_back({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
   EXPECT_THAT(grid.TilesRemovedBy(path_with_rare_tile),
               testing::UnorderedElementsAre(
                   grid[{8, 4}], grid[{7, 4}], grid[{6, 4}], grid[{8, 0}],
                   grid[{8, 1}], grid[{8, 2}], grid[{8, 3}], grid[{8, 5}],
                   grid[{8, 6}], grid[{8, 8}]));
 
-  Path long_path({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
-                  grid[{12, 6}]});
+  Path long_path;
+  long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
+                       grid[{12, 6}]});
   EXPECT_THAT(grid.TilesRemovedBy(long_path),
               testing::UnorderedElementsAre(
                   grid[{8, 5}], grid[{8, 4}], grid[{8, 6}], grid[{7, 5}],
@@ -144,11 +148,13 @@ TEST(GridTest, ClearPath) {
              "hhhhhhhhh", "ggggggggg", "fffffffff", "eeeeeeeee", "ddddddddd",
              "ccccccccc", "b*bbbbbbb", "aaaaaaaaa"});
 
-  Path long_path({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
-                  grid[{12, 6}]});
+  Path long_path;
+  long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
+                       grid[{12, 6}]});
   EXPECT_THAT(grid.ClearPath(long_path), absl_testing::IsOk());
 
-  Path short_path({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
+  Path short_path;
+  short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
   EXPECT_THAT(grid.ClearPath(short_path), absl_testing::IsOk());
   EXPECT_EQ((grid[{0, 1}]->letter()), ('c'));
   EXPECT_EQ((grid[{0, 2}]->letter()), ('a'));
@@ -162,22 +168,26 @@ TEST(GridTest, ScorePath) {
              "ccccccccc", "bbBbbbbbb", "aaaaaaaaa"});
 
   // a+a+b (6) * length (3) * stars + 1 (2) = 36
-  Path short_path({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
+  Path short_path;
+  short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
   EXPECT_EQ(grid.ScorePath(short_path), 36);
 
   // j+h+g + i+i+i+i+i+i+i (24) * length (3) * stars + 1 (1) = 72
-  Path path_with_rare_tile({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
+  Path path_with_rare_tile;
+  path_with_rare_tile.push_back({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
   EXPECT_EQ(grid.ScorePath(path_with_rare_tile), 72);
 
   // i+k+l+m+n + j+h+i+k+n+m+l (44) * length (5) * stars + 1 (1) = 220
-  Path long_path({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
-                  grid[{12, 6}]});
+  Path long_path;
+  long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
+                       grid[{12, 6}]});
   EXPECT_EQ(grid.ScorePath(long_path), 220);
 }
 
 TEST(GridTest, VisualizePath) {
   Grid grid({"   e", "   vi", "  iatp", " kd.dcHc", "enkolgscr", "ssrsaamfq"});
-  Path path({grid[{2, 2}], grid[{3, 2}], grid[{4, 3}], grid[{3, 3}]});
+  Path path;
+  path.push_back({grid[{2, 2}], grid[{3, 2}], grid[{4, 3}], grid[{3, 3}]});
   EXPECT_EQ(grid.VisualizePath(path),
             absl::StrJoin({"   .", "   v.", "  ia..", " .d+....", ".........",
                            "........."},

@@ -35,10 +35,6 @@ class Path {
   // The default constructor creates an empty path.
   Path() : simple_board_(9), star_count_(0) {}
 
-  // If a vector of tiles is passed to the constructor, they will be added one
-  // at a time.
-  explicit Path(const std::vector<std::shared_ptr<Tile>> &tiles);
-
   //-----------
   // Accessors
 
@@ -121,8 +117,9 @@ class Path {
 
   // Path::push_back()
   //
-  // Adds this tile to the end of the path and adjusts data accordingly.
+  // Adds the tile or tiles to the end of the path and adjusts data accordingly.
   void push_back(const std::shared_ptr<Tile> &tile);
+  void push_back(const std::vector<std::shared_ptr<Tile>> &tiles);
 
   //---------
   // Members
