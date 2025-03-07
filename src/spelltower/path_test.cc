@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/status_matchers.h"
 #include "gmock/gmock.h"
@@ -39,6 +40,7 @@ TEST(PathTest, PushBackOneTile) {
   EXPECT_EQ(path.size(), 1);
   EXPECT_THAT(path.lowest_legal_row(), testing::ElementsAre(0));
   EXPECT_THAT(path.simple_board()[0], testing::ElementsAre(0));
+  EXPECT_THAT(path.adjusted_points(), testing::ElementsAre(p0));
   EXPECT_EQ(path.star_count(), 1);
 
   EXPECT_THAT(path.push_back(t1), IsOk());
@@ -95,7 +97,7 @@ TEST(PathTest, PushBackBlankTileFails) {
 
 //   b
 // a
-TEST(PathTest, PushBackFailsWithColumnGap) {
+TEST(PathTest, PushBackFailsDueToColumnGap) {
   Path path;
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'a')), IsOk());
   Path unchanged = path;
@@ -107,7 +109,7 @@ TEST(PathTest, PushBackFailsWithColumnGap) {
 // c
 // a
 // b
-TEST(PathTest, PushBackFailsWithInterruptedColumn) {
+TEST(PathTest, PushBackFailsDueToInterruptedColumn) {
   Path path;
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(1, 0, 'a')), IsOk());
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'b')), IsOk());
@@ -115,6 +117,82 @@ TEST(PathTest, PushBackFailsWithInterruptedColumn) {
   EXPECT_THAT(path.push_back(std::make_shared<Tile>(2, 0, 'c')),
               StatusIs(absl::StatusCode::kOutOfRange));
   EXPECT_EQ(path, unchanged);
+}
+
+// b
+// c
+// a
+TEST(PathTest, PushBackFailsDueToNoRoom) {
+  Path path;
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'a')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(2, 0, 'b')), IsOk());
+  Path unchanged = path;
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(1, 0, 'c')),
+              StatusIs(absl::StatusCode::kOutOfRange));
+  EXPECT_EQ(path, unchanged);
+}
+
+// d
+// a
+// bc
+TEST(PathTest, PushBackFailsDueToLowestLegalRow) {
+  Path path;
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(1, 0, 'a')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'b')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 1, 'c')), IsOk());
+  Path unchanged = path;
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(2, 0, 'd')),
+              StatusIs(absl::StatusCode::kOutOfRange));
+  EXPECT_EQ(path, unchanged);
+}
+
+// b
+//
+// a
+TEST(PathTest, PushBackSucceedsWithADrop) {
+  Path path;
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'a')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(2, 0, 'b')), IsOk());
+  EXPECT_EQ(path.size(), 2);
+}
+
+//  b
+//
+// a
+TEST(PathTest, PushBackSucceedsWithAnOffsetDrop) {
+  Path path;
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'a')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(2, 1, 'b')), IsOk());
+  EXPECT_EQ(path.size(), 2);
+}
+
+// e
+//
+//  d
+//  fc
+// ab
+TEST(PathTest, AdjustedPoints) {
+  Point p00 = {0, 0};
+  Point p20 = {2, 0};
+  Point p30 = {3, 0};
+  Point p40 = {4, 0};
+  Point p01 = {0, 1};
+  Point p11 = {1, 1};
+  Point p21 = {2, 1};
+  Point p12 = {1, 2};
+
+  Path path;
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p00, 'a')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p01, 'b')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p12, 'c')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p21, 'd')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p40, 'e')), IsOk());
+  ASSERT_THAT(path.adjusted_points(),
+              testing::ElementsAreArray({p00, p01, p12, p21, p30}));
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(p11, 'f')), IsOk());
+  EXPECT_EQ(path.size(), 6);
+  EXPECT_THAT(path.adjusted_points(),
+              testing::ElementsAreArray({p00, p01, p12, p21, p20, p11}));
 }
 
 TEST(PathTest, PopBack) {
@@ -167,68 +245,6 @@ TEST(PathTest, IsContinuous) {
   EXPECT_THAT(path.IsContinuous(), testing::IsTrue());  // row 2
   ASSERT_THAT(path[4]->Drop(1), IsOk());
   EXPECT_THAT(path.IsContinuous(), testing::IsFalse());  // row 1
-}
-
-TEST(PathTest, IsPossible) {
-  std::shared_ptr<Tile> t00 = std::make_shared<Tile>(0, 0, 'a');
-  std::shared_ptr<Tile> t10 = std::make_shared<Tile>(1, 0, 'b');
-  std::shared_ptr<Tile> t20 = std::make_shared<Tile>(2, 0, 'c');
-  std::shared_ptr<Tile> t30 = std::make_shared<Tile>(3, 0, 'd');
-  std::shared_ptr<Tile> t01 = std::make_shared<Tile>(0, 1, 'e');
-  std::shared_ptr<Tile> t11 = std::make_shared<Tile>(1, 1, 'f');
-  std::shared_ptr<Tile> t21 = std::make_shared<Tile>(2, 1, 'g');
-  std::shared_ptr<Tile> t12 = std::make_shared<Tile>(1, 2, 'h');
-
-  Path empty_path;
-  EXPECT_THAT(empty_path.IsPossible(), IsOk());
-
-  //   2
-  // 01
-  Path simple_and_true;
-  ASSERT_THAT(simple_and_true.push_back({t00, t01, t12}), IsOk());
-  EXPECT_THAT(simple_and_true.IsPossible(), IsOk());
-
-  // 1
-  //
-  // 0
-  Path simple_drop;
-  ASSERT_THAT(simple_drop.push_back({t00, t20}), IsOk());
-  EXPECT_THAT(simple_drop.IsPossible(), IsOk());
-
-  //  1
-  //
-  // 0
-  Path simple_drop_offset;
-  ASSERT_THAT(simple_drop_offset.push_back({t00, t21}), IsOk());
-  EXPECT_THAT(simple_drop_offset.IsPossible(), IsOk());
-
-  // 3
-  // 0
-  // 12
-  Path false_bc_tiles_beneath;
-  ASSERT_THAT(false_bc_tiles_beneath.push_back({t10, t00, t01, t20}), IsOk());
-  EXPECT_THAT(false_bc_tiles_beneath.IsPossible(),
-              StatusIs(absl::StatusCode::kInvalidArgument));
-
-  // 4
-  //  3
-  //  52
-  // 01
-  Path complicated_and_true;
-  ASSERT_THAT(complicated_and_true.push_back({t00, t01, t12, t21, t30, t11}),
-              IsOk());
-  EXPECT_THAT(complicated_and_true.IsPossible(), IsOk());
-
-  // 6
-  // 54
-  // 073
-  // 12
-  Path complicated_and_false;
-  ASSERT_THAT(
-      complicated_and_false.push_back({t10, t00, t01, t12, t21, t20, t30, t11}),
-      IsOk());
-  EXPECT_THAT(complicated_and_false.IsPossible(),
-              StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 TEST(PathTest, AbslStringify) {

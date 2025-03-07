@@ -90,6 +90,12 @@ class Path {
   // it in `simple_board_`.
   std::vector<int> lowest_legal_row() const { return lowest_legal_row_; }
 
+  // Path::adjusted_points()
+  //
+  // Returns the most recent entry in `adjusted_points_`, which corresponds to
+  // the current path.
+  std::vector<Point> adjusted_points() const;
+
   // Path::star_count()
   //
   // Returns the number of star tiles contained in this path.
@@ -135,6 +141,13 @@ class Path {
   // A helper method for `pop_back()`.
   void RemoveNewestTileFromSimpleBoard();
 
+  // Path::FindNewAdjustedPoints()
+  //
+  // Determines the least each tile in the path has to drop in order for the
+  // path to become continuous, and saves the vector of updated points in
+  // `adjusted_points`_.
+  absl::Status FindNewAdjustedPoints();
+
   // Path::UpdatePoints()
   //
   // A helper method for `Path::IsPossible()`. Lowers the higher of two
@@ -149,6 +162,7 @@ class Path {
   std::vector<std::shared_ptr<Tile>> tiles_;
   std::vector<std::vector<int>> simple_board_;
   std::vector<int> lowest_legal_row_;
+  std::vector<std::vector<Point>> adjusted_points_;
   int star_count_;
 
   //------------------
