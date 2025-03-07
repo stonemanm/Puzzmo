@@ -43,12 +43,14 @@ class Tile {
 
   // If initialized with only a row and column, Tile will default to being
   // blank.
+  explicit Tile(const Point &p) : Tile(p.row, p.col) {}
   Tile(int row, int col) : Tile(row, col, kBlankTileLetter) {}
 
   // If also passed a letter, that letter will be stored. If the letter is
   // capitalized, the lowercase letter will be scored, but the tile created will
   // be a star tile. If passed a non-alphabetical character, a blank tile will
   // be created.
+  Tile(const Point &p, char letter) : Tile(p.row, p.col, letter) {}
   Tile(int row, int col, char letter);
 
   //-----------
