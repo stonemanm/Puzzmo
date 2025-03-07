@@ -4,9 +4,7 @@
 #include <cmath>
 #include <string>
 
-#include "absl/log/log.h"
 #include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "src/shared/point.h"
 
@@ -45,12 +43,28 @@ bool Path::contains(const Point &p) const {
   return false;
 }
 
+bool Path::contains(const std::shared_ptr<Tile> &tile) const {
+  return absl::c_contains(tiles_, tile);
+}
+
+std::vector<Point> Path::adjusted_points() const {
+  if (adjusted_points_.empty()) return {};
+  return adjusted_points_.back();
+}
+
+bool Path::IsContinuous() const {
+  for (int i = 0; i < tiles_.size() - 1; ++i) {
+    if (!tiles_[i]->coords().MooreNeighbors().contains(tiles_[i + 1]->coords()))
+      return false;
+  }
+  return true;
+}
+
 void Path::pop_back() {
-  const int idx = tiles_.size() - 1;
-  std::shared_ptr<Tile> &tile = tiles_[idx];
-  if (tile->is_star()) --star_count_;
-  RemoveNewestTileFromSimpleBoard();
+  std::shared_ptr<Tile> tile = tiles_.back();
   adjusted_points_.pop_back();
+  RemoveNewestTileFromSimpleBoard();
+  if (tile->is_star()) --star_count_;
   tiles_.pop_back();
 }
 
@@ -80,64 +94,6 @@ absl::Status Path::push_back(const std::shared_ptr<Tile> &tile) {
 absl::Status Path::push_back(const std::vector<std::shared_ptr<Tile>> &tiles) {
   for (const std::shared_ptr<Tile> &tile : tiles)
     if (absl::Status s = push_back(tile); !s.ok()) return s;
-  return absl::OkStatus();
-}
-
-std::vector<Point> Path::adjusted_points() const {
-  if (adjusted_points_.empty()) return {};
-  return adjusted_points_.back();
-}
-
-bool Path::IsContinuous() const {
-  for (int i = 0; i < tiles_.size() - 1; ++i) {
-    if (!tiles_[i]->coords().MooreNeighbors().contains(tiles_[i + 1]->coords()))
-      return false;
-  }
-  return true;
-}
-
-absl::Status Path::IsPossible() const {
-  if (size() < 2) return absl::OkStatus();
-  // Make a vector of the coordinates of each point. We can modify this without
-  // changing the path.
-  std::vector<Point> points;
-  for (const std::shared_ptr<Tile> &tile : tiles_)
-    points.push_back(tile->coords());
-
-  // Now check for row gaps, dropping the points when necessary.
-  bool is_aligned = false;
-  while (!is_aligned) {
-    std::vector<int> sorted_indices = IndicesByRow(points);
-
-    // Start with the lowest point
-    for (int i = 0; i < sorted_indices.size(); ++i) {
-      int idx = sorted_indices[i];
-      Point &curr = points[idx];
-      if (idx > 0) {
-        Point &prev = points[idx - 1];
-        if (!curr.MooreNeighbors().contains(prev)) {
-          if (absl::Status s = MakePointsNeighbors(idx - 1, idx, points);
-              !s.ok())
-            return s;
-          break;  // Restarts the for loop.
-        }
-      }
-      if (idx < points.size() - 1) {
-        Point &next = points[idx + 1];
-        if (!curr.MooreNeighbors().contains(next)) {
-          if (absl::Status s = MakePointsNeighbors(idx, idx + 1, points);
-              !s.ok())
-            return s;
-          break;  // Restarts the for loop.
-        }
-      }
-      // If we've made it here, this point (and all below it) can reach both of
-      // their neighbors! If this is the final loop, set is_aligned = true so we
-      // can break free
-      if (i == sorted_indices.size() - 1) is_aligned = true;
-    }
-    if (is_aligned) break;
-  }
   return absl::OkStatus();
 }
 
@@ -261,23 +217,22 @@ absl::Status Path::FindNewAdjustedPoints() {
 
 absl::Status Path::MakePointsNeighbors(int idx_a, int idx_b,
                                        std::vector<Point> &points) const {
-  // Determine which of the two points is fixed and which will move.
-  int fixed_idx = points[idx_a].row < points[idx_b].row ? idx_a : idx_b;
-  int loose_idx = points[idx_b].row < points[idx_a].row ? idx_a : idx_b;
+  // Determine which of the two points will move, and to where.
+  int target_row = std::min(points[idx_a].row, points[idx_b].row) + 1;
+  int idx_to_drop = points[idx_a].row > points[idx_b].row ? idx_a : idx_b;
 
-  // If the lowest `loose_idx` can go is still out of reach of `fixed_idx`,
+  // If the lowest `idx_to_drop` can go is still out of reach of `fixed_idx`,
   // return an error.
-  int target_row = points[fixed_idx].row + 1;
-  if (lowest_legal_row_[loose_idx] > target_row)
+  if (lowest_legal_row_[idx_to_drop] > target_row)
     return absl::OutOfRangeError(kPushBackError);
 
-  std::vector<int> simple_col = simple_board_[points[loose_idx].col];
-  int idx_of_loose_idx_in_simple_col = lowest_legal_row_[loose_idx];
+  std::vector<int> simple_col = simple_board_[points[idx_to_drop].col];
+  int idx_in_simple_col = lowest_legal_row_[idx_to_drop];
 
-  // It's possible that, in order to drop 'loose_idx', we have to drop
+  // It's possible that, in order to drop 'idx_to_drop', we have to drop
   // points beneath it as well.
   int ceiling_row = target_row;
-  for (int i = idx_of_loose_idx_in_simple_col - 1; i >= 0; --i) {
+  for (int i = idx_in_simple_col - 1; i >= 0; --i) {
     // If `idx` needs adjusting, lower it as little as possible.
     int idx = simple_col[i];
     if (ceiling_row > points[idx].row) break;
@@ -287,9 +242,9 @@ absl::Status Path::MakePointsNeighbors(int idx_a, int idx_b,
     ceiling_row = points[idx].row;
   }
 
-  // When we drop `loose_idx`, everything above it drops by the same amount.
-  int drop = points[loose_idx].row - target_row;
-  for (int i = idx_of_loose_idx_in_simple_col; i < simple_col.size(); ++i)
+  // When we drop `idx_to_drop`, everything above it drops by the same amount.
+  int drop = points[idx_to_drop].row - target_row;
+  for (int i = idx_in_simple_col; i < simple_col.size(); ++i)
     points[simple_col[i]].row -= drop;
 
   return absl::OkStatus();

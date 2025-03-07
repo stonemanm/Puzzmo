@@ -67,7 +67,6 @@ cc_library(
     deps = [
         ":tile",
         "//src/shared:point",
-        "@abseil-cpp//absl/log:log",
         "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/strings",
     ],
@@ -79,7 +78,6 @@ cc_test(
     srcs = ["path_test.cc"],
     deps = [
         ":path",
-        "@abseil-cpp//absl/log:log",
         "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/status:status_matchers",
         "@googletest//:gtest",

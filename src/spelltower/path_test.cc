@@ -2,7 +2,6 @@
 
 #include <memory>
 
-#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/status_matchers.h"
 #include "gmock/gmock.h"
@@ -166,33 +165,37 @@ TEST(PathTest, PushBackSucceedsWithAnOffsetDrop) {
   EXPECT_EQ(path.size(), 2);
 }
 
-// e
+// d
 //
-//  d
-//  fc
-// ab
+//  c
+//  b
+// ae
 TEST(PathTest, AdjustedPoints) {
   Point p00 = {0, 0};
-  Point p20 = {2, 0};
+  Point p10 = {1, 0};
   Point p30 = {3, 0};
   Point p40 = {4, 0};
   Point p01 = {0, 1};
   Point p11 = {1, 1};
   Point p21 = {2, 1};
-  Point p12 = {1, 2};
 
   Path path;
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(p00, 'a')), IsOk());
-  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p01, 'b')), IsOk());
-  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p12, 'c')), IsOk());
-  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p21, 'd')), IsOk());
-  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p40, 'e')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p11, 'b')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p21, 'c')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(p40, 'd')), IsOk());
   ASSERT_THAT(path.adjusted_points(),
-              testing::ElementsAreArray({p00, p01, p12, p21, p30}));
-  EXPECT_THAT(path.push_back(std::make_shared<Tile>(p11, 'f')), IsOk());
-  EXPECT_EQ(path.size(), 6);
+              testing::ElementsAreArray({p00, p11, p21, p30}));
+
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(p01, 'e')), IsOk());
+  EXPECT_EQ(path.size(), 5);
   EXPECT_THAT(path.adjusted_points(),
-              testing::ElementsAreArray({p00, p01, p12, p21, p20, p11}));
+              testing::ElementsAreArray({p00, p11, p21, p10, p01}));
+
+  path.pop_back();
+  EXPECT_EQ(path.size(), 4);
+  EXPECT_THAT(path.adjusted_points(),
+              testing::ElementsAreArray({p00, p11, p21, p30}));
 }
 
 TEST(PathTest, PopBack) {

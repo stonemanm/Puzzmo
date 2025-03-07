@@ -4,9 +4,9 @@
 //
 // This header file defines paths. At its core, a path is a vector of Tile
 // objects. Paths are used to construct words that can be cleared, but can be
-// constructed with consecutive tiles that can never neighbor each other. To
-// compensate, the class also contains logic to determine whether or not it is
-// possible to legally create it in a game of Spelltower.
+// constructed with consecutive tiles that can never neighbor each other. It is
+// impossible to add a new tile to a path if there is no way of shifting tiles
+// to make the path continuous.
 
 #ifndef path_h
 #define path_h
@@ -25,9 +25,12 @@ namespace puzzmo::spelltower {
 // potential removal. At its core, it is a vector of shared_ptrs to tiles
 // contained in a `Grid`.
 //
-// It is not necessarily possible to legally play the word in a path. To
-// determine this is comparatively computationally expensive, so checking it is
-// done in a standalone method.
+// A path is "continuous" if, for every tile in the path, both its predecessor
+// and its successor (if any) are Moore neighbors of that tile--that is to say,
+// one of the up-to-eight tiles surrounding it. Paths must be continuous to be
+// played. Tiles can be added to a `Path` object even if doing so will result in
+// a non-continuous path, so long as it is possible for the path to become
+// continuous by means of lowering tiles in the path.
 class Path {
  public:
   //--------------
@@ -62,9 +65,7 @@ class Path {
   // If a `std::shared_ptr<Tile>` is passed in, returns true if that tile is
   // already in the path.
   bool contains(const Point &point) const;
-  bool contains(const std::shared_ptr<Tile> &tile) const {
-    return absl::c_contains(tiles_, tile);
-  }
+  bool contains(const std::shared_ptr<Tile> &tile) const;
 
   // Path::empty()
   //
@@ -85,9 +86,9 @@ class Path {
 
   // Path::lowest_legal_row()
   //
-  // At index `i`, holds the lowest row to which that `tiles_[i]` can drop as
-  // part of this path. This is determined by the number of path tiles beneath
-  // it in `simple_board_`.
+  // Returns a vector that, at index `i`, holds the lowest row to which
+  // `tiles_[i]` can drop as part of this path. This is determined by the number
+  // of path tiles beneath it in `simple_board_`.
   std::vector<int> lowest_legal_row() const { return lowest_legal_row_; }
 
   // Path::adjusted_points()
@@ -109,12 +110,6 @@ class Path {
   // Returns `true` if each pair of adjacent tiles are Moore neighbors.
   bool IsContinuous() const;
 
-  // Path::IsPossible()
-  //
-  // Checks whether or not it is possible to make this path on a grid by
-  // removing tiles not in this path.
-  absl::Status IsPossible() const;
-
   //----------
   // Mutators
 
@@ -125,15 +120,23 @@ class Path {
 
   // Path::push_back()
   //
-  // Adds the tile or tiles to the end of the path and adjusts data accordingly.
+  // Attempts to add the tile or tiles to the path. Cannot accept `nullptr` or
+  // blank tiles, returning an error. Likewise, if adding a tile will render it
+  // impossible for the path to ever become continuous, an error will be
+  // returned.
+  //
+  // Should `push_back()` return something other than `absl::OkStatus()`, the
+  // path object will be left in a valid state. If a vector of tiles has been
+  // provided, only the tiles preceding that which caused the error will have
+  // been added.
   absl::Status push_back(const std::shared_ptr<Tile> &tile);
   absl::Status push_back(const std::vector<std::shared_ptr<Tile>> &tiles);
 
  private:
   // Path::AddNewestTileToSimpleBoard()
   //
-  // A helper method for `push_back()` to update `simple_board_`. Undoes its
-  // work and returns an error if this would create an interrupted column.
+  // A helper method for `Path::push_back()` to update `simple_board_`. Undoes
+  // its work and returns an error if this would create an interrupted column.
   absl::Status AddNewestTileToSimpleBoard();
 
   // Path::RemoveNewestTileFromSimpleBoard()
@@ -150,7 +153,7 @@ class Path {
 
   // Path::UpdatePoints()
   //
-  // A helper method for `Path::IsPossible()`. Lowers the higher of two
+  // A helper method for `Path::push_back()`. Lowers the higher of two
   // points to be one row above the lower of the two, adjusting
   // others as needed. Returns false if it is not possible to do so.
   absl::Status MakePointsNeighbors(int idx_a, int idx_b,
