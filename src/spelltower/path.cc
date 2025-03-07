@@ -68,41 +68,16 @@ void Path::pop_back() {
   const int idx = tiles_.size() - 1;
   std::shared_ptr<Tile> &tile = tiles_[idx];
   if (tile->is_star()) --star_count_;
-
-  // Decrement `path_tiles_under_` for values above `tile`, then remove it from
-  // `simple_col`.
-  std::vector<int> &simple_col = simple_board_[tile->col()];
-  int idx_in_simple_col = min_possible_row_[idx];
-  for (int i = idx_in_simple_col + 1; i < simple_col.size(); ++i) {
-    --min_possible_row_[simple_col[i]];
-  }
-  simple_col.erase(simple_col.begin() + idx_in_simple_col);
-
-  min_possible_row_.pop_back();
+  RemoveFromSimpleBoard();
   tiles_.pop_back();
 }
 
 void Path::push_back(const std::shared_ptr<Tile> &tile) {
   if (tile == nullptr) return;
 
-  const int idx = tiles_.size();
   tiles_.push_back(tile);
   if (tile->is_star()) ++star_count_;
-
-  // Set the number of tiles under `tile` to the number currently in
-  // `simple_col`, then add it to `simple_col`.
-  std::vector<int> &simple_col = simple_board_[tile->col()];
-  min_possible_row_.push_back(simple_col.size());
-  simple_col.push_back(idx);
-
-  // Swap `idx` into its proper place in `simple_col`, updating
-  // `path_tiles_under_` as we go.
-  for (int t = simple_col.size() - 1; t > 0; --t) {
-    if (tiles_[simple_col[t - 1]]->row() < tiles_[simple_col[t]]->row()) break;
-    std::swap(min_possible_row_[simple_col[t - 1]],
-              min_possible_row_[simple_col[t]]);
-    std::swap(simple_col[t - 1], simple_col[t]);
-  }
+  AddToSimpleBoard();
 }
 
 void Path::push_back(const std::vector<std::shared_ptr<Tile>> &tiles) {
@@ -129,7 +104,7 @@ bool Path::IsPossible() const {
   for (int i = 1; i < points.size(); ++i) {
     if (std::abs(points[i].col - points[i - 1].col) > 1) return false;
     if (points[i - 1].col == points[i].col &&
-        std::abs(min_possible_row_[i] - min_possible_row_[i - 1]) > 1) {
+        std::abs(row_on_simple_board_[i] - row_on_simple_board_[i - 1]) > 1) {
       return false;
     }
   }
@@ -146,7 +121,8 @@ bool Path::IsPossible() const {
       if (idx > 0) {
         Point &prev = points[idx - 1];
         if (!curr.MooreNeighbors().contains(prev)) {
-          if (!UpdatePoints(points, idx - 1, min_possible_row_, simple_board_))
+          if (!UpdatePoints(points, idx - 1, row_on_simple_board_,
+                            simple_board_))
             return false;
           break;  // Restarts the for loop.
         }
@@ -154,7 +130,7 @@ bool Path::IsPossible() const {
       if (idx < points.size() - 1) {
         Point &next = points[idx + 1];
         if (!curr.MooreNeighbors().contains(next)) {
-          if (!UpdatePoints(points, idx, min_possible_row_, simple_board_))
+          if (!UpdatePoints(points, idx, row_on_simple_board_, simple_board_))
             return false;
           break;  // Restarts the for loop.
         }
@@ -169,8 +145,42 @@ bool Path::IsPossible() const {
   return true;
 }
 
+void Path::AddToSimpleBoard() {
+  const std::shared_ptr<Tile> &tile = tiles_.back();
+  std::vector<int> &simple_col = simple_board_[tile->col()];
+  const int idx = size() - 1;
+
+  // Insert `idx` at the correct place in `simple_col`.
+  auto it = std::lower_bound(simple_col.begin(), simple_col.end(), idx,
+                             [*this](int lhs, int rhs) {
+                               return tiles_[lhs]->row() < tiles_[rhs]->row();
+                             });
+  int n = it - simple_col.begin();
+  simple_col.insert(it, idx);
+  row_on_simple_board_.push_back(n);
+
+  // Update `row_on_simple_board_` for everything above `idx` in `simple_col`.
+  for (int i = row_on_simple_board_[idx] + 1; i < simple_col.size(); ++i) {
+    ++row_on_simple_board_[simple_col[i]];
+  }
+}
+
+void Path::RemoveFromSimpleBoard() {
+  std::vector<int> &simple_col = simple_board_[tiles_.back()->col()];
+  const int idx = size() - 1;
+
+  for (int i = row_on_simple_board_[idx] + 1; i < simple_col.size(); ++i) {
+    --row_on_simple_board_[simple_col[i]];
+  }
+  simple_col.erase(simple_col.begin() + row_on_simple_board_[idx]);
+  row_on_simple_board_.pop_back();
+}
+
 bool operator==(const Path &lhs, const Path &rhs) {
-  return lhs.tiles() == rhs.tiles();
+  return lhs.tiles() == rhs.tiles() &&
+         lhs.simple_board() == rhs.simple_board() &&
+         lhs.row_on_simple_board() == rhs.row_on_simple_board() &&
+         lhs.star_count() == rhs.star_count();
 }
 
 bool operator!=(const Path &lhs, const Path &rhs) { return !(lhs == rhs); }

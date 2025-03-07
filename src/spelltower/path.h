@@ -82,11 +82,11 @@ class Path {
   // `tiles_`. Used to examine the order of tiles in columns.
   std::vector<std::vector<int>> simple_board() const { return simple_board_; }
 
-  // Path::min_possible_row()
+  // Path::row_on_simple_board()
   //
   // Stores the number of other tiles in this path that are below the tile at
   // `tiles_[i]` at index `i`.
-  std::vector<int> min_possible_row() const { return min_possible_row_; }
+  std::vector<int> row_on_simple_board() const { return row_on_simple_board_; }
 
   // Path::star_count()
   //
@@ -121,13 +121,25 @@ class Path {
   void push_back(const std::shared_ptr<Tile> &tile);
   void push_back(const std::vector<std::shared_ptr<Tile>> &tiles);
 
+ private:
+  // Path::AddToSimpleBoard()
+  //
+  // Handles the `simple_board_` and `row_on_simple_board_` logic in
+  // `push_back()`.
+  void AddToSimpleBoard();
+
+  // Path::RemoveFromSimpleBoard()
+  //
+  // Handles the `simple_board_` and `row_on_simple_board_` logic in
+  // `pop_back()`.
+  void RemoveFromSimpleBoard();
+
   //---------
   // Members
 
- private:
   std::vector<std::shared_ptr<Tile>> tiles_;
   std::vector<std::vector<int>> simple_board_;
-  std::vector<int> min_possible_row_;
+  std::vector<int> row_on_simple_board_;
   int star_count_;
 
   //------------------
@@ -136,7 +148,7 @@ class Path {
   template <typename H>
   friend H AbslHashValue(H h, const Path &path) {
     return H::combine(std::move(h), path.tiles_, path.simple_board_,
-                      path.min_possible_row_, path.star_count_);
+                      path.row_on_simple_board_, path.star_count_);
   }
 
   template <typename Sink>
