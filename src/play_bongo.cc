@@ -87,9 +87,9 @@ absl::StatusOr<Gamestate> LoadStartingState() {
 // "childof"
 int main(int argc, const char *argv[]) {
   // Load the dictionary and the starting game state
-  Dict dict;
-  if (absl::Status s = dict.Init(); !s.ok()) {
-    LOG(ERROR) << s;
+  absl::StatusOr<Dict> dict = Dict::LoadFromFiles();
+  if (!dict.ok()) {
+    LOG(ERROR) << dict.status();
     return 1;
   }
   absl::StatusOr<Gamestate> starting_state = LoadStartingState();
@@ -102,22 +102,22 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  std::vector<Point> path;
-  int r = 4;
-  for (int i = 0; i < 5; ++i) {
-    path.push_back({r, i});
-  }
-  absl::Status s = starting_state->FillPath(path, "askew");
-  if (!s.ok()) {
-    LOG(ERROR) << s;
-    return 1;
-  }
-  for (const auto &p : path) {
-    starting_state->set_is_locked_at(p, true);
-  }
+  // std::vector<Point> path;
+  // int r = 4;
+  // for (int i = 0; i < 5; ++i) {
+  //   path.push_back({r, i});
+  // }
+  // absl::Status s = starting_state->FillPath(path, "askew");
+  // if (!s.ok()) {
+  //   LOG(ERROR) << s;
+  //   return 1;
+  // }
+  // for (const auto &p : path) {
+  //   starting_state->set_is_locked_at(p, true);
+  // }
 
   Solver bongo_solver(
-      dict, *starting_state,
+      *dict, *starting_state,
       {.tiles_for_bonus_words = absl::GetFlag(FLAGS_tiles_for_bonus_words),
        .tiles_for_multiplier_tiles =
            absl::GetFlag(FLAGS_tiles_for_multiplier_tiles)});
