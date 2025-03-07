@@ -170,33 +170,34 @@ absl::Status Path::MakePointsNeighbors(int idx_a, int idx_b,
   int fixed_idx = points[idx_a].row < points[idx_b].row ? idx_a : idx_b;
   int loose_idx = points[idx_b].row < points[idx_a].row ? idx_a : idx_b;
 
-  if (points[fixed_idx].row + 1 < lowest_legal_row_[loose_idx])
+  // If the lowest `loose_idx` can go is still out of reach of `fixed_idx`,
+  // return an error.
+  int target_row = points[fixed_idx].row + 1;
+  if (lowest_legal_row_[loose_idx] > target_row)
     return absl::InvalidArgumentError(
         "Unable to make the path possible by dropping points.");
 
-  // We want to lower `higher_point` to one row above `lower_point`.
-  int drop = points[loose_idx].row - points[fixed_idx].row - 1;
-
-  // Drop everything above `higher_point` the same amount. Recall that
-  // `lowest_legal_row_[higher_point]` is the same as the index of
-  // `higher_point` in `simple_col_`.
   std::vector<int> simple_col = simple_board_[points[loose_idx].col];
-  for (int i = simple_col.size() - 1; i >= lowest_legal_row_[loose_idx]; --i) {
+  int idx_of_loose_idx_in_simple_col = lowest_legal_row_[loose_idx];
+
+  // It's possible that, in order to drop 'loose_idx', we have to drop
+  // points beneath it as well.
+  int ceiling_row = target_row;
+  for (int i = idx_of_loose_idx_in_simple_col - 1; i >= 0; --i) {
+    // If `idx` needs adjusting, lower it as little as possible.
     int idx = simple_col[i];
-    points[idx].row -= drop;
+    if (ceiling_row > points[idx].row) break;
+    points[idx].row = ceiling_row - 1;
+
+    // Update `ceiling_row` to apply to the next point.
+    ceiling_row = points[idx].row;
   }
 
-  // Drop everything below 'hi' as little as possible. Note that we can safely
-  // refer to `simple_col_[i+1]`, as `higher_point` follows everything in this
-  // loop.
-  for (int i = lowest_legal_row_[loose_idx] - 1; i >= 0; --i) {
-    int idx = simple_col[i];
-    // If this row doesn't need adjusting, none below it will.
-    if (points[idx].row < points[simple_col[i + 1]].row) break;
-    // If it does, then lower it as little as possible. This should not lower
-    // anything to a row below 0, thanks to lowest_legal_row_.
-    points[idx].row = points[simple_col[i + 1]].row - 1;
-  }
+  // When we drop `loose_idx`, everything above it drops by the same amount.
+  int drop = points[loose_idx].row - target_row;
+  for (int i = idx_of_loose_idx_in_simple_col; i < simple_col.size(); ++i)
+    points[simple_col[i]].row -= drop;
+
   return absl::OkStatus();
 }
 
