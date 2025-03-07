@@ -93,13 +93,26 @@ TEST(PathTest, PushBackBlankTileFails) {
   EXPECT_EQ(path, unchanged);
 }
 
-//   1
-// 0
+//   b
+// a
 TEST(PathTest, PushBackFailsWithColumnGap) {
   Path path;
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'a')), IsOk());
   Path unchanged = path;
   EXPECT_THAT(path.push_back(std::make_shared<Tile>(1, 2, 'b')),
+              StatusIs(absl::StatusCode::kOutOfRange));
+  EXPECT_EQ(path, unchanged);
+}
+
+// c
+// a
+// b
+TEST(PathTest, PushBackFailsWithInterruptedColumn) {
+  Path path;
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(1, 0, 'a')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'b')), IsOk());
+  Path unchanged = path;
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(2, 0, 'c')),
               StatusIs(absl::StatusCode::kOutOfRange));
   EXPECT_EQ(path, unchanged);
 }
@@ -188,14 +201,6 @@ TEST(PathTest, IsPossible) {
   Path simple_drop_offset;
   ASSERT_THAT(simple_drop_offset.push_back({t00, t21}), IsOk());
   EXPECT_THAT(simple_drop_offset.IsPossible(), IsOk());
-
-  // 1
-  // 2
-  // 0
-  Path false_bc_interrupted_column;
-  ASSERT_THAT(false_bc_interrupted_column.push_back({t00, t20, t10}), IsOk());
-  EXPECT_THAT(false_bc_interrupted_column.IsPossible(),
-              StatusIs(absl::StatusCode::kInvalidArgument));
 
   // 3
   // 0

@@ -123,17 +123,16 @@ class Path {
   absl::Status push_back(const std::vector<std::shared_ptr<Tile>> &tiles);
 
  private:
-  // Path::AddToSimpleBoard()
+  // Path::AddNewestTileToSimpleBoard()
   //
-  // Handles the `simple_board_` and `row_on_simple_board_` logic in
-  // `push_back()`.
-  void AddToSimpleBoard();
+  // A helper method for `push_back()` to update `simple_board_`. Undoes its
+  // work and returns an error if this would create an interrupted column.
+  absl::Status AddNewestTileToSimpleBoard();
 
-  // Path::RemoveFromSimpleBoard()
+  // Path::RemoveNewestTileFromSimpleBoard()
   //
-  // Handles the `simple_board_` and `row_on_simple_board_` logic in
-  // `pop_back()`.
-  void RemoveFromSimpleBoard();
+  // A helper method for `pop_back()`.
+  void RemoveNewestTileFromSimpleBoard();
 
   // Path::UpdatePoints()
   //

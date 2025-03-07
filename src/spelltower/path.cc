@@ -44,7 +44,7 @@ void Path::pop_back() {
   const int idx = tiles_.size() - 1;
   std::shared_ptr<Tile> &tile = tiles_[idx];
   if (tile->is_star()) --star_count_;
-  RemoveFromSimpleBoard();
+  RemoveNewestTileFromSimpleBoard();
   tiles_.pop_back();
 }
 
@@ -56,8 +56,11 @@ absl::Status Path::push_back(const std::shared_ptr<Tile> &tile) {
         absl::StrFormat(kColumnGapError, tile->col(), tiles_.back()->col()));
 
   tiles_.push_back(tile);
+  if (absl::Status s = AddNewestTileToSimpleBoard(); !s.ok()) {
+    tiles_.pop_back();
+    return s;
+  }
   if (tile->is_star()) ++star_count_;
-  AddToSimpleBoard();
   return absl::OkStatus();
 }
 
@@ -82,14 +85,6 @@ absl::Status Path::IsPossible() const {
   std::vector<Point> points;
   for (const std::shared_ptr<Tile> &tile : tiles_)
     points.push_back(tile->coords());
-
-  // Check for interrupted columns (or "A-C-B columns")
-  for (int i = 1; i < points.size(); ++i) {
-    if (points[i - 1].col == points[i].col &&
-        std::abs(row_on_simple_board_[i] - row_on_simple_board_[i - 1]) > 1) {
-      return absl::InvalidArgumentError(kInterruptedColumnError);
-    }
-  }
 
   // Now check for row gaps, dropping the points when necessary.
   bool is_aligned = false;
@@ -124,7 +119,7 @@ absl::Status Path::IsPossible() const {
   return absl::OkStatus();
 }
 
-void Path::AddToSimpleBoard() {
+absl::Status Path::AddNewestTileToSimpleBoard() {
   const std::shared_ptr<Tile> &tile = tiles_.back();
   std::vector<int> &simple_col = simple_board_[tile->col()];
   const int idx = size() - 1;
@@ -142,9 +137,19 @@ void Path::AddToSimpleBoard() {
   for (int i = row_on_simple_board_[idx] + 1; i < simple_col.size(); ++i) {
     ++row_on_simple_board_[simple_col[i]];
   }
+  if (simple_col.size() < 3) return absl::OkStatus();
+
+  // If this creates an interrupted column, undo it and return an error.
+  if (absl::c_contains(simple_col, idx - 1) &&
+      std::abs(row_on_simple_board_[idx] - row_on_simple_board_[idx - 1]) > 1) {
+    RemoveNewestTileFromSimpleBoard();
+    return absl::OutOfRangeError(kInterruptedColumnError);
+  }
+
+  return absl::OkStatus();
 }
 
-void Path::RemoveFromSimpleBoard() {
+void Path::RemoveNewestTileFromSimpleBoard() {
   std::vector<int> &simple_col = simple_board_[tiles_.back()->col()];
   const int idx = size() - 1;
 
