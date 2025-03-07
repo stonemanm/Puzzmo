@@ -14,6 +14,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "tile.h"
 
 namespace puzzmo::spelltower {
@@ -105,7 +106,7 @@ class Path {
   //
   // Checks whether or not it is possible to make this path on a grid by
   // removing tiles not in this path.
-  bool IsPossible() const;
+  absl::Status IsPossible() const;
 
   //----------
   // Mutators
@@ -118,8 +119,8 @@ class Path {
   // Path::push_back()
   //
   // Adds the tile or tiles to the end of the path and adjusts data accordingly.
-  void push_back(const std::shared_ptr<Tile> &tile);
-  void push_back(const std::vector<std::shared_ptr<Tile>> &tiles);
+  absl::Status push_back(const std::shared_ptr<Tile> &tile);
+  absl::Status push_back(const std::vector<std::shared_ptr<Tile>> &tiles);
 
  private:
   // Path::AddToSimpleBoard()
@@ -133,6 +134,11 @@ class Path {
   // Handles the `simple_board_` and `row_on_simple_board_` logic in
   // `pop_back()`.
   void RemoveFromSimpleBoard();
+
+  // A helper method for `Path::IsPossible()`. Lowers the higher of two
+  // consecutive points to be one row above the lower of the two, adjusting
+  // others as needed. Returns false if it is not possible to do so.
+  absl::Status UpdatePoints(std::vector<Point> &points, int smaller_idx) const;
 
   //---------
   // Members

@@ -24,8 +24,9 @@ TEST(SolverTest, PlayWord) {
       Grid({"cab", "z.r"}));
 
   Path word;
-  word.push_back({solver.grid()[{1, 2}], solver.grid()[{1, 1}],
-                  solver.grid()[{0, 2}]});  // "bar"
+  ASSERT_THAT(word.push_back({solver.grid()[{1, 2}], solver.grid()[{1, 1}],
+                              solver.grid()[{0, 2}]}),
+              absl_testing::IsOk());  // "bar"
   EXPECT_THAT(solver.PlayWord(word), absl_testing::IsOk());
   EXPECT_FALSE(solver.grid().IsPointInRange({1, 2}));
   EXPECT_THAT(solver.solution(), testing::SizeIs(1));
@@ -47,8 +48,9 @@ TEST(SolverTest, AbslStringify) {
             absl::StrFormat("%v", solver.grid()));
 
   Path scat;
-  scat.push_back({solver.grid()[{2, 0}], solver.grid()[{2, 1}],
-                  solver.grid()[{2, 2}], solver.grid()[{1, 3}]});
+  ASSERT_THAT(scat.push_back({solver.grid()[{2, 0}], solver.grid()[{2, 1}],
+                              solver.grid()[{2, 2}], solver.grid()[{1, 3}]}),
+              absl_testing::IsOk());
   std::string scat_str =
       absl::StrCat("1. \"scat\"\n", solver.grid().VisualizePath(scat));
   ASSERT_THAT(solver.PlayWord(scat), absl_testing::IsOk());
@@ -57,8 +59,9 @@ TEST(SolverTest, AbslStringify) {
       absl::StrCat(scat_str, "\n\n", absl::StrFormat("%v", solver.grid())));
 
   Path carb;
-  carb.push_back({solver.grid()[{1, 0}], solver.grid()[{1, 1}],
-                  solver.grid()[{0, 2}], solver.grid()[{1, 2}]});
+  ASSERT_THAT(carb.push_back({solver.grid()[{1, 0}], solver.grid()[{1, 1}],
+                              solver.grid()[{0, 2}], solver.grid()[{1, 2}]}),
+              absl_testing::IsOk());
   std::string carb_str =
       absl::StrCat("2. \"carb\"\n", solver.grid().VisualizePath(carb));
   ASSERT_THAT(solver.PlayWord(carb), absl_testing::IsOk());

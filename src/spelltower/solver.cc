@@ -21,8 +21,7 @@ void Solver::FillWordCache() {
   Path path;
   for (const auto& column : grid_.tiles()) {
     for (const std::shared_ptr<Tile>& tile : column) {
-      if (tile == nullptr || tile->is_blank()) continue;
-      path.push_back(tile);
+      if (absl::Status s = path.push_back(tile); !s.ok()) continue;
       FillWordCacheDFS(trie_.root()->children[tile->letter() - 'a'], path);
       path.pop_back();
     }
@@ -71,7 +70,7 @@ void Solver::FillWordCacheDFS(const std::shared_ptr<TrieNode>& trie_node,
   absl::flat_hash_set<std::shared_ptr<Tile>> options =
       grid_.PossibleNextTilesForPath(path);
   for (const std::shared_ptr<Tile>& next : options) {
-    path.push_back(next);
+    if (absl::Status s = path.push_back(next); !s.ok()) continue;
     FillWordCacheDFS(trie_node->children[next->letter() - 'a'], path);
     path.pop_back();
   }

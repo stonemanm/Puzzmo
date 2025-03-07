@@ -96,7 +96,8 @@ TEST(GridTest, PossibleNextTilesForPath) {
              "       xx", "      xx*", "     xxxx", "    xxxxx", "   xxxxxx",
              "  xxxxxxx", " xxxxxxxx", "xxxxxxxxx"});
   Path path;
-  path.push_back({grid[{6, 7}], grid[{7, 7}], grid[{7, 8}]});
+  ASSERT_THAT(path.push_back({grid[{6, 7}], grid[{7, 7}], grid[{7, 8}]}),
+              absl_testing::IsOk());
   EXPECT_THAT(grid.PossibleNextTilesForPath(path),
               testing::UnorderedElementsAre(grid[{8, 8}]));
 }
@@ -120,13 +121,16 @@ TEST(GridTest, TilesRemovedBy) {
              "ccccccccc", "bbbbbbbbb", "aaaaaaaaa"});
 
   Path short_path;
-  short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
+  ASSERT_THAT(short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]}),
+              absl_testing::IsOk());
   EXPECT_THAT(
       grid.TilesRemovedBy(short_path),
       testing::UnorderedElementsAre(grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]));
 
   Path path_with_rare_tile;
-  path_with_rare_tile.push_back({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
+  ASSERT_THAT(
+      path_with_rare_tile.push_back({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]}),
+      absl_testing::IsOk());
   EXPECT_THAT(grid.TilesRemovedBy(path_with_rare_tile),
               testing::UnorderedElementsAre(
                   grid[{8, 4}], grid[{7, 4}], grid[{6, 4}], grid[{8, 0}],
@@ -134,8 +138,9 @@ TEST(GridTest, TilesRemovedBy) {
                   grid[{8, 6}], grid[{8, 8}]));
 
   Path long_path;
-  long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
-                       grid[{12, 6}]});
+  ASSERT_THAT(long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}],
+                                   grid[{11, 6}], grid[{12, 6}]}),
+              absl_testing::IsOk());
   EXPECT_THAT(grid.TilesRemovedBy(long_path),
               testing::UnorderedElementsAre(
                   grid[{8, 5}], grid[{8, 4}], grid[{8, 6}], grid[{7, 5}],
@@ -149,12 +154,14 @@ TEST(GridTest, ClearPath) {
              "ccccccccc", "b*bbbbbbb", "aaaaaaaaa"});
 
   Path long_path;
-  long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
-                       grid[{12, 6}]});
+  ASSERT_THAT(long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}],
+                                   grid[{11, 6}], grid[{12, 6}]}),
+              absl_testing::IsOk());
   EXPECT_THAT(grid.ClearPath(long_path), absl_testing::IsOk());
 
   Path short_path;
-  short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
+  ASSERT_THAT(short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]}),
+              absl_testing::IsOk());
   EXPECT_THAT(grid.ClearPath(short_path), absl_testing::IsOk());
   EXPECT_EQ((grid[{0, 1}]->letter()), ('c'));
   EXPECT_EQ((grid[{0, 2}]->letter()), ('a'));
@@ -169,25 +176,33 @@ TEST(GridTest, ScorePath) {
 
   // a+a+b (6) * length (3) * stars + 1 (2) = 36
   Path short_path;
-  short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]});
+  ASSERT_THAT(short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]}),
+              absl_testing::IsOk());
   EXPECT_EQ(grid.ScorePath(short_path), 36);
 
   // j+h+g + i+i+i+i+i+i+i (24) * length (3) * stars + 1 (1) = 72
   Path path_with_rare_tile;
-  path_with_rare_tile.push_back({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]});
+  ASSERT_THAT(
+      path_with_rare_tile.push_back({grid[{8, 4}], grid[{7, 4}], grid[{6, 4}]}),
+      absl_testing::IsOk());
   EXPECT_EQ(grid.ScorePath(path_with_rare_tile), 72);
 
   // i+k+l+m+n + j+h+i+k+n+m+l (44) * length (5) * stars + 1 (1) = 220
   Path long_path;
-  long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}], grid[{11, 6}],
-                       grid[{12, 6}]});
+  ASSERT_THAT(long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}],
+                                   grid[{11, 6}], grid[{12, 6}]}),
+              absl_testing::IsOk());
   EXPECT_EQ(grid.ScorePath(long_path), 220);
 }
 
 TEST(GridTest, VisualizePath) {
   Grid grid({"   e", "   vi", "  iatp", " kd.dcHc", "enkolgscr", "ssrsaamfq"});
   Path path;
-  path.push_back({grid[{2, 2}], grid[{3, 2}], grid[{4, 3}], grid[{3, 3}]});
+  ASSERT_THAT(
+      path.push_back({grid[{2, 2}], grid[{3, 2}], grid[{4, 3}], grid[{3, 3}]}),
+      absl_testing::IsOk());  // "diva"
+  // EXPECT_EQ(true, false);
+  EXPECT_EQ(absl::StrFormat("%v", path), "diva");
   EXPECT_EQ(grid.VisualizePath(path),
             absl::StrJoin({"   .", "   v.", "  ia..", " .d+....", ".........",
                            "........."},
