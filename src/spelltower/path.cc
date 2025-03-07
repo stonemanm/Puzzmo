@@ -35,7 +35,6 @@ std::vector<int> IndicesByRow(const std::vector<Point> &points) {
 
 bool Path::contains(const Point &p) const {
   for (const std::shared_ptr<Tile> &tile : tiles_) {
-    if (tile == nullptr) continue;
     if (tile->coords() == p) return true;
   }
   return false;
@@ -55,6 +54,7 @@ absl::Status Path::push_back(const std::shared_ptr<Tile> &tile) {
   if (!tiles_.empty() && std::abs(tile->col() - tiles_.back()->col()) > 1)
     return absl::OutOfRangeError(
         absl::StrFormat(kColumnGapError, tile->col(), tiles_.back()->col()));
+
   tiles_.push_back(tile);
   if (tile->is_star()) ++star_count_;
   AddToSimpleBoard();

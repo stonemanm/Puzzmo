@@ -135,6 +135,8 @@ class Path {
   // `pop_back()`.
   void RemoveFromSimpleBoard();
 
+  // Path::UpdatePoints()
+  //
   // A helper method for `Path::IsPossible()`. Lowers the higher of two
   // consecutive points to be one row above the lower of the two, adjusting
   // others as needed. Returns false if it is not possible to do so.
