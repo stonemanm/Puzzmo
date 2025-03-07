@@ -83,11 +83,12 @@ class Path {
   // `tiles_`. Used to examine the order of tiles in columns.
   std::vector<std::vector<int>> simple_board() const { return simple_board_; }
 
-  // Path::row_on_simple_board()
+  // Path::lowest_legal_row()
   //
-  // Stores the number of other tiles in this path that are below the tile at
-  // `tiles_[i]` at index `i`.
-  std::vector<int> row_on_simple_board() const { return row_on_simple_board_; }
+  // At index `i`, holds the lowest row to which that `tiles_[i]` can drop as
+  // part of this path. This is determined by the number of path tiles beneath
+  // it in `simple_board_`.
+  std::vector<int> lowest_legal_row() const { return lowest_legal_row_; }
 
   // Path::star_count()
   //
@@ -137,16 +138,17 @@ class Path {
   // Path::UpdatePoints()
   //
   // A helper method for `Path::IsPossible()`. Lowers the higher of two
-  // consecutive points to be one row above the lower of the two, adjusting
+  // points to be one row above the lower of the two, adjusting
   // others as needed. Returns false if it is not possible to do so.
-  absl::Status UpdatePoints(std::vector<Point> &points, int smaller_idx) const;
+  absl::Status MakePointsNeighbors(int idx_a, int idx_b,
+                                   std::vector<Point> &points) const;
 
   //---------
   // Members
 
   std::vector<std::shared_ptr<Tile>> tiles_;
   std::vector<std::vector<int>> simple_board_;
-  std::vector<int> row_on_simple_board_;
+  std::vector<int> lowest_legal_row_;
   int star_count_;
 
   //------------------
@@ -155,7 +157,7 @@ class Path {
   template <typename H>
   friend H AbslHashValue(H h, const Path &path) {
     return H::combine(std::move(h), path.tiles_, path.simple_board_,
-                      path.row_on_simple_board_, path.star_count_);
+                      path.lowest_legal_row_, path.star_count_);
   }
 
   template <typename Sink>

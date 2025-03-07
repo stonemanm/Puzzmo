@@ -98,14 +98,18 @@ absl::Status Path::IsPossible() const {
       if (idx > 0) {
         Point &prev = points[idx - 1];
         if (!curr.MooreNeighbors().contains(prev)) {
-          if (absl::Status s = UpdatePoints(points, idx - 1); !s.ok()) return s;
+          if (absl::Status s = MakePointsNeighbors(idx - 1, idx, points);
+              !s.ok())
+            return s;
           break;  // Restarts the for loop.
         }
       }
       if (idx < points.size() - 1) {
         Point &next = points[idx + 1];
         if (!curr.MooreNeighbors().contains(next)) {
-          if (absl::Status s = UpdatePoints(points, idx); !s.ok()) return s;
+          if (absl::Status s = MakePointsNeighbors(idx, idx + 1, points);
+              !s.ok())
+            return s;
           break;  // Restarts the for loop.
         }
       }
@@ -131,17 +135,17 @@ absl::Status Path::AddNewestTileToSimpleBoard() {
                              });
   int n = it - simple_col.begin();
   simple_col.insert(it, idx);
-  row_on_simple_board_.push_back(n);
+  lowest_legal_row_.push_back(n);
 
-  // Update `row_on_simple_board_` for everything above `idx` in `simple_col`.
-  for (int i = row_on_simple_board_[idx] + 1; i < simple_col.size(); ++i) {
-    ++row_on_simple_board_[simple_col[i]];
+  // Update `lowest_legal_row_` for everything above `idx` in `simple_col`.
+  for (int i = lowest_legal_row_[idx] + 1; i < simple_col.size(); ++i) {
+    ++lowest_legal_row_[simple_col[i]];
   }
   if (simple_col.size() < 3) return absl::OkStatus();
 
   // If this creates an interrupted column, undo it and return an error.
   if (absl::c_contains(simple_col, idx - 1) &&
-      std::abs(row_on_simple_board_[idx] - row_on_simple_board_[idx - 1]) > 1) {
+      std::abs(lowest_legal_row_[idx] - lowest_legal_row_[idx - 1]) > 1) {
     RemoveNewestTileFromSimpleBoard();
     return absl::OutOfRangeError(kInterruptedColumnError);
   }
@@ -153,46 +157,44 @@ void Path::RemoveNewestTileFromSimpleBoard() {
   std::vector<int> &simple_col = simple_board_[tiles_.back()->col()];
   const int idx = size() - 1;
 
-  for (int i = row_on_simple_board_[idx] + 1; i < simple_col.size(); ++i) {
-    --row_on_simple_board_[simple_col[i]];
+  for (int i = lowest_legal_row_[idx] + 1; i < simple_col.size(); ++i) {
+    --lowest_legal_row_[simple_col[i]];
   }
-  simple_col.erase(simple_col.begin() + row_on_simple_board_[idx]);
-  row_on_simple_board_.pop_back();
+  simple_col.erase(simple_col.begin() + lowest_legal_row_[idx]);
+  lowest_legal_row_.pop_back();
 }
 
-absl::Status Path::UpdatePoints(std::vector<Point> &points,
-                                int smaller_idx) const {
-  int lower_point = (points[smaller_idx].row < points[smaller_idx + 1].row)
-                        ? smaller_idx
-                        : smaller_idx + 1;
-  int higher_point = (points[smaller_idx + 1].row < points[smaller_idx].row)
-                         ? smaller_idx
-                         : smaller_idx + 1;
-  if (points[lower_point].row + 1 < row_on_simple_board_[higher_point])
+absl::Status Path::MakePointsNeighbors(int idx_a, int idx_b,
+                                       std::vector<Point> &points) const {
+  // Determine which of the two points is fixed and which will move.
+  int fixed_idx = points[idx_a].row < points[idx_b].row ? idx_a : idx_b;
+  int loose_idx = points[idx_b].row < points[idx_a].row ? idx_a : idx_b;
+
+  if (points[fixed_idx].row + 1 < lowest_legal_row_[loose_idx])
     return absl::InvalidArgumentError(
         "Unable to make the path possible by dropping points.");
 
-  // We want to lower `hi` to one row above `lo`.
-  int drop = points[higher_point].row - points[lower_point].row - 1;
+  // We want to lower `higher_point` to one row above `lower_point`.
+  int drop = points[loose_idx].row - points[fixed_idx].row - 1;
 
-  // Drop everything above `hi` the same amount. Recall that
-  // `row_on_simple_board__[hi]` is the same as the index of `hi` in
-  // `simple_col_`.
-  std::vector<int> simple_col = simple_board_[points[higher_point].col];
-  for (int i = simple_col.size() - 1; i >= row_on_simple_board_[higher_point];
-       --i) {
+  // Drop everything above `higher_point` the same amount. Recall that
+  // `lowest_legal_row_[higher_point]` is the same as the index of
+  // `higher_point` in `simple_col_`.
+  std::vector<int> simple_col = simple_board_[points[loose_idx].col];
+  for (int i = simple_col.size() - 1; i >= lowest_legal_row_[loose_idx]; --i) {
     int idx = simple_col[i];
     points[idx].row -= drop;
   }
 
   // Drop everything below 'hi' as little as possible. Note that we can safely
-  // refer to `simple_col_[i+1]`, as `hi` follows everything in this loop.
-  for (int i = row_on_simple_board_[higher_point] - 1; i >= 0; --i) {
+  // refer to `simple_col_[i+1]`, as `higher_point` follows everything in this
+  // loop.
+  for (int i = lowest_legal_row_[loose_idx] - 1; i >= 0; --i) {
     int idx = simple_col[i];
     // If this row doesn't need adjusting, none below it will.
     if (points[idx].row < points[simple_col[i + 1]].row) break;
     // If it does, then lower it as little as possible. This should not lower
-    // anything to a row below 0, thanks to row_on_simple_board__.
+    // anything to a row below 0, thanks to lowest_legal_row_.
     points[idx].row = points[simple_col[i + 1]].row - 1;
   }
   return absl::OkStatus();
@@ -201,7 +203,7 @@ absl::Status Path::UpdatePoints(std::vector<Point> &points,
 bool operator==(const Path &lhs, const Path &rhs) {
   return lhs.tiles() == rhs.tiles() &&
          lhs.simple_board() == rhs.simple_board() &&
-         lhs.row_on_simple_board() == rhs.row_on_simple_board() &&
+         lhs.lowest_legal_row() == rhs.lowest_legal_row() &&
          lhs.star_count() == rhs.star_count();
 }
 

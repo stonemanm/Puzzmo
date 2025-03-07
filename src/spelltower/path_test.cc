@@ -18,7 +18,7 @@ TEST(PathTest, EmptyConstructor) {
   EXPECT_THAT(path.tiles(), testing::IsEmpty());
   EXPECT_TRUE(path.empty());
   EXPECT_EQ(path.size(), 0);
-  EXPECT_THAT(path.row_on_simple_board(), testing::IsEmpty());
+  EXPECT_THAT(path.lowest_legal_row(), testing::IsEmpty());
   EXPECT_THAT(path.simple_board(), testing::SizeIs(9));
   EXPECT_THAT(path.simple_board()[0], testing::IsEmpty());
   EXPECT_EQ(path.star_count(), 0);
@@ -37,7 +37,7 @@ TEST(PathTest, PushBackOneTile) {
   EXPECT_THAT(path.tiles(), testing::ElementsAre(t0));
   EXPECT_FALSE(path.empty());
   EXPECT_EQ(path.size(), 1);
-  EXPECT_THAT(path.row_on_simple_board(), testing::ElementsAre(0));
+  EXPECT_THAT(path.lowest_legal_row(), testing::ElementsAre(0));
   EXPECT_THAT(path.simple_board()[0], testing::ElementsAre(0));
   EXPECT_EQ(path.star_count(), 1);
 
@@ -45,7 +45,7 @@ TEST(PathTest, PushBackOneTile) {
   EXPECT_THAT(path.tiles(), testing::ElementsAre(t0, t1));
   EXPECT_FALSE(path.empty());
   EXPECT_EQ(path.size(), 2);
-  EXPECT_THAT(path.row_on_simple_board(), testing::ElementsAre(0, 0));
+  EXPECT_THAT(path.lowest_legal_row(), testing::ElementsAre(0, 0));
   EXPECT_THAT(path.simple_board()[0], testing::ElementsAre(0));
   EXPECT_THAT(path.simple_board()[1], testing::ElementsAre(1));
   EXPECT_EQ(path.star_count(), 2);
@@ -54,7 +54,7 @@ TEST(PathTest, PushBackOneTile) {
   EXPECT_THAT(path.tiles(), testing::ElementsAre(t0, t1, t2));
   EXPECT_FALSE(path.empty());
   EXPECT_EQ(path.size(), 3);
-  EXPECT_THAT(path.row_on_simple_board(), testing::ElementsAre(0, 1, 0));
+  EXPECT_THAT(path.lowest_legal_row(), testing::ElementsAre(0, 1, 0));
   EXPECT_THAT(path.simple_board()[0], testing::ElementsAre(0));
   EXPECT_THAT(path.simple_board()[1], testing::ElementsAre(2, 1));
   EXPECT_EQ(path.star_count(), 2);
@@ -70,7 +70,7 @@ TEST(PathTest, PushBackMultipleTiles) {
   EXPECT_THAT(path.tiles(), testing::ElementsAre(t0, t1, t2));
   EXPECT_FALSE(path.empty());
   EXPECT_EQ(path.size(), 3);
-  EXPECT_THAT(path.row_on_simple_board(), testing::ElementsAre(0, 1, 0));
+  EXPECT_THAT(path.lowest_legal_row(), testing::ElementsAre(0, 1, 0));
   EXPECT_THAT(path.simple_board()[0], testing::ElementsAre(0));
   EXPECT_THAT(path.simple_board()[1], testing::ElementsAre(2, 1));
   EXPECT_EQ(path.star_count(), 2);
@@ -128,7 +128,7 @@ TEST(PathTest, PopBack) {
   EXPECT_THAT(path.tiles(), testing::ElementsAre(t0, t1));
   EXPECT_FALSE(path.empty());
   EXPECT_EQ(path.size(), 2);
-  EXPECT_THAT(path.row_on_simple_board(), testing::ElementsAre(0, 0));
+  EXPECT_THAT(path.lowest_legal_row(), testing::ElementsAre(0, 0));
   EXPECT_THAT(path.simple_board()[0], testing::ElementsAre(0));
   EXPECT_THAT(path.simple_board()[1], testing::ElementsAre(1));
   EXPECT_EQ(path.star_count(), 2);
@@ -137,7 +137,7 @@ TEST(PathTest, PopBack) {
   EXPECT_THAT(path.tiles(), testing::ElementsAre(t0));
   EXPECT_FALSE(path.empty());
   EXPECT_EQ(path.size(), 1);
-  EXPECT_THAT(path.row_on_simple_board(), testing::ElementsAre(0));
+  EXPECT_THAT(path.lowest_legal_row(), testing::ElementsAre(0));
   EXPECT_THAT(path.simple_board()[0], testing::ElementsAre(0));
   EXPECT_EQ(path.star_count(), 1);
 
@@ -145,7 +145,7 @@ TEST(PathTest, PopBack) {
   EXPECT_THAT(path.tiles(), testing::IsEmpty());
   EXPECT_TRUE(path.empty());
   EXPECT_EQ(path.size(), 0);
-  EXPECT_THAT(path.row_on_simple_board(), testing::IsEmpty());
+  EXPECT_THAT(path.lowest_legal_row(), testing::IsEmpty());
   EXPECT_THAT(path.simple_board()[0], testing::IsEmpty());
   EXPECT_EQ(path.star_count(), 0);
 }
