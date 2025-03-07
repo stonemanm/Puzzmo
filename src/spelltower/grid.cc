@@ -74,7 +74,7 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::AccessibleTilesFrom(
 
   absl::flat_hash_set<Point> moore_neighbors = tile->coords().MooreNeighbors();
   absl::erase_if(moore_neighbors,
-                 [*this](Point p) { return !IsPointInRange(p); });
+                 [*this](const Point& p) { return !IsPointInRange(p); });
 
   absl::flat_hash_set<std::shared_ptr<Tile>> accessible_tiles;
   for (const Point& p : moore_neighbors) {
@@ -95,52 +95,62 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::PossibleNextTilesForPath(
     const Path& path) const {
   absl::flat_hash_set<std::shared_ptr<Tile>> accessible_tiles =
       AccessibleTilesFrom(path.tiles().back());
-  absl::erase_if(accessible_tiles, [path](std::shared_ptr<Tile> tile) {
+  absl::erase_if(accessible_tiles, [path](const std::shared_ptr<Tile>& tile) {
     return tile->is_blank() || path.contains(tile->coords());
   });
   return accessible_tiles;
 }
 
-absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesAffectedBy(
+absl::flat_hash_set<Point> Grid::PointsAffectedBy(
     const std::shared_ptr<Tile>& tile) const {
   if (tile == nullptr) return {};
 
-  absl::flat_hash_set<Point> von_neumann_neighbors =
+  absl::flat_hash_set<Point> affected_points =
       tile->coords().VonNeumannNeighbors();
-  absl::erase_if(von_neumann_neighbors,
-                 [*this](Point p) { return !IsPointInRange(p); });
+  absl::erase_if(affected_points,
+                 [*this](const Point& p) { return !IsPointInRange(p); });
 
-  absl::flat_hash_set<std::shared_ptr<Tile>> accessible_tiles;
-  for (const Point& p : von_neumann_neighbors) {
+  return affected_points;
+}
+
+absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesAffectedBy(
+    const std::shared_ptr<Tile>& tile) const {
+  absl::flat_hash_set<std::shared_ptr<Tile>> affected_tiles;
+
+  absl::flat_hash_set<Point> affected_points = PointsAffectedBy(tile);
+  for (const Point& p : affected_points) {
     std::shared_ptr<Tile> tile = tiles_[p.col][p.row];
     if (tile == nullptr) continue;
-    accessible_tiles.insert(tile);
+    affected_tiles.insert(tile);
   }
-  return accessible_tiles;
+  return affected_tiles;
 }
 
 absl::flat_hash_set<Point> Grid::PointsRemovedBy(const Path& path) const {
   absl::flat_hash_set<Point> affected_points;
-
   for (const std::shared_ptr<Tile>& tile : path.tiles()) {
-    // We can be confident that `path` does not contain any nullptr entries.
+    // Because `tile` is coming from `path`, we know it isn't `nullptr`.
     affected_points.insert(tile->coords());
-    absl::flat_hash_set<Point> vnn = tile->coords().VonNeumannNeighbors();
-    if (path.size() < 5) {
-      // If path size is less than 5, we still want to eliminate adjacent
-      // blank tiles.
-      absl::erase_if(vnn, [*this](Point p) {
-        return !IsPointInRange(p) || !tiles_[p.col][p.row]->is_blank();
-      });
-    }
-    affected_points.insert(vnn.begin(), vnn.end());
+
+    // If `tile` is rare, we need to include everything in the row.
     if (tile->is_rare()) {
       for (int c = 0; c < kNumCols; ++c)
-        affected_points.insert({tile->row(), c});
+        if (Point p = {tile->row(), c}; IsPointInRange(p))
+          affected_points.insert(p);
     }
+
+    // We want to include any blank tiles that are von Neumann neighbors
+    // regardless, but if `path` has 5 or more tiles, we keep the letters as
+    // well.
+    absl::flat_hash_set<Point> points_affected_by = PointsAffectedBy(tile);
+    if (path.size() < 5) {
+      absl::erase_if(points_affected_by, [*this](const Point& p) {
+        return !tiles_[p.col][p.row]->is_blank();
+      });
+    }
+    affected_points.insert(points_affected_by.begin(),
+                           points_affected_by.end());
   }
-  absl::erase_if(affected_points,
-                 [*this](Point p) { return !IsPointInRange(p); });
   return affected_points;
 }
 
@@ -150,25 +160,23 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
 
   absl::flat_hash_set<Point> affected_points = PointsRemovedBy(path);
   for (const Point& p : affected_points) {
+    // This should never be `nullptr` due to checks in `PointsRemovedBy()`.
     std::shared_ptr<Tile> tile = tiles_[p.col][p.row];
-    if (tile == nullptr) continue;
     accessible_tiles.insert(tile);
   }
   return accessible_tiles;
 }
 
-std::vector<std::string> Grid::AsStringVector() const {
+std::vector<std::string> Grid::AsCharMatrix() const {
   std::vector<std::string> v;
   for (int r = 0; r < kNumRows; ++r) {
     std::vector<std::shared_ptr<Tile>> grid_row = row(r);
-
-    int last_c = grid_row.size();
-    while (grid_row[last_c - 1] == nullptr && last_c > 0) --last_c;
-    if (last_c == 0) break;
+    while (!grid_row.empty() && grid_row.back() == nullptr) grid_row.pop_back();
+    if (grid_row.empty())
+      break;  // If a row is completely empty, those above it are too.
 
     std::string s;
-    for (int c = 0; c <= last_c; ++c) {
-      std::shared_ptr<Tile> tile = tiles_[c][r];
+    for (const std::shared_ptr<Tile>& tile : grid_row) {
       if (tile == nullptr)
         absl::StrAppend(&s, std::string(1, kEmptySpaceLetter));
       else
@@ -180,16 +188,15 @@ std::vector<std::string> Grid::AsStringVector() const {
 }
 
 std::string Grid::VisualizePath(const Path& path) const {
-  absl::flat_hash_set<Point> points_removed_by = PointsRemovedBy(path);
-  std::vector<std::string> board = AsStringVector();
+  absl::flat_hash_set<Point> affected_points = PointsRemovedBy(path);
+  std::vector<std::string> board = AsCharMatrix();
   for (int r = 0; r < board.size(); ++r) {
-    for (int c = 0; c < kNumCols; ++c) {
-      if (board[r][c] == kEmptySpaceLetter) continue;
-
+    for (int c = 0; c < board[r].size(); ++c) {
       Point p = {r, c};
-      if (path.contains(p)) continue;
+      // In these cases, the character there is already correct.
+      if (board[r][c] == kEmptySpaceLetter || path.contains(p)) continue;
 
-      if (points_removed_by.contains(p)) {
+      if (affected_points.contains(p)) {
         board[r][c] = kAffectedSpaceLetter;
       } else {
         board[r][c] = kBlankTileLetter;

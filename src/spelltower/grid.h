@@ -171,6 +171,13 @@ class Grid {
   absl::flat_hash_set<std::shared_ptr<Tile>> PossibleNextTilesForPath(
       const Path &path) const;
 
+  // Grid::PointsAffectedBy()
+  //
+  // Returns the von Neumann neighbors of `tile->coords()` that have tiles on
+  // them.
+  absl::flat_hash_set<Point> PointsAffectedBy(
+      const std::shared_ptr<Tile> &tile) const;
+
   // Grid::TilesAffectedBy()
   //
   // Returns `tile`'s von Neumann neighbors. Empty spaces are not included.
@@ -206,10 +213,10 @@ class Grid {
   // space created.
   absl::Status ClearTile(const std::shared_ptr<Tile> &tile);
 
-  // Grid::AsStringVector()
+  // Grid::AsCharMatrix()
   //
   // A helper method for `Grid::VisualizePath()` and `AbslStringify()`.
-  std::vector<std::string> AsStringVector() const;
+  std::vector<std::string> AsCharMatrix() const;
 
   // Grid::PointsRemovedBy()
   //
@@ -241,7 +248,7 @@ class Grid {
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Grid &grid) {
-    std::vector<std::string> board = grid.AsStringVector();
+    std::vector<std::string> board = grid.AsCharMatrix();
     std::reverse(board.begin(), board.end());
     sink.Append(absl::StrJoin(board, "\n"));
   }
