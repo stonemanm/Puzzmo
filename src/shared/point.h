@@ -26,7 +26,7 @@ struct Point {
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Point &p) {
-    absl::Format(&sink, "(%d, %d)", p.row, p.col);
+    absl::Format(&sink, "(%d,%d)", p.row, p.col);
   }
 
   Point &operator+=(const Point &rhs);

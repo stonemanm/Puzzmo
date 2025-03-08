@@ -180,7 +180,7 @@ std::vector<std::string> Grid::AsCharMatrix() const {
       if (tile == nullptr)
         absl::StrAppend(&s, std::string(1, kEmptySpaceLetter));
       else
-        absl::StrAppend(&s, *tile);
+        absl::StrAppend(&s, tile->letter_on_board());
     }
     v.push_back(s);
   }

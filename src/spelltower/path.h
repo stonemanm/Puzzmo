@@ -20,6 +20,8 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "tile.h"
 
 namespace puzzmo::spelltower {
@@ -196,8 +198,11 @@ class Path {
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Path &path) {
-    for (const std::shared_ptr<Tile> &tile : path.tiles())
-      absl::Format(&sink, "%v", *tile);
+    sink.Append(absl::StrJoin(
+        path.tiles(), ", ",
+        [](std::string *out, const std::shared_ptr<Tile> &tile) {
+          return absl::StrAppend(out, absl::StrFormat("%v", *tile));
+        }));
   }
 };
 

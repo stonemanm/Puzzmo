@@ -196,15 +196,15 @@ TEST(GridTest, ScorePath) {
 }
 
 TEST(GridTest, VisualizePath) {
-  Grid grid({"   e", "   vi", "  iatp", " kd.dcHc", "enkolgscr", "ssrsaamfq"});
+  Grid grid({"   e", "   vi", "  Iatp", " kd.dcHc", "enkolgscr", "ssrsaamfq"});
   Path path;
   ASSERT_THAT(
       path.push_back({grid[{2, 2}], grid[{3, 2}], grid[{4, 3}], grid[{3, 3}]}),
-      absl_testing::IsOk());  // "diva"
-  // EXPECT_EQ(true, false);
-  EXPECT_EQ(absl::StrFormat("%v", path), "diva");
+      absl_testing::IsOk());
+  ASSERT_EQ(path.word(), "diva");
+  EXPECT_EQ(absl::StrFormat("%v", path), "d (2,2), I (3,2), v (4,3), a (3,3)");
   EXPECT_EQ(grid.VisualizePath(path),
-            absl::StrJoin({"   .", "   v.", "  ia..", " .d+....", ".........",
+            absl::StrJoin({"   .", "   v.", "  Ia..", " .d+....", ".........",
                            "........."},
                           "\n"));
 }

@@ -176,8 +176,8 @@ class Solver {
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const Solver& solver) {
     for (int i = 0; i < solver.solution().size(); ++i) {
-      sink.Append(absl::StrCat(i + 1, ". \"", solver.solution()[i], "\"\n",
-                               solver.snapshots_[i], "\n\n"));
+      sink.Append(absl::StrCat(i + 1, ". \"", solver.solution()[i].word(),
+                               "\"\n", solver.snapshots_[i], "\n\n"));
     }
     absl::Format(&sink, "%v", solver.grid_);
   }

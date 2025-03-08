@@ -101,7 +101,7 @@ TEST(SolverTest, AbslStringify) {
   // sca
   // cabt.
   // ..r..
-  Grid grid({"sca", "cabt.", "..r.."});
+  Grid grid({"Sca", "cabT.", "..r.."});
   Solver solver(trie, grid);
   EXPECT_EQ(absl::StrFormat("%v", solver),
             absl::StrFormat("%v", solver.grid()));

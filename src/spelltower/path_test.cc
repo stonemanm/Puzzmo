@@ -263,13 +263,16 @@ TEST(PathTest, IsContinuous) {
 
 TEST(PathTest, AbslStringify) {
   Path path;
+  EXPECT_EQ(absl::StrFormat("%v", path), "");
+
   ASSERT_THAT(
       path.push_back(
           {std::make_shared<Tile>(0, 0, 'q'), std::make_shared<Tile>(1, 1, 'r'),
            std::make_shared<Tile>(2, 0, 'S'), std::make_shared<Tile>(2, 1, 'T'),
            std::make_shared<Tile>(3, 2, 'u')}),
       IsOk());
-  EXPECT_EQ(absl::StrFormat("%v", path), "qrSTu");
+  EXPECT_EQ(absl::StrFormat("%v", path),
+            "q (0,0), r (1,1), S (2,0), T (2,1), u (3,2)");
 }
 
 }  // namespace

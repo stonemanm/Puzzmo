@@ -78,6 +78,14 @@ class Tile {
   // `kBlankTileLetter`.
   char letter() const { return letter_; }
 
+  // Tile::letter_on_board()
+  //
+  // Returns the character on this tile, capitalized if it is a star tile and
+  // converted to a length-1 string instead of a char.
+  std::string letter_on_board() const {
+    return std::string(1, is_star_ ? std::toupper(letter_) : letter_);
+  }
+
   // Tile::is_blank()
   //
   // Returns `true` if `letter_` is not an alphabetical character. Prefer
@@ -130,8 +138,7 @@ class Tile {
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Tile &tile) {
-    sink.Append(std::string(
-        1, tile.is_star_ ? std::toupper(tile.letter_) : tile.letter_));
+    absl::Format(&sink, "%s %v", tile.letter_on_board(), tile.coords());
   }
 };
 

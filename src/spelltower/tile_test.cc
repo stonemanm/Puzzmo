@@ -48,12 +48,11 @@ TEST(TileTest, Drop) {
 }
 
 TEST(TileTest, AbslStringify) {
-  EXPECT_EQ(absl::StrFormat("%v", Tile(0, 0)),
-            std::string(1, kBlankTileLetter));
+  EXPECT_EQ(absl::StrFormat("%v", Tile(0, 0)), ". (0,0)");
 
-  EXPECT_EQ(absl::StrFormat("%v", Tile(0, 0, 'a')), "a");
+  EXPECT_EQ(absl::StrFormat("%v", Tile(0, 0, 'a')), "a (0,0)");
 
-  EXPECT_EQ(absl::StrFormat("%v", Tile(0, 0, 'A')), "A");
+  EXPECT_EQ(absl::StrFormat("%v", Tile(0, 0, 'A')), "A (0,0)");
 }
 
 }  // namespace
