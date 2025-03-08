@@ -55,6 +55,8 @@ class Solver {
   // Populates `word_cache_`.
   void FillWordCache();
 
+  absl::StatusOr<Path> BestPathForWord(absl::string_view word) const;
+
   //----------
   // Mutators
 
@@ -70,6 +72,9 @@ class Solver {
   absl::Status SolveGreedily();
 
  private:
+  void BestPathForWordDFS(absl::string_view word, int i, Path& path,
+                          Path& best_path) const;
+
   // In parallel, searches `trie_` and `grid_` depth-first from the node and the
   // last tile in `path`.
   void FillWordCacheDFS(const std::shared_ptr<TrieNode>& trie_node, Path& path);

@@ -28,6 +28,18 @@ void Solver::FillWordCache() {
   }
 }
 
+absl::StatusOr<Path> Solver::BestPathForWord(absl::string_view word) const {
+  if (!trie_.contains(word))
+    return absl::InvalidArgumentError("Word not in trie.");
+  Path path;
+  Path best_path;
+  BestPathForWordDFS(word, 0, path, best_path);
+  if (best_path.empty())
+    return absl::NotFoundError(
+        absl::StrCat("No possible path for ", word, " found in grid."));
+  return best_path;
+}
+
 void Solver::reset() {
   grid_ = starting_grid_;
   word_cache_.clear();
@@ -57,6 +69,28 @@ absl::Status Solver::SolveGreedily() {
     FillWordCache();
   }
   return absl::OkStatus();
+}
+
+void Solver::BestPathForWordDFS(absl::string_view word, int i, Path& path,
+                                Path& best_path) const {
+  // TODO: could modify for all-star word by including a failure condition.
+  // Could even keep a letter count--if we haven't used the star of a letter and
+  // we're out of that letter...
+
+  // Check for success.
+  if (i == word.length()) {
+    if (grid_.ScorePath(path) > grid_.ScorePath(best_path)) best_path = path;
+    return;
+  }
+
+  // Try all the options.
+  absl::flat_hash_set<std::shared_ptr<Tile>> options =
+      grid_.letter_map()[word[i]];
+  for (const std::shared_ptr<Tile>& next : options) {
+    if (absl::Status s = path.push_back(next); !s.ok()) continue;
+    BestPathForWordDFS(word, i + 1, path, best_path);
+    path.pop_back();
+  }
 }
 
 void Solver::FillWordCacheDFS(const std::shared_ptr<TrieNode>& trie_node,

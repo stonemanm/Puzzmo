@@ -106,6 +106,7 @@ cc_test(
     srcs = ["solver_test.cc"],
     deps = [
         ":solver",
+        "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",

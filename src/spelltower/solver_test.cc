@@ -1,11 +1,16 @@
 #include "solver.h"
 
+#include "absl/status/status.h"
 #include "absl/status/status_matchers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace puzzmo::spelltower {
 namespace {
+
+using absl_testing::IsOk;
+using absl_testing::IsOkAndHolds;
+using absl_testing::StatusIs;
 
 TEST(SolverTest, WordCache) {
   Trie trie({"carb", "crab", "arb", "arc", "bar", "bra", "cab", "car"});
@@ -16,6 +21,24 @@ TEST(SolverTest, WordCache) {
   solver.FillWordCache();
   EXPECT_THAT(solver.word_cache(), testing::SizeIs(3));
   EXPECT_THAT(solver.word_cache().begin()->second, testing::SizeIs(1));
+}
+
+TEST(SolverTest, BestPathForWord) {
+  Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
+                      "tests", "beset", "besets"}),
+                Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
+
+  // Word not in trie.
+  EXPECT_THAT(solver.BestPathForWord("exit"),
+              StatusIs(absl::StatusCode::kInvalidArgument));
+
+  Path best_path;
+  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
+  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
+  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
+  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
+  EXPECT_THAT(solver.BestPathForWord("bests"), IsOkAndHolds(best_path));
 }
 
 TEST(SolverTest, PlayWord) {
