@@ -7,6 +7,11 @@
 // constructed with consecutive tiles that can never neighbor each other. It is
 // impossible to add a new tile to a path if there is no way of shifting tiles
 // to make the path continuous.
+//
+// Note that `Path` does not own the tiles that comprise it. It is possible to
+// move tiles in a path such that the path is no longer possible. There are
+// currently no safeguards around this, so it is recommended for the time being
+// that a path not outlast the modification of the grid it was based upon.
 
 #ifndef path_h
 #define path_h
@@ -109,6 +114,13 @@ class Path {
   //
   // Returns `true` if each pair of adjacent tiles are Moore neighbors.
   bool IsContinuous() const;
+
+  // Path::Delta()
+  //
+  // Returns the sum, for each tile in the path, of the difference between its
+  // coords and its `adjusted_coords_`. A continuous path will have a delta of
+  // zero.
+  int Delta() const;
 
   //----------
   // Mutators

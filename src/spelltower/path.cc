@@ -60,6 +60,13 @@ bool Path::IsContinuous() const {
   return true;
 }
 
+int Path::Delta() const {
+  int delta = 0;
+  for (int i = 0; i < tiles_.size(); ++i)
+    delta += tiles_[i]->row() - adjusted_points()[i].row;
+  return delta;
+}
+
 void Path::pop_back() {
   std::shared_ptr<Tile> tile = tiles_.back();
   adjusted_points_.pop_back();

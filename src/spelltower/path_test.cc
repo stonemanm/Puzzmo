@@ -170,7 +170,7 @@ TEST(PathTest, PushBackSucceedsWithAnOffsetDrop) {
 //  c
 //  b
 // ae
-TEST(PathTest, AdjustedPoints) {
+TEST(PathTest, AdjustedPointsAndDelta) {
   Point p00 = {0, 0};
   Point p10 = {1, 0};
   Point p30 = {3, 0};
@@ -184,18 +184,21 @@ TEST(PathTest, AdjustedPoints) {
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(p11, 'b')), IsOk());
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(p21, 'c')), IsOk());
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(p40, 'd')), IsOk());
-  ASSERT_THAT(path.adjusted_points(),
+  EXPECT_THAT(path.adjusted_points(),
               testing::ElementsAreArray({p00, p11, p21, p30}));
+  EXPECT_EQ(path.Delta(), 1);
 
   EXPECT_THAT(path.push_back(std::make_shared<Tile>(p01, 'e')), IsOk());
   EXPECT_EQ(path.size(), 5);
   EXPECT_THAT(path.adjusted_points(),
               testing::ElementsAreArray({p00, p11, p21, p10, p01}));
+  EXPECT_EQ(path.Delta(), 2);
 
   path.pop_back();
   EXPECT_EQ(path.size(), 4);
   EXPECT_THAT(path.adjusted_points(),
               testing::ElementsAreArray({p00, p11, p21, p30}));
+  EXPECT_EQ(path.Delta(), 1);
 }
 
 TEST(PathTest, PopBack) {
