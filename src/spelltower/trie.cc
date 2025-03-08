@@ -47,8 +47,21 @@ absl::StatusOr<Trie> Trie::LoadFromSerializedTrie() {
   return trie;
 }
 
-void Trie::insert(const std::vector<std::string>& words) {
-  for (const std::string& word : words) insert(word);
+std::shared_ptr<TrieNode> Trie::root() const { return root_; }
+
+bool Trie::contains(absl::string_view word) const {
+  std::shared_ptr<TrieNode> node = WalkPath(root_, word);
+  return node && node->is_word;
+}
+
+int Trie::NumWordsWithPrefix(absl::string_view prefix) const {
+  std::shared_ptr<TrieNode> node = WalkPath(root_, prefix);
+  return (node == nullptr) ? 0 : node->words_with_prefix;
+}
+
+absl::flat_hash_set<std::string> Trie::WordsWithPrefix(
+    absl::string_view prefix) const {
+  return AllWordsUnderNode(WalkPath(root_, prefix), prefix);
 }
 
 void Trie::insert(absl::string_view word) {
@@ -67,40 +80,28 @@ void Trie::insert(absl::string_view word) {
   node->is_word = true;
 }
 
-bool Trie::contains(absl::string_view word) const {
-  std::shared_ptr<TrieNode> node = WalkPath(root_, word);
-  return node && node->is_word;
-}
-
-std::shared_ptr<TrieNode> Trie::root() const { return root_; }
-
-int Trie::NumWordsWithPrefix(absl::string_view prefix) const {
-  std::shared_ptr<TrieNode> node = WalkPath(root_, prefix);
-  return (node == nullptr) ? 0 : node->words_with_prefix;
-}
-
-absl::flat_hash_set<std::string> Trie::WordsWithPrefix(
-    absl::string_view prefix) const {
-  return AllWordsUnderNode(WalkPath(root_, prefix), prefix);
+void Trie::insert(const std::vector<std::string>& words) {
+  for (const std::string& word : words) insert(word);
 }
 
 absl::flat_hash_set<std::string> Trie::AllWordsUnderNode(
     std::shared_ptr<TrieNode> node, absl::string_view prefix) const {
   absl::flat_hash_set<std::string> words;
   std::string mutable_prefix = std::string(prefix);
-  TraversalHelper(node, mutable_prefix, words);
+  TraversalHelperDFS(node, mutable_prefix, words);
   return words;
 }
 
-void Trie::TraversalHelper(std::shared_ptr<TrieNode> node, std::string& prefix,
-                           absl::flat_hash_set<std::string> words) const {
+void Trie::TraversalHelperDFS(std::shared_ptr<TrieNode> node,
+                              std::string& prefix,
+                              absl::flat_hash_set<std::string> words) const {
   if (node == nullptr) return;
   if (node->is_word) words.insert(prefix);
   for (int i = 0; i < 26; ++i) {
     std::shared_ptr<TrieNode> child = node->children[i];
     if (child == nullptr) continue;
     prefix.push_back('a' + i);
-    TraversalHelper(child, prefix, words);
+    TraversalHelperDFS(child, prefix, words);
     prefix.pop_back();
   }
 }
