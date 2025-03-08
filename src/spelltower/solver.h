@@ -18,6 +18,7 @@
 #include "absl/status/statusor.h"
 #include "grid.h"
 #include "path.h"
+#include "src/shared/letter_count.h"
 #include "trie.h"
 
 namespace puzzmo::spelltower {
@@ -34,7 +35,7 @@ class Solver {
   // The simplest constructor for a `Solver`, taking a `Trie` and a `Grid`. For
   // simplicity, the grid can be provided in the form of `grid_strings`.
   Solver(const Trie& trie, const Grid& grid)
-      : trie_(trie), starting_grid_(grid), grid_(grid), words_score_(0) {}
+      : trie_(trie), starting_grid_(grid), grid_(grid), word_score_sum_(0) {}
   Solver(const Trie& trie, const std::vector<std::string>& grid_strings)
       : Solver(trie, Grid(grid_strings)) {}
 
@@ -92,7 +93,7 @@ class Solver {
   // Returns the total score that will be obtained by playing the current
   // solution. This includes the score from every word played as well as the
   // score bonuses for clearing most or all of the grid.
-  int score() const { return words_score_ + grid_.ScoreBonuses(); }
+  int score() const { return word_score_sum_ + grid_.ScoreBonuses(); }
 
   // Solver::AlmostThere()
   //
@@ -114,6 +115,14 @@ class Solver {
   // which path returns the highest score. In the event of a tie, the path with
   // the lowest delta is chosen.
   absl::StatusOr<Path> BestPossiblePathForWord(absl::string_view word) const;
+
+  // Solver::BestPossibleAllStarPathForWord()
+  //
+  // Functions identically to `BestPossiblePathForWord()`, but with the added
+  // constraint that the resulting path must contain every star tile in the
+  // grid.
+  absl::StatusOr<Path> BestPossibleAllStarPathForWord(
+      absl::string_view word) const;
 
   // Solver::FillWordCache()
   //
@@ -155,6 +164,20 @@ class Solver {
   void BestPossiblePathForWordDFS(absl::string_view word, int i, Path& path,
                                   Path& best_path) const;
 
+  // Solver::BestPossibleAllStarPathForWordDFS()
+  //
+  // A recursive helper method called by `BestPossibleAllStarPathForWord()`.
+  // Works the same as `BestPossiblePathForWord()`, with these changes:
+  // - If a star tile is added to `path`, that letter is removed from
+  //   `unused_star_letters` before recursing, and added back after.
+  // - If at any point the rest of the word does not contain one of the
+  //   `unused_star_letters`, cuts the branch short immediately.
+  // - If the path contains the whole word but doesn't have all stars in it,
+  //   does not consider it for `best_path`.
+  void BestPossibleAllStarPathForWordDFS(absl::string_view word, int i,
+                                         LetterCount& unused_star_letters,
+                                         Path& path, Path& best_path) const;
+
   // Solver::FillWordCcheDFS()
   //
   // A recursive helper method called by `FillWordCache()`. In parallel,
@@ -168,7 +191,7 @@ class Solver {
   absl::btree_map<int, absl::btree_set<Path>, std::greater<int>> word_cache_;
   std::vector<Path> solution_;
   std::vector<std::string> snapshots_;
-  int words_score_;
+  int word_score_sum_;
 
   //------------------
   // Abseil functions

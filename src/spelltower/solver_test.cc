@@ -23,7 +23,35 @@ TEST(SolverTest, WordCache) {
   EXPECT_THAT(solver.word_cache().begin()->second, testing::SizeIs(1));
 }
 
-TEST(SolverTest, BestPathForWord) {
+TEST(SolverTest, BestPossiblePathForWord) {
+  Solver solver_with_unused_star(
+      Trie({"set", "sets", "bet", "bets", "best", "bests", "test", "tests",
+            "beset", "besets"}),
+      Grid({"BXsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
+
+  // Word doesn't use a star.
+  EXPECT_THAT(solver_with_unused_star.BestPossibleAllStarPathForWord("bests"),
+              StatusIs(absl::StatusCode::kNotFound));
+
+  Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
+                      "tests", "beset", "besets"}),
+                Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
+
+  // Word not in trie.
+  EXPECT_THAT(solver.BestPossibleAllStarPathForWord("exit"),
+              StatusIs(absl::StatusCode::kInvalidArgument));
+
+  Path best_path;
+  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
+  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
+  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
+  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  EXPECT_THAT(solver.BestPossibleAllStarPathForWord("bests"),
+              IsOkAndHolds(best_path));
+}
+
+TEST(SolverTest, BestPossibleAllStarPathForWord) {
   Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
                       "tests", "beset", "besets"}),
                 Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));

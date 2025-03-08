@@ -1,5 +1,20 @@
 #include "solver.h"
+
+#include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
+
 namespace puzzmo::spelltower {
+
+constexpr absl::string_view kPathEmptyError =
+    "Path is empty and cannot be played.";
+constexpr absl::string_view kPathNotContinuousError =
+    "Path is noncontinuous and cannot be played: %v.";
+constexpr absl::string_view kWordNotInGridError =
+    "No possible path for \"%s\" found in grid.";
+constexpr absl::string_view kStarLettersNotInWord =
+    "Word \"%s\" does not use all of the star letters (%s).";
+constexpr absl::string_view kWordNotInTrieError =
+    "Word \"%s\" is not contained in the trie.";
 
 absl::StatusOr<Solver> Solver::CreateSolverWithSerializedTrie(
     const Grid& grid) {
@@ -18,13 +33,36 @@ absl::StatusOr<Solver> Solver::CreateSolverWithSerializedTrie(
 absl::StatusOr<Path> Solver::BestPossiblePathForWord(
     absl::string_view word) const {
   if (!trie_.contains(word))
-    return absl::InvalidArgumentError("Word not in trie.");
+    return absl::InvalidArgumentError(
+        absl::StrFormat(kWordNotInTrieError, word));
   Path path;
   Path best_path;
   BestPossiblePathForWordDFS(word, 0, path, best_path);
   if (best_path.empty())
-    return absl::NotFoundError(
-        absl::StrCat("No possible path for ", word, " found in grid."));
+    return absl::NotFoundError(absl::StrFormat(kWordNotInGridError, word));
+  return best_path;
+}
+
+absl::StatusOr<Path> Solver::BestPossibleAllStarPathForWord(
+    absl::string_view word) const {
+  if (!trie_.contains(word))
+    return absl::InvalidArgumentError(
+        absl::StrFormat(kWordNotInTrieError, word));
+
+  LetterCount star_letters(
+      absl::StrJoin(grid_.star_tiles(), "",
+                    [](std::string* out, const std::shared_ptr<Tile>& tile) {
+                      return tile->letter();
+                    }));
+  if (!LetterCount(word).contains(star_letters))
+    return absl::InvalidArgumentError(absl::StrFormat(
+        kStarLettersNotInWord, word, star_letters.CharsInOrder()));
+
+  Path path;
+  Path best_path;
+  BestPossibleAllStarPathForWordDFS(word, 0, star_letters, path, best_path);
+  if (best_path.empty())
+    return absl::NotFoundError(absl::StrFormat(kWordNotInGridError, word));
   return best_path;
 }
 
@@ -46,21 +84,19 @@ void Solver::reset() {
   word_cache_.clear();
   solution_.clear();
   snapshots_.clear();
-  words_score_ = 0;
+  word_score_sum_ = 0;
 }
 
 absl::Status Solver::PlayWord(const Path& word) {
-  if (word.empty())
-    return absl::InvalidArgumentError("Path is empty and cannot be played.");
+  if (word.empty()) return absl::InvalidArgumentError(kPathEmptyError);
   if (!word.IsContinuous())
     return absl::InvalidArgumentError(
-        "Path is not continuous and cannot be played.");
+        absl::StrFormat(kPathNotContinuousError, word));
   if (!trie_.contains(word.word()))
     return absl::InvalidArgumentError(
-        absl::StrCat("Path contains word ", word.word(),
-                     ", which is not contained in the trie."));
+        absl::StrFormat(kWordNotInTrieError, word.word()));
 
-  int n = grid_.ScorePath(word);
+  int word_score = grid_.ScorePath(word);
   snapshots_.push_back(grid_.VisualizePath(word));
   if (absl::Status s = grid_.ClearPath(word); !s.ok()) {
     snapshots_.pop_back();
@@ -68,7 +104,7 @@ absl::Status Solver::PlayWord(const Path& word) {
   }
   solution_.push_back(word);
   word_cache_.clear();
-  words_score_ += n;
+  word_score_sum_ += word_score;
   return absl::OkStatus();
 }
 
@@ -85,10 +121,6 @@ absl::Status Solver::SolveGreedily() {
 
 void Solver::BestPossiblePathForWordDFS(absl::string_view word, int i,
                                         Path& path, Path& best_path) const {
-  // TODO: could modify for all-star word by including a failure condition.
-  // Could even keep a letter count--if we haven't used the star of a letter and
-  // we're out of that letter...
-
   // Check for success.
   if (i == word.length()) {
     int score = grid_.ScorePath(path);
@@ -106,6 +138,40 @@ void Solver::BestPossiblePathForWordDFS(absl::string_view word, int i,
   for (const std::shared_ptr<Tile>& next : options) {
     if (absl::Status s = path.push_back(next); !s.ok()) continue;
     BestPossiblePathForWordDFS(word, i + 1, path, best_path);
+    path.pop_back();
+  }
+}
+
+void Solver::BestPossibleAllStarPathForWordDFS(absl::string_view word, int i,
+                                               LetterCount& unused_star_letters,
+                                               Path& path,
+                                               Path& best_path) const {
+  // Check for success.
+  if (i == word.length()) {
+    if (path.star_count() == grid_.star_tiles().size()) {
+      int score = grid_.ScorePath(path);
+      int best_score = grid_.ScorePath(best_path);
+      if (score > best_score ||
+          (score == best_score && path.Delta() < best_path.Delta())) {
+        best_path = path;
+      }
+    }
+    return;
+  }
+
+  // Check for failure. If any of the unused star letters cannot be found in the
+  // rest of the word, no need to go further down this branch.
+  if (!LetterCount(word.substr(i)).contains(unused_star_letters)) return;
+
+  // Try all the options.
+  absl::flat_hash_set<std::shared_ptr<Tile>> options =
+      grid_.letter_map()[word[i]];
+  for (const std::shared_ptr<Tile>& next : options) {
+    if (absl::Status s = path.push_back(next); !s.ok()) continue;
+    if (next->is_star()) (void)unused_star_letters.RemoveLetter(next->letter());
+    BestPossibleAllStarPathForWordDFS(word, i + 1, unused_star_letters, path,
+                                      best_path);
+    if (next->is_star()) (void)unused_star_letters.AddLetter(next->letter());
     path.pop_back();
   }
 }
