@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "src/shared/point.h"
@@ -50,6 +51,13 @@ bool Path::contains(const std::shared_ptr<Tile> &tile) const {
 std::vector<Point> Path::adjusted_points() const {
   if (adjusted_points_.empty()) return {};
   return adjusted_points_.back();
+}
+
+std::string Path::word() const {
+  std::string word;
+  for (const std::shared_ptr<Tile> &tile : tiles_)
+    absl::StrAppend(&word, std::string(1, tile->letter()));
+  return word;
 }
 
 bool Path::IsContinuous() const {

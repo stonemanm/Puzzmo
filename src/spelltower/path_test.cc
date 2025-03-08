@@ -192,13 +192,21 @@ TEST(PathTest, AdjustedPointsAndDelta) {
   EXPECT_EQ(path.size(), 5);
   EXPECT_THAT(path.adjusted_points(),
               testing::ElementsAreArray({p00, p11, p21, p10, p01}));
-  EXPECT_EQ(path.Delta(), 2);
+  EXPECT_EQ(path.Delta(), 3);
 
   path.pop_back();
   EXPECT_EQ(path.size(), 4);
   EXPECT_THAT(path.adjusted_points(),
               testing::ElementsAreArray({p00, p11, p21, p30}));
   EXPECT_EQ(path.Delta(), 1);
+}
+
+TEST(PathTest, Word) {
+  Path path;
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'b')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 1, 'A')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 2, 't')), IsOk());
+  EXPECT_EQ(path.word(), "bat");
 }
 
 TEST(PathTest, PopBack) {

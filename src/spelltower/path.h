@@ -107,6 +107,11 @@ class Path {
   // Returns the number of star tiles contained in this path.
   int star_count() const { return star_count_; }
 
+  // Path::word()
+  //
+  // Returns the word spelled out by the tiles in the path, cast to lowercase.
+  std::string word() const;
+
   //----------
   // Validity
 
