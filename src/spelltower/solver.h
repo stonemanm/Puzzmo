@@ -22,12 +22,25 @@
 
 namespace puzzmo::spelltower {
 
+// spelltower::Solver
+//
+// The `Solver` class is used to output possible solutions to a Spelltower
+// puzzle. It is the highest-level class in the library.
 class Solver {
  public:
+  //--------------
+  // Constructors
+
+  // The simplest constructor for a `Solver`, taking a `Trie` and a `Grid`. For
+  // simplicity, the grid can be provided in the form of `grid_strings`.
   Solver(const Trie& trie, const Grid& grid)
       : trie_(trie), starting_grid_(grid), grid_(grid), words_score_(0) {}
-  Solver(const Trie& trie, const std::vector<std::string>& grid)
-      : Solver(trie, Grid(grid)) {}
+  Solver(const Trie& trie, const std::vector<std::string>& grid_strings)
+      : Solver(trie, Grid(grid_strings)) {}
+
+  // A static method that creates a `Solver` with only a `Grid`, loading the
+  // `Trie` from a serialized string. Creating the trie in this way can be done
+  // in a single DFS traversal, which is less expensive.
   static absl::StatusOr<Solver> CreateSolverWithSerializedTrie(
       const Grid& grid);
   static absl::StatusOr<Solver> CreateSolverWithSerializedTrie(
@@ -36,47 +49,117 @@ class Solver {
   //-----------
   // Accessors
 
+  // Solver::trie()
+  //
+  // Provides access to the underlying `Trie`.
   const Trie trie() const { return trie_; }
+
+  // Solver::starting_grid()
+  //
+  // Provides access to the `Grid` with which the `Solver` was created.
   const Grid starting_grid() const { return starting_grid_; }
+
+  // Solver::grid()
+  //
+  // Provides access to the `Grid` to which the `Solver` has been making
+  // changes.
   Grid grid() const { return grid_; }
+
+  // Solver::word_cache()
+  //
+  // Returns a data structure containing all the words currently on `grid_`.
   absl::btree_map<int, absl::btree_set<Path>, std::greater<int>> word_cache()
       const {
     return word_cache_;
   }
+
+  // Solver::solution()
+  //
+  // Provides access to the solution thus far, which is the vector of `Path`
+  // objects that have been played in sequence to transform `starting_grid_` to
+  // `grid_`.
   std::vector<Path> solution() const { return solution_; }
+
+  // Solver::snapshots()
+  //
+  // Returns the vector of snapshots, which provides a visualization of the
+  // solution. For every entry in `solution_`, `snapshots_` contains a string
+  // representation of the footprint of that path on the grid.
+  std::vector<std::string> snapshots() const { return snapshots_; }
+
+  // Solver::score()
+  //
+  // Returns the total score that will be obtained by playing the current
+  // solution. This includes the score from every word played as well as the
+  // score bonuses for clearing most or all of the grid.
   int score() const { return words_score_ + grid_.ScoreBonuses(); }
 
+  // Solver::AlmostThere()
+  //
+  // Returns `true` if every column in `grid_` has at most two tiles in it.
   bool AlmostThere() const { return grid_.AlmostThere(); }
+
+  // Solver::FullClear()
+  //
+  // Returns `true` if `grid_` no longer has tiles in it.
   bool FullClear() const { return grid_.FullClear(); }
 
   //----------
   // Helpers
 
-  // Populates `word_cache_`.
-  void FillWordCache();
+  // Solver::BestPossiblePathForWord()
+  //
+  // Constructs and returns the best possible path for a given word. This path
+  // is not necessarily continuous, and is likely not. "Best" is determined by
+  // which path returns the highest score. In the event of a tie, the path with
+  // the lowest delta is chosen.
+  absl::StatusOr<Path> BestPossiblePathForWord(absl::string_view word) const;
 
-  absl::StatusOr<Path> BestPathForWord(absl::string_view word) const;
+  // Solver::FillWordCache()
+  //
+  // If `word_cache_` is empty, runs DFS on the grid and populates `word_cache_`
+  // with the results. Does not run if `word_cache_` is populated.
+  void FillWordCache();
 
   //----------
   // Mutators
 
-  // Clears the solution.
+  // Solver::reset()
+  //
+  // Returns the solver to its starting state.
   void reset();
 
-  // Removes the word from `grid_`, adding the score to `words_score_`, then
-  // pushes `word` into `solution_`. Clears `word_cache`.
+  // Solver::PlayWord()
+  //
+  // Removes all tiles affected by `word` from `grid_`, adds the score to
+  // `words_score_`, and updates `solution_` and `snapshots_`. Clears
+  // `word_cache`.
+  //
+  // Fails if `word` is empty, if `word` is non-continuous, or if `word.word()`
+  // is not in `trie_`.
   absl::Status PlayWord(const Path& word);
 
+  //------------------
+  // Solution methods
+
+  // Solver::SolveGreedily()
+  //
   // Repeatedly plays the highest-scoring word available until no more words can
   // be found.
   absl::Status SolveGreedily();
 
  private:
-  void BestPathForWordDFS(absl::string_view word, int i, Path& path,
-                          Path& best_path) const;
+  // Solver::BestPossiblePathForWordDFS()
+  //
+  // A recursive helper method called by `BestPossiblePathForWord()`.
+  void BestPossiblePathForWordDFS(absl::string_view word, int i, Path& path,
+                                  Path& best_path) const;
 
-  // In parallel, searches `trie_` and `grid_` depth-first from the node and the
-  // last tile in `path`.
+  // Solver::FillWordCcheDFS()
+  //
+  // A recursive helper method called by `FillWordCache()`. In parallel,
+  // searches `trie_` and `grid_` depth-first from the node and the last tile in
+  // `path`.
   void FillWordCacheDFS(const std::shared_ptr<TrieNode>& trie_node, Path& path);
 
   const Trie trie_;

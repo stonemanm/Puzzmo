@@ -29,7 +29,7 @@ TEST(SolverTest, BestPathForWord) {
                 Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
 
   // Word not in trie.
-  EXPECT_THAT(solver.BestPathForWord("exit"),
+  EXPECT_THAT(solver.BestPossiblePathForWord("exit"),
               StatusIs(absl::StatusCode::kInvalidArgument));
 
   Path best_path;
@@ -38,10 +38,10 @@ TEST(SolverTest, BestPathForWord) {
   ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
   ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
-  EXPECT_THAT(solver.BestPathForWord("bests"), IsOkAndHolds(best_path));
+  EXPECT_THAT(solver.BestPossiblePathForWord("bests"), IsOkAndHolds(best_path));
 }
 
-TEST(SolverTest, PlayWord) {
+TEST(SolverTest, PlayWordSuccess) {
   Solver solver(
       Trie({"carb", "crab", "arb", "arc", "bar", "bra", "cab", "car"}),
       Grid({"cab", "z.r"}));
@@ -54,6 +54,42 @@ TEST(SolverTest, PlayWord) {
   EXPECT_FALSE(solver.grid().IsPointInRange({1, 2}));
   EXPECT_THAT(solver.solution(), testing::SizeIs(1));
   EXPECT_EQ(solver.score(), 1021);  // almost there
+}
+
+TEST(SolverTest, PlayWordFailsForEmptyPath) {
+  Solver solver(
+      Trie({"carb", "crab", "arb", "arc", "bar", "bra", "cab", "car"}),
+      Grid({"cab", "z.r"}));
+
+  Path word;
+  EXPECT_THAT(solver.PlayWord(word),
+              StatusIs(absl::StatusCode::kInvalidArgument));
+}
+
+TEST(SolverTest, PlayWordFailsForNonContinuousPath) {
+  Solver solver(
+      Trie({"carb", "crab", "arb", "arc", "bar", "bra", "cab", "car"}),
+      Grid({"cab", "...", "z.r"}));
+
+  Path word;
+  ASSERT_THAT(word.push_back(solver.grid()[{2, 0}]), IsOk());  // c
+  ASSERT_THAT(word.push_back(solver.grid()[{2, 1}]), IsOk());  // a
+  ASSERT_THAT(word.push_back(solver.grid()[{0, 2}]),
+              IsOk());  // r, but not continuous.
+  EXPECT_THAT(solver.PlayWord(word),
+              StatusIs(absl::StatusCode::kInvalidArgument));
+}
+
+TEST(SolverTest, PlayWordFailsForWordNotInTrie) {
+  Solver solver(Trie({"nope", "not", "here"}), Grid({"cab"}));
+
+  Path word;
+  ASSERT_THAT(word.push_back(solver.grid()[{0, 0}]), IsOk());  // c
+  ASSERT_THAT(word.push_back(solver.grid()[{0, 1}]), IsOk());  // a
+  ASSERT_THAT(word.push_back(solver.grid()[{0, 2}]),
+              IsOk());  // b
+  EXPECT_THAT(solver.PlayWord(word),
+              StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 TEST(SolverTest, SolveGreedily) {
