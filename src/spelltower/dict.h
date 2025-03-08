@@ -29,6 +29,10 @@ class Dict {
 
   bool contains(absl::string_view word) const { return trie_.contains(word); }
 
+  const Trie& trie() const { return trie_; }
+
+  const absl::flat_hash_set<std::string>& words() const { return words_; }
+
   // absl::Status Init();
 
   // absl::flat_hash_set<std::string> GetMatchingWords(
@@ -36,13 +40,15 @@ class Dict {
 
  private:
   Dict(const Trie& trie) : trie_(trie) {}
+  Dict(const Trie& trie, const absl::flat_hash_set<std::string>& words)
+      : trie_(trie), words_(words) {}
 
   const Trie trie_;
 
   // absl::StatusOr<SearchableWords> TryReadingInAndSortingWords() const;
   // absl::StatusOr<absl::flat_hash_set<std::string>> TryReadingInWords() const;
   // absl::flat_hash_set<std::string> common_words_;
-  // absl::flat_hash_set<std::string> valid_words_;
+  const absl::flat_hash_set<std::string> words_;
   // SearchableWords searchable_words_;
 };
 

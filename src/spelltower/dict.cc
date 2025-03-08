@@ -20,18 +20,46 @@ namespace puzzmo::spelltower {
 using SearchableWords = Dict::SearchableWords;
 
 absl::StatusOr<Dict> Dict::LoadDictFromSerializedTrie() {
+  // Get the serialized trie.
   std::string path = absl::GetFlag(FLAGS_serialized_dict_path);
   std::ifstream file(path);
   if (!file.is_open())
     return absl::InvalidArgumentError(
         absl::StrCat("Error: Could not open ", path));
-
   std::string serialized_trie_string;
   std::getline(file, serialized_trie_string);
-  Trie trie(serialized_trie_string);
   file.close();
 
-  return Dict(std::move(trie));
+  // Prepare both data structures for the words.
+  absl::flat_hash_set<std::string> words;
+  Trie trie;
+
+  // Construct both representations of the words at the same time.
+  std::string letter_path;
+  std::stack<std::shared_ptr<TrieNode>> node_path;
+  std::shared_ptr<TrieNode> node = trie.root();
+  for (char c : serialized_trie_string) {
+    if (std::isalpha(c)) {
+      int idx = c - 'a';
+      node->children[idx] = std::make_shared<TrieNode>();
+      node_path.push(node);
+      node = node->children[idx];
+      letter_path.push_back(c);
+    } else if (std::isdigit(c)) {
+      node->words_with_prefix *= 10;
+      node->words_with_prefix += c - '0';
+    } else if (c == kNodeIsWord) {
+      node->is_word = true;
+      words.insert(letter_path);
+    } else if (c == kEndOfNode) {
+      if (node_path.empty()) continue;
+      node = node_path.top();
+      node_path.pop();
+      letter_path.pop_back();
+    }
+  }
+
+  return Dict(std::move(trie), std::move(words));
 }
 
 // absl::Status Dict::Init() {

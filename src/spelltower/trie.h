@@ -19,6 +19,9 @@
 
 namespace puzzmo::spelltower {
 
+constexpr char kNodeIsWord = '!';
+constexpr char kEndOfNode = ']';
+
 // spelltower::TrieNode
 //
 // A basic implementation of a node in a `Trie`. A `TrieNode` holds 26 pointers
