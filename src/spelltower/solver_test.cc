@@ -35,9 +35,9 @@ TEST(SolverTest, BestPathForWord) {
   Path best_path;
   ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
   ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
+  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
   EXPECT_THAT(solver.BestPathForWord("bests"), IsOkAndHolds(best_path));
 }
 

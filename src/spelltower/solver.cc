@@ -79,7 +79,12 @@ void Solver::BestPathForWordDFS(absl::string_view word, int i, Path& path,
 
   // Check for success.
   if (i == word.length()) {
-    if (grid_.ScorePath(path) > grid_.ScorePath(best_path)) best_path = path;
+    int score = grid_.ScorePath(path);
+    int best_score = grid_.ScorePath(best_path);
+    if (score > best_score ||
+        (score == best_score && path.Delta() < best_path.Delta())) {
+      best_path = path;
+    }
     return;
   }
 
