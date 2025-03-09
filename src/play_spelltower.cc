@@ -57,6 +57,7 @@ int main(int argc, const char *argv[]) {
   if (absl::GetFlag(FLAGS_print_current_options)) {
     solver->FillWordCache();
     auto wc = solver->word_cache();
+    LOG(INFO) << "All possible words on grid: ";
     for (const auto &[score, wds] : wc) {
       LOG(INFO) << absl::StrCat(score, ": ", absl::StrJoin(wds, ", "));
     }
