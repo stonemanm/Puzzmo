@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "re2/re2.h"
@@ -64,95 +65,39 @@ absl::StatusOr<Dict> Dict::LoadDictFromSerializedTrie() {
   return Dict(std::move(trie), std::move(words));
 }
 
+bool Dict::contains(absl::string_view word) const {
+  return words_.at(LetterCount(word)).contains(word);
+}
+
 Dict::Dict(const Trie& trie, const absl::flat_hash_set<std::string>& words)
     : trie_(trie) {
   for (const std::string& word : words) words_[LetterCount(word)].insert(word);
 }
 
-// absl::Status Dict::Init() {
-//   // Initialize common_words_
-//   if (auto common_words = TryReadingInWords(); !common_words.ok()) {
-//     return common_words.status();
-//   } else {
-//     common_words_ = *std::move(common_words);
-//   }
+absl::flat_hash_set<std::string> Dict::WordsMatchingParameters(
+    const SearchParameters& params) const {
+  absl::flat_hash_set<std::string> matches;
 
-//   // Initialize valid_words_
-//   if (auto valid_words = TryReadingInWords(); !valid_words.ok()) {
-//     return valid_words.status();
-//   } else {
-//     valid_words_ = *std::move(valid_words);
-//   }
+  LOG(INFO) << words_.size() << " | " << trie_.root()->words_with_prefix;
 
-//   // Initialize searchable_words_
-//   if (absl::StatusOr<SearchableWords> searchable_words =
-//           TryReadingInAndSortingWords();
-//       !searchable_words.ok()) {
-//     return searchable_words.status();
-//   } else {
-//     searchable_words_ = *std::move(searchable_words);
-//   }
+  for (const auto& [letter_count, anagrams] : words_) {
+    LOG(INFO) << letter_count << " | " << absl::StrJoin(anagrams, ", ");
+    const int len = letter_count.size();
+    if (len < params.min_length) continue;
+    if (len > params.max_length) continue;
+    if (!letter_count.contains(params.letter_subset)) continue;
+    if (!params.letter_superset.empty() &&
+        !params.letter_superset.contains(letter_count))
+      continue;
 
-//   return absl::OkStatus();
-// }
-
-// absl::flat_hash_set<std::string> Dict::GetMatchingWords(
-//     const SearchOptions& options) const {
-//   absl::flat_hash_set<std::string> matches;
-
-//   for (const auto& [len, submap] : searchable_words_) {
-//     if (len < options.min_length || options.max_length < len) continue;
-
-//     for (const auto& [letter_count, anagrams] : submap) {
-//       if (!letter_count.contains(options.min_letters)) continue;
-//       if (!options.max_letters.empty() &&
-//           !options.max_letters.contains(letter_count))
-//         continue;
-
-//       for (const std::string& word : anagrams) {
-//         if (!options.matching_regex.empty() &&
-//             !RE2::FullMatch(word, options.matching_regex))
-//           continue;
-
-//         matches.insert(word);
-//       }
-//     }
-//   }
-//   return matches;
-// }
-
-// absl::StatusOr<absl::flat_hash_set<std::string>> Dict::TryReadingInWords()
-//     const {
-//   std::string path = absl::GetFlag(FLAGS_spelltower_words_path);
-//   std::ifstream file(path);
-//   if (!file.is_open()) {
-//     return absl::InvalidArgumentError(
-//         absl::StrCat("Error: Could not open ", path));
-//   }
-//   absl::flat_hash_set<std::string> words;
-//   std::string line;
-//   while (std::getline(file, line)) {
-//     words.insert(line);
-//   }
-//   file.close();
-//   return words;
-// }
-
-// absl::StatusOr<SearchableWords> Dict::TryReadingInAndSortingWords() const {
-//   std::string path = absl::GetFlag(FLAGS_spelltower_words_path);
-//   std::ifstream file(path);
-//   if (!file.is_open()) {
-//     return absl::InvalidArgumentError(
-//         absl::StrCat("Error: Could not open ", path));
-//   }
-//   SearchableWords words;
-//   std::string line;
-//   while (std::getline(file, line)) {
-//     words[line.length()][LetterCount(line)].insert(line);
-//   }
-//   file.close();
-
-//   return words;
-// }
+    for (const std::string& word : anagrams) {
+      // if (!params.matching_regex.empty() &&
+      //     !RE2::FullMatch(word, params.matching_regex))
+      //   continue;
+      matches.insert(word);
+    }
+  }
+  return matches;
+}
 
 }  // namespace puzzmo::spelltower

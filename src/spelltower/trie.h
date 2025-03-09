@@ -119,7 +119,7 @@ class Trie {
   //
   // A recursive method used to walk all branches of a trie.
   void TraversalHelperDFS(std::shared_ptr<TrieNode> node, std::string& prefix,
-                          absl::flat_hash_set<std::string> words) const;
+                          absl::flat_hash_set<std::string>& words) const;
 
   // Trie::WalkPath()
   //

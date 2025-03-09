@@ -91,7 +91,7 @@ absl::flat_hash_set<std::string> Trie::AllWordsUnderNode(
 
 void Trie::TraversalHelperDFS(std::shared_ptr<TrieNode> node,
                               std::string& prefix,
-                              absl::flat_hash_set<std::string> words) const {
+                              absl::flat_hash_set<std::string>& words) const {
   if (node == nullptr) return;
   if (node->is_word) words.insert(prefix);
   for (int i = 0; i < 26; ++i) {
