@@ -65,7 +65,8 @@ absl::StatusOr<Dict> Dict::LoadDictFromSerializedTrie() {
 }
 
 bool Dict::contains(absl::string_view word) const {
-  return words_.at(LetterCount(word)).contains(word);
+  LetterCount lc(word);
+  return words_.contains(lc) && words_.at(lc).contains(word);
 }
 
 Dict::Dict(const Trie& trie, const absl::flat_hash_set<std::string>& words)

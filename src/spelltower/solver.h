@@ -130,6 +130,14 @@ class Solver {
   absl::StatusOr<Path> BestPossibleAllStarPathForWord(
       absl::string_view word) const;
 
+  // Solver::LongestPossibleAllStarWord()
+  //
+  // Gets the letter count and all-star regex of `grid_`, then searches `dict_`
+  // for them. Starting from the longest word, calls
+  // `BestPossibleAllStarPathForWord()` on the word, and when one becomes
+  // possible, returns it.
+  absl::StatusOr<Path> LongestPossibleAllStarWord() const;
+
   // Solver::FillWordCache()
   //
   // If `word_cache_` is empty, runs DFS on the grid and populates `word_cache_`

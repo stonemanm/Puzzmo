@@ -1,5 +1,6 @@
 #include "solver.h"
 
+#include "absl/container/btree_set.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -64,6 +65,20 @@ absl::StatusOr<Path> Solver::BestPossibleAllStarPathForWord(
   if (best_path.empty())
     return absl::NotFoundError(absl::StrFormat(kWordNotInGridError, word));
   return best_path;
+}
+
+absl::StatusOr<Path> Solver::LongestPossibleAllStarWord() const {
+  std::vector<LetterCount> col_lcs = grid_.column_letter_counts();
+  LetterCount superset =
+      std::accumulate(col_lcs.begin(), col_lcs.end(), LetterCount());
+  auto words_to_try = dict_.WordsMatchingParameters(
+      {.letter_superset = superset, .matching_regex = grid_.AllStarRegex()});
+  for (const std::string& word : words_to_try) {
+    if (absl::StatusOr<Path> path = BestPossibleAllStarPathForWord(word);
+        path.ok())
+      return path;
+  }
+  return absl::NotFoundError("No all-star words found.");
 }
 
 void Solver::FillWordCache() {
