@@ -5,7 +5,6 @@
 #include <utility>
 
 #include "absl/flags/flag.h"
-#include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "re2/re2.h"
@@ -78,10 +77,7 @@ absl::flat_hash_set<std::string> Dict::WordsMatchingParameters(
     const SearchParameters& params) const {
   absl::flat_hash_set<std::string> matches;
 
-  LOG(INFO) << words_.size() << " | " << trie_.root()->words_with_prefix;
-
   for (const auto& [letter_count, anagrams] : words_) {
-    LOG(INFO) << letter_count << " | " << absl::StrJoin(anagrams, ", ");
     const int len = letter_count.size();
     if (len < params.min_length) continue;
     if (len > params.max_length) continue;
