@@ -17,8 +17,6 @@ ABSL_FLAG(std::string, spelltower_words_path, "data/words_puzzmo.txt",
 
 namespace puzzmo::spelltower {
 
-using SearchableWords = Dict::SearchableWords;
-
 absl::StatusOr<Dict> Dict::LoadDictFromSerializedTrie() {
   // Get the serialized trie.
   std::string path = absl::GetFlag(FLAGS_serialized_dict_path);
@@ -31,10 +29,11 @@ absl::StatusOr<Dict> Dict::LoadDictFromSerializedTrie() {
   file.close();
 
   // Prepare both data structures for the words.
-  absl::flat_hash_set<std::string> words;
+  absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>> words;
   Trie trie;
 
   // Construct both representations of the words at the same time.
+  LetterCount lc;
   std::string letter_path;
   std::stack<std::shared_ptr<TrieNode>> node_path;
   std::shared_ptr<TrieNode> node = trie.root();
@@ -44,22 +43,30 @@ absl::StatusOr<Dict> Dict::LoadDictFromSerializedTrie() {
       node->children[idx] = std::make_shared<TrieNode>();
       node_path.push(node);
       node = node->children[idx];
+      if (absl::StatusOr<int> s = lc.AddLetter(c); !s.ok()) return s.status();
       letter_path.push_back(c);
     } else if (std::isdigit(c)) {
       node->words_with_prefix *= 10;
       node->words_with_prefix += c - '0';
     } else if (c == kNodeIsWord) {
       node->is_word = true;
-      words.insert(letter_path);
+      words[lc].insert(letter_path);
     } else if (c == kEndOfNode) {
       if (node_path.empty()) continue;
       node = node_path.top();
       node_path.pop();
+      if (absl::StatusOr<int> s = lc.RemoveLetter(letter_path.back()); !s.ok())
+        return s.status();
       letter_path.pop_back();
     }
   }
 
   return Dict(std::move(trie), std::move(words));
+}
+
+Dict::Dict(const Trie& trie, const absl::flat_hash_set<std::string>& words)
+    : trie_(trie) {
+  for (const std::string& word : words) words_[LetterCount(word)].insert(word);
 }
 
 // absl::Status Dict::Init() {

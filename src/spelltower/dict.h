@@ -14,9 +14,6 @@ namespace puzzmo::spelltower {
 
 class Dict {
  public:
-  using SearchableWords = absl::flat_hash_map<
-      int, absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>>;
-
   struct SearchOptions {
     int min_length = 3;
     int max_length = INT_MAX;
@@ -25,8 +22,7 @@ class Dict {
     std::string matching_regex;
   };
 
-  explicit Dict(const Trie& trie)
-      : trie_(trie), words_(trie.WordsWithPrefix("")) {}
+  explicit Dict(const Trie& trie) : Dict(trie, trie.WordsWithPrefix("")) {}
 
   static absl::StatusOr<Dict> LoadDictFromSerializedTrie();
 
@@ -34,7 +30,10 @@ class Dict {
 
   const Trie& trie() const { return trie_; }
 
-  const absl::flat_hash_set<std::string>& words() const { return words_; }
+  const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>&
+  words() const {
+    return words_;
+  }
 
   // absl::Status Init();
 
@@ -42,11 +41,14 @@ class Dict {
   //     const SearchOptions& options) const;
 
  private:
-  Dict(const Trie& trie, const absl::flat_hash_set<std::string>& words)
+  Dict(const Trie& trie,
+       const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>&
+           words)
       : trie_(trie), words_(words) {}
+  Dict(const Trie& trie, const absl::flat_hash_set<std::string>& words);
 
   const Trie trie_;
-  const absl::flat_hash_set<std::string> words_;
+  absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>> words_;
 
   // absl::StatusOr<SearchableWords> TryReadingInAndSortingWords() const;
   // absl::StatusOr<absl::flat_hash_set<std::string>> TryReadingInWords() const;

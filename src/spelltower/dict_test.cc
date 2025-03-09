@@ -10,7 +10,7 @@ TEST(DictTest, LoadDictFromSerializedTrie) {
   auto dict = Dict::LoadDictFromSerializedTrie();
   EXPECT_THAT(dict.status(), absl_testing::IsOk());
   EXPECT_EQ(dict->trie().contains("gargantuan"),
-            dict->words().contains("gargantuan"));
+            dict->words().at(LetterCount("gargantuan")).contains("gargantuan"));
 }
 
 }  // namespace
