@@ -96,6 +96,7 @@ cc_library(
         ":path",
         "//src/shared:letter_count",
         "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",

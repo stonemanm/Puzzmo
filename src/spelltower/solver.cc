@@ -1,6 +1,7 @@
 #include "solver.h"
 
 #include "absl/container/btree_set.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -16,6 +17,8 @@ constexpr absl::string_view kStarLettersNotInWord =
     "Word \"%s\" does not use all of the star letters (%s).";
 constexpr absl::string_view kWordNotInTrieError =
     "Word \"%s\" is not contained in the trie.";
+constexpr absl::string_view kVerboseLongestWord =
+    "Searching for a path for word \"%s\".";
 
 absl::StatusOr<Solver> Solver::CreateSolverWithSerializedDict(
     const Grid& grid) {
@@ -74,6 +77,7 @@ absl::StatusOr<Path> Solver::LongestPossibleAllStarWord() const {
   auto words_to_try = dict_.WordsMatchingParameters(
       {.letter_superset = superset, .matching_regex = grid_.AllStarRegex()});
   for (const std::string& word : words_to_try) {
+    LOG(INFO) << absl::StrFormat(kVerboseLongestWord, word);
     if (absl::StatusOr<Path> path = BestPossibleAllStarPathForWord(word);
         path.ok())
       return path;
