@@ -6,6 +6,17 @@
 #include "absl/strings/str_join.h"
 
 namespace puzzmo::spelltower {
+namespace {
+
+// The order of the tiles here doesn't matter intrinsically--we just need a
+// comparator so that we can iterate over all permutations of the star tiles.
+auto tile_comparator = [](const std::shared_ptr<Tile>& lhs,
+                          const std::shared_ptr<Tile>& rhs) {
+  return (lhs->col() != rhs->col() ? lhs->col() < rhs->col()
+                                   : lhs->row() < rhs->row());
+};
+
+}  // namespace
 
 Grid::Grid(const std::vector<std::string>& grid_strings)
     : tiles_(kNumCols, std::vector<std::shared_ptr<Tile>>(kNumRows, nullptr)),
@@ -28,6 +39,7 @@ Grid::Grid(const std::vector<std::string>& grid_strings)
       (void)column_letter_counts_[c].AddLetter(tile->letter());
     }
   }
+  std::sort(star_tiles_.begin(), star_tiles_.end(), tile_comparator);
 }
 
 std::vector<std::shared_ptr<Tile>> Grid::row(int row) const {
@@ -185,6 +197,30 @@ std::vector<std::string> Grid::AsCharMatrix() const {
     v.push_back(s);
   }
   return v;
+}
+
+std::string Grid::AllStarRegex() const {
+  if (star_tiles_.empty()) return "";
+
+  std::vector<std::shared_ptr<Tile>> stars(star_tiles_);
+  std::vector<std::string> regexes;
+  do {
+    std::string rgx = ".*";
+    rgx.push_back(stars[0]->letter());
+    for (int i = 1; i < stars.size(); ++i) {
+      int gap = std::abs(stars[i - 1]->col() - stars[i]->col());
+      if (gap > 0) --gap;
+      absl::StrAppend(&rgx, ".{", gap, ",}");
+      rgx.push_back(stars[i]->letter());
+    }
+    absl::StrAppend(&rgx, ".*");
+    regexes.push_back(rgx);
+  } while (std::next_permutation(stars.begin(), stars.end(), tile_comparator));
+
+  return absl::StrJoin(regexes, "|",
+                       [](std::string* out, const std::string& in) {
+                         absl::StrAppend(out, "(", in, ")");
+                       });
 }
 
 std::string Grid::VisualizePath(const Path& path) const {

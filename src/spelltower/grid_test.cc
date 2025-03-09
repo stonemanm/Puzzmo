@@ -209,6 +209,15 @@ TEST(GridTest, VisualizePath) {
                           "\n"));
 }
 
+TEST(GridTest, AllStarRegex) {
+  Grid grid({"AxxxDE"});
+  EXPECT_THAT(
+      grid.AllStarRegex(),
+      testing::StrEq(
+          "(.*a.{3,}d.{0,}e.*)|(.*a.{4,}e.{0,}d.*)|(.*d.{3,}a.{4,}e.*)|(.*d.{0,"
+          "}e.{4,}a.*)|(.*e.{4,}a.{3,}d.*)|(.*e.{0,}d.{3,}a.*)"));
+}
+
 TEST(GridTest, AbslStringify) {
   const std::vector<std::string> grid_string = {
       "   e", "   vi", "  iatp", " kd.dcHc", "enkolgscr", "ssrsaamfq"};
