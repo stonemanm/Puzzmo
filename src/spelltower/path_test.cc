@@ -272,6 +272,15 @@ TEST(PathTest, IsContinuous) {
   EXPECT_THAT(path.IsContinuous(), testing::IsFalse());  // row 1
 }
 
+TEST(PathTest, Antiestablishment) {
+  Path path;
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(0, 6, 'i')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(10, 5, 'e')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(7, 5, 'b')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(3, 5, 'i')),
+              StatusIs(absl::StatusCode::kOutOfRange));
+}
+
 TEST(PathTest, AbslStringify) {
   Path path;
   EXPECT_EQ(absl::StrFormat("%v", path), "");

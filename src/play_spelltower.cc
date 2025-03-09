@@ -6,6 +6,7 @@
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "src/spelltower/path.h"
 #include "src/spelltower/solver.h"
 
@@ -17,7 +18,7 @@ ABSL_FLAG(bool, print_current_options, false,
           "Print all playable words and their scores to the command line.");
 
 ABSL_FLAG(
-    bool, print_longest_allstar_word, true,
+    bool, print_longest_allstar_word, false,
     "Find and print the longest possible word including all star tiles to the "
     "command line.");
 
@@ -59,7 +60,11 @@ int main(int argc, const char *argv[]) {
     auto wc = solver->word_cache();
     LOG(INFO) << "All possible words on grid: ";
     for (const auto &[score, wds] : wc) {
-      LOG(INFO) << absl::StrCat(score, ": ", absl::StrJoin(wds, ", "));
+      LOG(INFO) << absl::StrCat(
+          score, ": ",
+          absl::StrJoin(wds, ", ", [](std::string *out, const Path &path) {
+            absl::StrAppend(out, path.word());
+          }));
     }
   }
 
@@ -69,8 +74,13 @@ int main(int argc, const char *argv[]) {
       LOG(ERROR) << path.status();
       return 1;
     }
-    LOG(INFO) << absl::StrCat("Longest possible all-star word: ", path->word(),
-                              "\n", *path);
+    LOG(INFO) << absl::StrCat("Longest possible all-star word: ", path->word());
+    for (int i = 0; i < path->size(); ++i) {
+      LOG(INFO) << absl::StrCat(
+          (*path)[i]->letter_on_board(), " ", (*path)[i]->coords(), " -> ",
+          (*path).adjusted_points()[i], " --- (needs to drop ",
+          (*path)[i]->row() - (*path).adjusted_points()[i].row, " rows)");
+    }
   }
 
   if (absl::GetFlag(FLAGS_solve_greedily)) {

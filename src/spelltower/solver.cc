@@ -74,13 +74,18 @@ absl::StatusOr<Path> Solver::LongestPossibleAllStarWord() const {
   std::vector<LetterCount> col_lcs = grid_.column_letter_counts();
   LetterCount superset =
       std::accumulate(col_lcs.begin(), col_lcs.end(), LetterCount());
-  auto words_to_try = dict_.WordsMatchingParameters(
-      {.letter_superset = superset, .matching_regex = grid_.AllStarRegex()});
-  for (const std::string& word : words_to_try) {
-    LOG(INFO) << absl::StrFormat(kVerboseLongestWord, word);
-    if (absl::StatusOr<Path> path = BestPossibleAllStarPathForWord(word);
-        path.ok())
-      return path;
+  for (int len = 28; len >= 3; --len) {
+    auto words_to_try =
+        dict_.WordsMatchingParameters({.min_length = len,
+                                       .max_length = len,
+                                       .letter_superset = superset,
+                                       .matching_regex = grid_.AllStarRegex()});
+    for (const std::string& word : words_to_try) {
+      LOG(INFO) << absl::StrFormat(kVerboseLongestWord, word);
+      if (absl::StatusOr<Path> path = BestPossibleAllStarPathForWord(word);
+          path.ok())
+        return path;
+    }
   }
   return absl::NotFoundError("No all-star words found.");
 }

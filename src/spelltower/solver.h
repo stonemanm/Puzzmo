@@ -120,6 +120,9 @@ class Solver {
   // is not necessarily continuous, and is likely not. "Best" is determined by
   // which path returns the highest score. In the event of a tie, the path with
   // the lowest delta is chosen.
+  //
+  // TODO: using score here doesn't work, because it incentivizes larger gaps so
+  // more tiles are exposed. Use stars instead.
   absl::StatusOr<Path> BestPossiblePathForWord(absl::string_view word) const;
 
   // Solver::BestPossibleAllStarPathForWord()
@@ -136,6 +139,10 @@ class Solver {
   // for them. Starting from the longest word, calls
   // `BestPossibleAllStarPathForWord()` on the word, and when one becomes
   // possible, returns it.
+  //
+  // TODO: rename this and implement it to prioritize maximizing multipliers.
+  // i.e. a 22-long word with only two stars is x66, whereas a 16-long word with
+  // all three stars is x64.
   absl::StatusOr<Path> LongestPossibleAllStarWord() const;
 
   // Solver::FillWordCache()

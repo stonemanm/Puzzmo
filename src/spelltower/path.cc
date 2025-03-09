@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -180,9 +181,12 @@ absl::Status Path::FindNewAdjustedPoints() {
     // any path tile. We can leave it there for now.
     points.push_back(new_p);
   } else {
-    // If that isn't the case, then it is possible to shift points to make
-    // room, and we should do so.
+    // If that isn't the case, then we need to check if the tile above it is
+    // already at its minimum row. If not, it is possible to shift points to
+    // make room, and we should do so.
     int idx_above = simple_col[lowest_legal_row_[new_idx] + 1];
+    if (lowest_legal_row_[idx_above] - 1 == points[idx_above].row)
+      return absl::OutOfRangeError(kPushBackError);
     new_p.row = points[idx_above].row - 1;
     int ceiling_row = new_p.row;
     for (int i = lowest_legal_row_[new_idx] - 1; i >= 0; --i) {
@@ -196,6 +200,9 @@ absl::Status Path::FindNewAdjustedPoints() {
     }
     points.push_back(new_p);
   }
+
+  // LOG(INFO) << "After inserting new_p (size " << size()
+  //           << "): " << absl::StrJoin(points, ", ");
 
   // Now that we've placed `new_p`, we need to make the path continuous by
   // dropping points as needed.
@@ -234,6 +241,13 @@ absl::Status Path::FindNewAdjustedPoints() {
     }
     if (is_aligned) break;
   }
+  // LOG(INFO) << "Adjusted points after adding point #" << size() << ":";
+  // for (int i = 0; i < size() - 1; ++i) {
+  //   LOG(INFO) << tiles_[i]->letter_on_board() << " " << tiles_[i]->coords()
+  //             << " -> " << points[i];
+  // }
+  // LOG(INFO) << tiles_[size() - 1]->letter_on_board() << " "
+  //           << tiles_[size() - 1]->coords() << " -> " << points[size() - 1];
   adjusted_points_.push_back(points);
   return absl::OkStatus();
 }
