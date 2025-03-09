@@ -87,9 +87,9 @@ absl::flat_hash_set<std::string> Dict::WordsMatchingParameters(
       continue;
 
     for (const std::string& word : anagrams) {
-      // if (!params.matching_regex.empty() &&
-      //     !RE2::FullMatch(word, params.matching_regex))
-      //   continue;
+      if (!params.matching_regex.empty() &&
+          !RE2::FullMatch(word, params.matching_regex))
+        continue;
       matches.insert(word);
     }
   }

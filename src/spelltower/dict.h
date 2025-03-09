@@ -95,7 +95,7 @@ class Dict {
     int max_length = INT_MAX;
     LetterCount letter_subset;
     LetterCount letter_superset;
-    // std::string matching_regex;
+    std::string matching_regex;
   };
 
   // Dict::WordsMatchingParameters()

@@ -32,6 +32,9 @@ TEST(DictTest, WordsMatchingParameters) {
       dict.WordsMatchingParameters({.letter_superset = LetterCount("abcr")}),
       testing::UnorderedElementsAre(testing::StrEq("car"),
                                     testing::StrEq("crab")));
+  EXPECT_THAT(dict.WordsMatchingParameters({.matching_regex = ".*r"}),
+              testing::UnorderedElementsAre(testing::StrEq("car"),
+                                            testing::StrEq("binder")));
   EXPECT_THAT(dict.WordsMatchingParameters({.min_length = 5, .max_length = 6}),
               testing::UnorderedElementsAre(
                   testing::StrEq("crabs"), testing::StrEq("scarab"),
@@ -60,6 +63,20 @@ TEST(DictTest, WordsMatchingParameters) {
                                     .letter_superset = LetterCount("bdeinrs")}),
       testing::UnorderedElementsAre(testing::StrEq("binds"),
                                     testing::StrEq("binders")));
+
+  EXPECT_THAT(
+      dict.WordsMatchingParameters({.min_length = 5, .matching_regex = ".*r"}),
+      testing::UnorderedElementsAre(testing::StrEq("binder")));
+  EXPECT_THAT(
+      dict.WordsMatchingParameters({.max_length = 5, .matching_regex = ".*r"}),
+      testing::UnorderedElementsAre(testing::StrEq("car")));
+  EXPECT_THAT(dict.WordsMatchingParameters(
+                  {.letter_subset = LetterCount("b"), .matching_regex = ".*r"}),
+              testing::UnorderedElementsAre(testing::StrEq("binder")));
+  EXPECT_THAT(dict.WordsMatchingParameters(
+                  {.letter_superset = LetterCount("biinderxlj"),
+                   .matching_regex = ".*r"}),
+              testing::UnorderedElementsAre(testing::StrEq("binder")));
 }
 
 }  // namespace
