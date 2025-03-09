@@ -2,15 +2,25 @@
 
 Puzzles:
 
-- [ ] Spelltower
-  - [x] Word picker
-  - [ ] Board updates and iterative optimization
+- [x] **Bongo**
+  - [x] Try several permutations of highest-scoring tiles in multiplier spaces.
+  - [ ] Somehow save daily checked words between runs.
+  - [ ] Multiple solver types.
+- [x] **Spelltower**
+  - [x] Get a list of all possible playable words on the board, and their scores.
+  - [x] `SolveGreedily`
+  - [ ] `SolveOptimally`
+    - [x] Get longest potentially-possible word using all stars.
+    - [ ] Find a way to make that word playable, or else determine it to be impossible and try another word.
+- [x] **Typeshift**
+  - [x] Find sets of words that use every letter.
+  - [x] Find the _fewest possible_ words to use every letter.
 
 Technical Features:
 
 - [x] Building C++ files using Bazel in Visual Studio Code
 - [x] Google's [Abseil library](https://github.com/abseil/abseil-cpp)
-- [ ] [Google Test](https://github.com/google/googletest) for unit tests
+- [x] [Google Test](https://github.com/google/googletest) for unit tests
 
 ## Prerequisite: Installing Bazel
 
