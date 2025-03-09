@@ -11,6 +11,7 @@
 
 #include <string>
 
+#include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/statusor.h"
@@ -98,10 +99,21 @@ class Dict {
     std::string matching_regex;
   };
 
+  // Dict::LongerStrComp
+  //
+  // A comparator for `WordsMatchingParameters()`. Sorts longer strings
+  // before shorter ones.
+  struct LongerStrComp {
+    bool operator()(const std::string& lhs, const std::string rhs) const {
+      return lhs.length() != rhs.length() ? lhs.length() > rhs.length()
+                                          : lhs < rhs;
+    }
+  };
+
   // Dict::WordsMatchingParameters()
   //
   // Searches the word map for all words that meet the provided criteria.
-  absl::flat_hash_set<std::string> WordsMatchingParameters(
+  absl::btree_set<std::string, LongerStrComp> WordsMatchingParameters(
       const SearchParameters& params) const;
 
  private:

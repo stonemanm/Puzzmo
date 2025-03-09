@@ -73,9 +73,9 @@ Dict::Dict(const Trie& trie, const absl::flat_hash_set<std::string>& words)
   for (const std::string& word : words) words_[LetterCount(word)].insert(word);
 }
 
-absl::flat_hash_set<std::string> Dict::WordsMatchingParameters(
+absl::btree_set<std::string, Dict::LongerStrComp> Dict::WordsMatchingParameters(
     const SearchParameters& params) const {
-  absl::flat_hash_set<std::string> matches;
+  absl::btree_set<std::string, LongerStrComp> matches;
 
   for (const auto& [letter_count, anagrams] : words_) {
     const int len = letter_count.size();
