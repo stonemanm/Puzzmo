@@ -45,8 +45,10 @@ cc_binary(
         "//data:spelltower_board.txt",
     ],
     deps = [
+        "//src/spelltower:path",
         "//src/spelltower:solver",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
     ],

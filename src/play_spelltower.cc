@@ -6,62 +6,79 @@
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "src/spelltower/path.h"
 #include "src/spelltower/solver.h"
 
 using namespace puzzmo;
+using ::spelltower::Path;
 using ::spelltower::Solver;
 
-ABSL_FLAG(bool, run_regex, true, "Run regex mode instead of the DFS?");
+ABSL_FLAG(bool, print_current_options, false,
+          "Print all playable words and their scores to the command line.");
 
-ABSL_FLAG(std::string, path_to_board_file, "data/spelltower_board.txt",
-          "Input file containing up to a 9x13 char grid.");
+ABSL_FLAG(
+    bool, print_longest_allstar_word, true,
+    "Find and print the longest possible word including all star tiles to the "
+    "command line.");
+
+ABSL_FLAG(bool, solve_greedily, false,
+          "Solve the Spelltower board greedily and print the solution to the "
+          "command line.");
 
 namespace {
 
-absl::StatusOr<std::vector<std::string>> LoadStringVector(
-    const std::string &path) {
-  std::ifstream file(path);
+constexpr absl::string_view kSpelltowerBoardFilePath =
+    "data/spelltower_board.txt";
+
+absl::StatusOr<Solver> LoadSolver() {
+  std::ifstream file(kSpelltowerBoardFilePath);
   if (!file.is_open()) {
     return absl::InvalidArgumentError(
-        absl::StrCat("Error: Could not open ", path));
+        absl::StrCat("Error: Could not open ", kSpelltowerBoardFilePath));
   }
-  std::vector<std::string> strs;
+  std::vector<std::string> grid_strings;
   std::string line;
   while (std::getline(file, line)) {
-    strs.push_back(line);
+    grid_strings.push_back(line);
   }
   file.close();
-  return strs;
+  return Solver::CreateSolverWithSerializedDict(grid_strings);
 }
 
 }  // namespace
 
 int main(int argc, const char *argv[]) {
-  absl::StatusOr<std::vector<std::string>> board =
-      LoadStringVector(absl::GetFlag(FLAGS_path_to_board_file));
-  if (!board.ok()) {
-    LOG(ERROR) << board.status();
-    return 1;
-  }
-
-  absl::StatusOr<Solver> solver =
-      Solver::CreateSolverWithSerializedDict(*board);
+  absl::StatusOr<Solver> solver = LoadSolver();
   if (!solver.ok()) {
     LOG(ERROR) << solver.status();
     return 1;
   }
 
-  solver->FillWordCache();
-  auto wc = solver->word_cache();
-  for (const auto &[score, wds] : wc) {
-    LOG(INFO) << absl::StrCat(score, ": ", absl::StrJoin(wds, ", "));
+  if (absl::GetFlag(FLAGS_print_current_options)) {
+    solver->FillWordCache();
+    auto wc = solver->word_cache();
+    for (const auto &[score, wds] : wc) {
+      LOG(INFO) << absl::StrCat(score, ": ", absl::StrJoin(wds, ", "));
+    }
   }
 
-  if (absl::Status s = solver->SolveGreedily(); !s.ok()) {
-    LOG(ERROR) << s;
-    return 1;
+  if (absl::GetFlag(FLAGS_print_longest_allstar_word)) {
+    absl::StatusOr<Path> path = solver->LongestPossibleAllStarWord();
+    if (!path.ok()) {
+      LOG(ERROR) << path.status();
+      return 1;
+    }
+    LOG(INFO) << absl::StrCat("Longest possible all-star word: ", path->word(),
+                              "\n", *path);
   }
 
-  LOG(INFO) << absl::StrCat("Greedy solution: \n", *solver);
+  if (absl::GetFlag(FLAGS_solve_greedily)) {
+    if (absl::Status s = solver->SolveGreedily(); !s.ok()) {
+      LOG(ERROR) << s;
+      return 1;
+    }
+    LOG(INFO) << absl::StrCat("Greedy solution: \n", *solver);
+  }
+
   return 0;
 }
