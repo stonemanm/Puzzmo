@@ -139,10 +139,10 @@ class Path {
 
   // Path::push_back()
   //
-  // Attempts to add the tile or tiles to the path. Cannot accept `nullptr` or
-  // blank tiles, returning an error. Likewise, if adding a tile will render it
-  // impossible for the path to ever become continuous, an error will be
-  // returned.
+  // Attempts to add the tile or tiles to the path. Cannot accept `nullptr`,
+  // blank tiles, or duplicate tiles, returning an error. Likewise, if adding a
+  // tile will render it impossible for the path to ever become continuous, an
+  // error will be returned.
   //
   // Should `push_back()` return something other than `absl::OkStatus()`, the
   // path object will be left in a valid state. If a vector of tiles has been

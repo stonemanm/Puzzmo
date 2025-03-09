@@ -17,6 +17,8 @@ constexpr absl::string_view kBlankTileError =
 constexpr absl::string_view kColumnGapError =
     "The tile passed to push_back() is in column %d, which cannot be reached "
     "from column %d.";
+constexpr absl::string_view kDuplicateTileError =
+    "Path already contains tile %v, so it cannot be added again.";
 constexpr absl::string_view kInterruptedColumnError =
     "Another path tile prevents any possible connection between this tile and "
     "the tile preceding it.";
@@ -86,6 +88,12 @@ void Path::pop_back() {
 absl::Status Path::push_back(const std::shared_ptr<Tile> &tile) {
   if (tile == nullptr) return absl::InvalidArgumentError(kNullptrError);
   if (tile->is_blank()) return absl::InvalidArgumentError(kBlankTileError);
+  if (std::any_of(tiles_.begin(), tiles_.end(),
+                  [tile](const std::shared_ptr<Tile> &path_tile) {
+                    return path_tile->coords() == tile->coords();
+                  }))
+    return absl::InvalidArgumentError(
+        absl::StrFormat(kDuplicateTileError, *tile));
   if (!tiles_.empty() && std::abs(tile->col() - tiles_.back()->col()) > 1)
     return absl::OutOfRangeError(
         absl::StrFormat(kColumnGapError, tile->col(), tiles_.back()->col()));

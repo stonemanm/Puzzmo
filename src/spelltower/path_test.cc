@@ -96,6 +96,17 @@ TEST(PathTest, PushBackBlankTileFails) {
 
 //   b
 // a
+TEST(PathTest, PushBackFailsDueToDuplicateTile) {
+  Path path;
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'a')), IsOk());
+  Path unchanged = path;
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'b')),
+              StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_EQ(path, unchanged);
+}
+
+//   b
+// a
 TEST(PathTest, PushBackFailsDueToColumnGap) {
   Path path;
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 0, 'a')), IsOk());
