@@ -16,10 +16,10 @@
 #include "absl/container/btree_set.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "dict.h"
 #include "grid.h"
 #include "path.h"
 #include "src/shared/letter_count.h"
-#include "trie.h"
 
 namespace puzzmo::spelltower {
 
@@ -32,28 +32,34 @@ class Solver {
   //--------------
   // Constructors
 
-  // The simplest constructor for a `Solver`, taking a `Trie` and a `Grid`. For
+  // The simplest constructor for a `Solver`, taking a `Dict` and a `Grid`. For
   // simplicity, the grid can be provided in the form of `grid_strings`.
+  Solver(const Dict& dict, const Grid& grid)
+      : dict_(dict), starting_grid_(grid), grid_(grid), word_score_sum_(0) {}
+  Solver(const Dict& dict, const std::vector<std::string>& grid_strings)
+      : Solver(dict, Grid(grid_strings)) {}
+
+  // The dict can also be created from a trie, although this is less efficient.
   Solver(const Trie& trie, const Grid& grid)
-      : trie_(trie), starting_grid_(grid), grid_(grid), word_score_sum_(0) {}
+      : dict_(trie), starting_grid_(grid), grid_(grid), word_score_sum_(0) {}
   Solver(const Trie& trie, const std::vector<std::string>& grid_strings)
       : Solver(trie, Grid(grid_strings)) {}
 
   // A static method that creates a `Solver` with only a `Grid`, loading the
-  // `Trie` from a serialized string. Creating the trie in this way can be done
-  // in a single DFS traversal, which is less expensive.
-  static absl::StatusOr<Solver> CreateSolverWithSerializedTrie(
+  // `Dict` from a serialized string. Creating the dict in this way can be done
+  // in a single DFS trie traversal, which is less expensive.
+  static absl::StatusOr<Solver> CreateSolverWithSerializedDict(
       const Grid& grid);
-  static absl::StatusOr<Solver> CreateSolverWithSerializedTrie(
+  static absl::StatusOr<Solver> CreateSolverWithSerializedDict(
       const std::vector<std::string>& grid);
 
   //-----------
   // Accessors
 
-  // Solver::trie()
+  // Solver::dict()
   //
-  // Provides access to the underlying `Trie`.
-  const Trie trie() const { return trie_; }
+  // Provides access to the underlying `Dict`.
+  const Dict dict() const { return dict_; }
 
   // Solver::starting_grid()
   //
@@ -185,7 +191,7 @@ class Solver {
   // `path`.
   void FillWordCacheDFS(const std::shared_ptr<TrieNode>& trie_node, Path& path);
 
-  const Trie trie_;
+  const Dict dict_;
   const Grid starting_grid_;
   Grid grid_;
   absl::btree_map<int, absl::btree_set<Path>, std::greater<int>> word_cache_;

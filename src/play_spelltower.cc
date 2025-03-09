@@ -45,7 +45,7 @@ int main(int argc, const char *argv[]) {
   }
 
   absl::StatusOr<Solver> solver =
-      Solver::CreateSolverWithSerializedTrie(*board);
+      Solver::CreateSolverWithSerializedDict(*board);
   if (!solver.ok()) {
     LOG(ERROR) << solver.status();
     return 1;

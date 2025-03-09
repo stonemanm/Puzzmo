@@ -25,6 +25,9 @@ class Dict {
     std::string matching_regex;
   };
 
+  explicit Dict(const Trie& trie)
+      : trie_(trie), words_(trie.WordsWithPrefix("")) {}
+
   static absl::StatusOr<Dict> LoadDictFromSerializedTrie();
 
   bool contains(absl::string_view word) const { return trie_.contains(word); }
@@ -39,16 +42,15 @@ class Dict {
   //     const SearchOptions& options) const;
 
  private:
-  Dict(const Trie& trie) : trie_(trie) {}
   Dict(const Trie& trie, const absl::flat_hash_set<std::string>& words)
       : trie_(trie), words_(words) {}
 
   const Trie trie_;
+  const absl::flat_hash_set<std::string> words_;
 
   // absl::StatusOr<SearchableWords> TryReadingInAndSortingWords() const;
   // absl::StatusOr<absl::flat_hash_set<std::string>> TryReadingInWords() const;
   // absl::flat_hash_set<std::string> common_words_;
-  const absl::flat_hash_set<std::string> words_;
   // SearchableWords searchable_words_;
 };
 

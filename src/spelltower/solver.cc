@@ -16,23 +16,23 @@ constexpr absl::string_view kStarLettersNotInWord =
 constexpr absl::string_view kWordNotInTrieError =
     "Word \"%s\" is not contained in the trie.";
 
-absl::StatusOr<Solver> Solver::CreateSolverWithSerializedTrie(
+absl::StatusOr<Solver> Solver::CreateSolverWithSerializedDict(
     const Grid& grid) {
-  absl::StatusOr<Trie> trie = Trie::LoadFromSerializedTrie();
-  if (!trie.ok()) return trie.status();
-  return Solver(*trie, grid);
+  absl::StatusOr<Dict> dict = Dict::LoadDictFromSerializedTrie();
+  if (!dict.ok()) return dict.status();
+  return Solver(*dict, grid);
 }
 
-absl::StatusOr<Solver> Solver::CreateSolverWithSerializedTrie(
+absl::StatusOr<Solver> Solver::CreateSolverWithSerializedDict(
     const std::vector<std::string>& grid) {
-  absl::StatusOr<Trie> trie = Trie::LoadFromSerializedTrie();
-  if (!trie.ok()) return trie.status();
-  return Solver(*trie, Grid(grid));
+  absl::StatusOr<Dict> dict = Dict::LoadDictFromSerializedTrie();
+  if (!dict.ok()) return dict.status();
+  return Solver(*dict, Grid(grid));
 }
 
 absl::StatusOr<Path> Solver::BestPossiblePathForWord(
     absl::string_view word) const {
-  if (!trie_.contains(word))
+  if (!dict_.contains(word))
     return absl::InvalidArgumentError(
         absl::StrFormat(kWordNotInTrieError, word));
   Path path;
@@ -45,7 +45,7 @@ absl::StatusOr<Path> Solver::BestPossiblePathForWord(
 
 absl::StatusOr<Path> Solver::BestPossibleAllStarPathForWord(
     absl::string_view word) const {
-  if (!trie_.contains(word))
+  if (!dict_.contains(word))
     return absl::InvalidArgumentError(
         absl::StrFormat(kWordNotInTrieError, word));
 
@@ -73,7 +73,8 @@ void Solver::FillWordCache() {
   for (const auto& column : grid_.tiles()) {
     for (const std::shared_ptr<Tile>& tile : column) {
       if (absl::Status s = path.push_back(tile); !s.ok()) continue;
-      FillWordCacheDFS(trie_.root()->children[tile->letter() - 'a'], path);
+      FillWordCacheDFS(dict_.trie().root()->children[tile->letter() - 'a'],
+                       path);
       path.pop_back();
     }
   }
@@ -92,7 +93,7 @@ absl::Status Solver::PlayWord(const Path& word) {
   if (!word.IsContinuous())
     return absl::InvalidArgumentError(
         absl::StrFormat(kPathNotContinuousError, word));
-  if (!trie_.contains(word.word()))
+  if (!dict_.contains(word.word()))
     return absl::InvalidArgumentError(
         absl::StrFormat(kWordNotInTrieError, word.word()));
 
