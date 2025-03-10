@@ -1,5 +1,5 @@
-#ifndef dict_h
-#define dict_h
+#ifndef PUZZMO_BONGO_DICT_H_
+#define PUZZMO_BONGO_DICT_H_
 
 #include <string>
 

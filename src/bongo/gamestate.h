@@ -1,5 +1,14 @@
-#ifndef gamestate_h
-#define gamestate_h
+// -----------------------------------------------------------------------------
+// File: gamestate.h
+// -----------------------------------------------------------------------------
+//
+// This header file defines the gamestate of a Bongo puzzle at any given moment.
+// It maintains the locations of the bonus line and multiplier cells in the
+// grid, the positions of any tiles that have been placed, and the quantity and
+// value of different letter tiles available.
+
+#ifndef PUZZMO_BONGO_GAMESTATE_H_
+#define PUZZMO_BONGO_GAMESTATE_H_
 
 #include <string>
 #include <vector>
@@ -12,6 +21,9 @@
 
 namespace puzzmo::bongo {
 
+// bongo::Gamestate
+//
+//
 class Gamestate {
  public:
   // board and letter_grid should be vector of length 5, containing 5-long

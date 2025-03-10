@@ -6,8 +6,8 @@
 // dictionary, helper methods to interact with the board using the dictionary,
 // and various solution methods.
 
-#ifndef solver_h
-#define solver_h
+#ifndef PUZZMO_SPELLTOWER_SOLVER_H_
+#define PUZZMO_SPELLTOWER_SOLVER_H_
 
 #include <string>
 #include <vector>
@@ -229,4 +229,4 @@ class Solver {
 
 }  // namespace puzzmo::spelltower
 
-#endif  // !solver_h
+#endif

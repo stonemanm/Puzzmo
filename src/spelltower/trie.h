@@ -5,8 +5,8 @@
 // This header file defines a trie: the data structure used to store legal words
 // in Spelltower for ease of lookup and access.
 
-#ifndef trie_h
-#define trie_h
+#ifndef PUZZMO_SPELLTOWER_TRIE_H_
+#define PUZZMO_SPELLTOWER_TRIE_H_
 
 #include <iostream>
 #include <memory>

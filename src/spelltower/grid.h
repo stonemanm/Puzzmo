@@ -3,11 +3,11 @@
 // -----------------------------------------------------------------------------
 //
 // This header file defines grids. A grid is the board state of Spelltower at
-// any given moment. It consists of a 9x13 layout of tiles, some of which are
+// any given moment. It consists of a 13x9 layout of tiles, some of which are
 // star tiles.
 
-#ifndef grid_h
-#define grid_h
+#ifndef PUZZMO_SPELLTOWER_GRID_H_
+#define PUZZMO_SPELLTOWER_GRID_H_
 
 #include <memory>
 #include <vector>
@@ -265,4 +265,4 @@ bool operator!=(const Grid &lhs, const Grid &rhs);
 
 }  // namespace puzzmo::spelltower
 
-#endif  // !grid_h
+#endif

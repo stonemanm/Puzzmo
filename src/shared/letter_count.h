@@ -1,5 +1,5 @@
-#ifndef letter_count_h
-#define letter_count_h
+#ifndef PUZZMO_SHARED_LETTERCOUNT_H_
+#define PUZZMO_SHARED_LETTERCOUNT_H_
 
 #include <string>
 #include <vector>

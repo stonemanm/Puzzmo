@@ -13,8 +13,8 @@
 // currently no safeguards around this, so it is recommended for the time being
 // that a path not outlast the modification of the grid it was based upon.
 
-#ifndef path_h
-#define path_h
+#ifndef PUZZMO_SPELLTOWER_PATH_H_
+#define PUZZMO_SPELLTOWER_PATH_H_
 
 #include <memory>
 #include <vector>
@@ -215,4 +215,4 @@ bool operator>=(const Path &lhs, const Path &rhs);
 
 }  // namespace puzzmo::spelltower
 
-#endif  // !path_h
+#endif

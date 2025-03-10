@@ -1,5 +1,5 @@
-#ifndef card_h
-#define card_h
+#ifndef PUZZMO_PILEUPPOKER_CARD_H_
+#define PUZZMO_PILEUPPOKER_CARD_H_
 
 #include <string>
 

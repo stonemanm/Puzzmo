@@ -1,5 +1,5 @@
-#ifndef dictionary_utils_h
-#define dictionary_utils_h
+#ifndef PUZZMO_SHARED_DICTIONARYUTILS_H_
+#define PUZZMO_SHARED_DICTIONARYUTILS_H_
 
 #include <climits>
 #include <string>

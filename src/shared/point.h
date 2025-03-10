@@ -1,5 +1,5 @@
-#ifndef point_h
-#define point_h
+#ifndef PUZZMO_SHARED_POINT_H_
+#define PUZZMO_SHARED_POINT_H_
 
 #include <utility>
 

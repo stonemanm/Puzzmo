@@ -8,8 +8,8 @@
 // letter or be blank. Some tiles are also star tiles, which increase the score
 // multiplier when clearing a word.
 
-#ifndef tile_h
-#define tile_h
+#ifndef PUZZMO_SPELLTOWER_TILE_H_
+#define PUZZMO_SPELLTOWER_TILE_H_
 
 #include <cctype>
 
@@ -147,4 +147,4 @@ bool operator!=(const Tile &lhs, const Tile &rhs);
 
 }  // namespace puzzmo::spelltower
 
-#endif  // !tile_h
+#endif

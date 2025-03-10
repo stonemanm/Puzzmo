@@ -6,8 +6,8 @@
 // dictionary, helper methods to interact with the board using the dictionary,
 // and various solution methods.
 
-#ifndef solver_h
-#define solver_h
+#ifndef PUZZMO_BONGO_SOLVER_H_
+#define PUZZMO_BONGO_SOLVER_H_
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"

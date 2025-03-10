@@ -1,5 +1,5 @@
-#ifndef pile_up_poker_solver_h
-#define pile_up_poker_solver_h
+#ifndef PUZZMO_PILEUPPOKER_PILEUPPOKERSOLVER_H_
+#define PUZZMO_PILEUPPOKER_PILEUPPOKERSOLVER_H_
 
 #include <vector>
 

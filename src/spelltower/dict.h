@@ -6,8 +6,8 @@
 // legality for Spelltower. It stores words in both a trie and a sorted hash set
 // to fulfill multiple different use cases efficiently.
 
-#ifndef dict_h
-#define dict_h
+#ifndef PUZZMO_SPELLTOWER_DICT_H_
+#define PUZZMO_SPELLTOWER_DICT_H_
 
 #include <string>
 
@@ -129,4 +129,4 @@ class Dict {
 
 }  // namespace puzzmo::spelltower
 
-#endif  // !dict_h
+#endif
