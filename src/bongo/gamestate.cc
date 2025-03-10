@@ -85,15 +85,15 @@ absl::Status Gamestate::ClearCell(const Point &p) {
     return absl::InvalidArgumentError(absl::StrCat(
         "Point ", p, " does not refer to a cell on the board.\n", *this));
 
-  if (is_locked_at(p))
+  if (grid_[p.row][p.col].is_locked)
     return absl::FailedPreconditionError(
         absl::StrCat("Cell ", p, " is locked and cannot be altered.\n", *this));
 
-  if (char b = char_at(p); std::isalpha(b)) {
+  if (char b = grid_[p.row][p.col].letter; std::isalpha(b)) {
     if (auto s = letter_pool_.AddLetter(b); !s.ok()) return s.status();
   }
 
-  set_char_at(p, '_');
+  grid_[p.row][p.col].letter = kEmptyCell;
   return absl::OkStatus();
 }
 
@@ -102,7 +102,7 @@ absl::Status Gamestate::FillCell(const Point &p, char c) {
 
   if (auto s = ClearCell(p); !s.ok()) return s;
 
-  set_char_at(p, c);
+  grid_[p.row][p.col].letter = c;
   return absl::OkStatus();
 }
 
@@ -111,7 +111,9 @@ absl::Status Gamestate::ClearPath(const std::vector<Point> &path) {
     if (!HasCell(p))
       return absl::InvalidArgumentError(absl::StrCat(
           "Point ", p, " does not refer to a cell on the board.\n", *this));
-    if (is_locked_at(p) || !std::isalpha(char_at(p))) continue;
+    if (grid_[p.row][p.col].is_locked ||
+        !std::isalpha(grid_[p.row][p.col].letter))
+      continue;
     if (auto s = ClearCell(p); !s.ok()) return s;
   }
   return absl::OkStatus();
@@ -126,7 +128,7 @@ absl::Status Gamestate::FillPath(const std::vector<Point> &path,
 
   for (int i = 0; i < path.size(); ++i) {
     const Point p = path[i];
-    if (char_at(path[i]) == sv[i]) continue;
+    if (grid_[p.row][p.col].letter == sv[i]) continue;
     if (auto s = FillCell(p, sv[i]); !s.ok()) return s;
   }
   return absl::OkStatus();
@@ -136,7 +138,7 @@ absl::Status Gamestate::ClearBoard() {
   for (int row = 0; row < 5; ++row) {
     for (int col = 0; col < 5; ++col) {
       const Point p = {row, col};
-      if (is_locked_at(row, col)) continue;
+      if (grid_[p.row][p.col].is_locked) continue;
       if (auto s = ClearCell(p); !s.ok()) return s;
     }
   }
@@ -167,8 +169,8 @@ bool Gamestate::IsChildOf(const Gamestate &other) const {
   for (int r = 0; r < 5; ++r) {
     for (int c = 0; c < 5; ++c) {
       if (grid_[r][c].multiplier != other.grid()[r][c].multiplier) return false;
-      char l = other.char_at(r, c);
-      if (std::isalpha(l) && char_at(r, c) != l) return false;
+      char l = other.grid()[r][c].letter;
+      if (std::isalpha(l) && grid_[r][c].letter != l) return false;
     }
   }
   return true;
@@ -227,7 +229,7 @@ std::vector<Point> Gamestate::MultiplierCells() const {
   std::vector<Point> multiplier_cells;
   for (int row = 0; row < 5; ++row) {
     for (int col = 0; col < 5; ++col) {
-      if (multiplier_at({row, col}) >= 2) {
+      if (grid_[row][col].multiplier >= 2) {
         multiplier_cells.push_back({row, col});
       }
     }
@@ -275,53 +277,9 @@ std::vector<Point> Gamestate::row_path(int row) const {
 std::string Gamestate::path_string(const std::vector<Point> &path) const {
   std::string s = "";
   for (const Point &p : path) {
-    s += char_at(p);
+    s += grid_[p.row][p.col].letter;
   }
   return s;
-}
-
-char Gamestate::char_at(const Point &p) const {
-  return HasCell(p) ? grid_[p.row][p.col].letter : '\0';
-}
-
-char Gamestate::char_at(int row, int col) const {
-  return char_at({.row = row, .col = col});
-}
-
-void Gamestate::set_char_at(const Point &p, char c) {
-  if (!HasCell(p)) return;
-  grid_[p.row][p.col].letter = c;
-}
-
-void Gamestate::set_char_at(int row, int col, char c) {
-  set_char_at({.row = row, .col = col}, c);
-}
-
-int Gamestate::multiplier_at(const Point &p) const {
-  if (!HasCell(p)) return 0;
-  return grid_[p.row][p.col].multiplier;
-}
-
-int Gamestate::multiplier_at(int row, int col) const {
-  return multiplier_at({.row = row, .col = col});
-}
-
-bool Gamestate::is_locked_at(const Point &p) const {
-  if (!HasCell(p)) return false;
-  return grid_[p.row][p.col].is_locked;
-}
-
-bool Gamestate::is_locked_at(int row, int col) const {
-  return is_locked_at({.row = row, .col = col});
-}
-
-void Gamestate::set_is_locked_at(const Point &p, bool is_locked) {
-  if (!HasCell(p)) return;
-  grid_[p.row][p.col].is_locked = is_locked;
-}
-
-void Gamestate::set_is_locked_at(int row, int col, bool is_locked) {
-  set_is_locked_at({.row = row, .col = col}, is_locked);
 }
 
 /** * * * * * * * * * * *

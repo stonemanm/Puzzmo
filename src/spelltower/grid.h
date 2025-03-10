@@ -71,15 +71,15 @@ class Grid {
   // `Grid` has two separate overloaded subscript operators. If provided an int,
   // it treats it as the index of a column and returns that column. If provided
   // a `Point` instead, it returns the pointer at that row and column.
-  std::shared_ptr<Tile> &operator[](Point p) { return tiles_[p.col][p.row]; }
-  const std::shared_ptr<Tile> &operator[](Point p) const {
-    return tiles_[p.col][p.row];
-  }
   std::vector<std::shared_ptr<Tile>> &operator[](int col) {
     return tiles_[col];
   }
   const std::vector<std::shared_ptr<Tile>> &operator[](int col) const {
     return tiles_[col];
+  }
+  std::shared_ptr<Tile> &operator[](Point p) { return tiles_[p.col][p.row]; }
+  const std::shared_ptr<Tile> &operator[](Point p) const {
+    return tiles_[p.col][p.row];
   }
 
   // Grid::row()

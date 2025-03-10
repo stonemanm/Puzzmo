@@ -49,28 +49,28 @@ TEST(GameStateTest, FillAndClear) {
   EXPECT_EQ(bgs.letter_pool().count('a'), 37);
   EXPECT_THAT(bgs.FillCell(p1, 'a'), IsOk());
   EXPECT_EQ(bgs.letter_pool().count('a'), 36);
-  EXPECT_EQ(bgs.char_at(p1), 'a');
+  EXPECT_EQ(bgs[p1].letter, 'a');
 
   // Removes placed letter if present
   EXPECT_THAT(bgs.FillCell(p2, 'a'), IsOk());
   EXPECT_EQ(bgs.letter_pool().count('a'), 35);
   EXPECT_THAT(bgs.FillCell(p2, 'b'), IsOk());
   EXPECT_EQ(bgs.letter_pool().count('a'), 36);
-  EXPECT_EQ(bgs.char_at(p2), 'b');
+  EXPECT_EQ(bgs[p2].letter, 'b');
 
   // Fails for letter not in bgs
   EXPECT_THAT(bgs.FillCell(p3, 'c'), IsOk());
   EXPECT_THAT(bgs.FillCell(p3, 'z'),
               StatusIs(absl::StatusCode::kInvalidArgument));
-  EXPECT_EQ(bgs.char_at(p3), 'c');
+  EXPECT_EQ(bgs[p3].letter, 'c');
 
   // Fails if cell is locked
-  bgs.set_is_locked_at(p4, true);
+  bgs[p4].is_locked = true;
   EXPECT_EQ(bgs.letter_pool().count('d'), 1);
   EXPECT_THAT(bgs.FillCell(p4, 'd'),
               StatusIs(absl::StatusCode::kFailedPrecondition));
   EXPECT_EQ(bgs.letter_pool().count('d'), 0);
-  EXPECT_EQ(bgs.char_at(p4), '_');
+  EXPECT_EQ(bgs[p4].letter, kEmptyCell);
 
   // Fails if cell is out of bounds
   EXPECT_THAT(bgs.FillCell(ip1, 'a'),
@@ -93,7 +93,7 @@ TEST(GameStateTest, FillAndClear) {
   EXPECT_EQ(bgs.path_string(path), "__b__");
 
   // Fails if point on path locked and doesn't align with the word being placed
-  bgs.set_is_locked_at(p2, true);
+  bgs[p2].is_locked = true;
   EXPECT_THAT(bgs.FillPath(path, "aaaaa"),
               StatusIs(absl::StatusCode::kFailedPrecondition));
   EXPECT_EQ(bgs.path_string(path), "aab__");
@@ -111,17 +111,17 @@ TEST(GameStateTest, FillAndClear) {
    */
 
   EXPECT_THAT(bgs.ClearCell(p1), IsOk());
-  EXPECT_EQ(bgs.char_at(p1), '_');
+  EXPECT_EQ(bgs[p1].letter, kEmptyCell);
 
   // Fails if cell locked
   EXPECT_THAT(bgs.ClearCell(p2),
               StatusIs(absl::StatusCode::kFailedPrecondition));
-  EXPECT_EQ(bgs.char_at(p2), 'b');
+  EXPECT_EQ(bgs[p2].letter, 'b');
 
   // Succeeds if cell already empty
-  bgs.set_is_locked_at(p4, false);
+  bgs[p4].is_locked = false;
   EXPECT_THAT(bgs.ClearCell(p4), IsOk());
-  EXPECT_EQ(bgs.char_at(p4), '_');
+  EXPECT_EQ(bgs[p4].letter, kEmptyCell);
 
   /**
    * ClearPath
@@ -131,28 +131,28 @@ TEST(GameStateTest, FillAndClear) {
   EXPECT_THAT(bgs.ClearPath({p1, p4}), IsOk());
 
   // Succeeds but skips locked spaces
-  bgs.set_is_locked_at(p2, false);
-  bgs.set_is_locked_at(path[1], true);
-  bgs.set_is_locked_at(path[4], true);
+  bgs[p2].is_locked = false;
+  bgs[path[1]].is_locked = true;
+  bgs[path[4]].is_locked = true;
   EXPECT_THAT(bgs.ClearPath(path), IsOk());
   EXPECT_EQ(bgs.path_string(path), "_a__a");
 
   // Fails if path contains invalid point, but does the work before that.
-  bgs.set_is_locked_at(path[4], false);
+  bgs[path[4]].is_locked = false;
   EXPECT_THAT(bgs.ClearPath({path[4], ip1}),
               StatusIs(absl::StatusCode::kInvalidArgument));
-  EXPECT_EQ(bgs.char_at(path[4]), '_');
+  EXPECT_EQ(bgs[path[4]].letter, kEmptyCell);
 
   /**
    * ClearBoard
    */
 
   // Locked tiles survive
-  EXPECT_EQ(bgs.char_at(p3), 'c');
-  EXPECT_EQ(bgs.char_at(path[1]), 'a');
+  EXPECT_EQ(bgs[p3].letter, 'c');
+  EXPECT_EQ(bgs[path[1]].letter, 'a');
   EXPECT_THAT(bgs.ClearBoard(), IsOk());
-  EXPECT_EQ(bgs.char_at(p3), '_');
-  EXPECT_EQ(bgs.char_at(path[1]), 'a');
+  EXPECT_EQ(bgs[p3].letter, kEmptyCell);
+  EXPECT_EQ(bgs[path[1]].letter, 'a');
 }
 
 TEST(GamestateTest, LowercasePathMethods) {

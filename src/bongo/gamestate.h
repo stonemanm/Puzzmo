@@ -124,19 +124,17 @@ class Gamestate {
   std::vector<Point> row_path(int row) const;
   std::string path_string(const std::vector<Point> &path) const;
 
-  char char_at(const Point &p) const;
-  char char_at(int row, int col) const;
-  int multiplier_at(const Point &p) const;
-  int multiplier_at(int row, int col) const;
-  bool is_locked_at(const Point &p) const;
-  bool is_locked_at(int row, int col) const;
-  void set_is_locked_at(const Point &p, bool is_locked);
-  void set_is_locked_at(int row, int col, bool is_locked);
+  // operator[]
+  //
+  // `Gamestate` has two separate overloaded subscript operators. If provided an
+  // int, it treats it as the index of a row and returns that row. If provided
+  // a `Point` instead, it returns the `Cell` at that row and column in `grid_`.
+  std::vector<Cell> &operator[](int row) { return grid_[row]; }
+  const std::vector<Cell> &operator[](int row) const { return grid_[row]; }
+  Cell &operator[](Point p) { return grid_[p.row][p.col]; }
+  const Cell &operator[](Point p) const { return grid_[p.row][p.col]; }
 
  private:
-  void set_char_at(const Point &p, char c);
-  void set_char_at(int row, int col, char c);
-
   std::vector<std::vector<Cell>> grid_;
   LetterCount letter_pool_;
   absl::flat_hash_map<char, int> values_;
