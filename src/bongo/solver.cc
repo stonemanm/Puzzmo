@@ -117,7 +117,7 @@ absl::StatusOr<Gamestate> Solver::Solve() {
     if (auto s = current_board.FillLine(bonus_path, bonus_word); !s.ok())
       return s;
     for (const Point &p : bonus_path) {
-      current_board.set_is_locked_at(p, true);
+      current_board[p].is_locked = true;
     }
 
     // Grab the high-scoring tiles not used by the bonus word, and try all the
@@ -128,21 +128,25 @@ absl::StatusOr<Gamestate> Solver::Solve() {
     do {
       std::vector<Point> locked_here;
       for (int i = 0; i < 3; ++i) {
-        Point p = multiplier_squares[i];
-        if (std::isalpha(current_board.char_at(p))) continue;
+        const Point p = multiplier_squares[i];
+        Cell &cell = current_board[p];
+        if (std::isalpha(cell.letter)) continue;
         // If we have an error placing tiles, clean up the ones we have placed
         // so far and then move on.
-        if (auto s = current_board.FillCell(p, top3[i]); !s.ok()) return s;
+        if (absl::Status s = current_board.FillCell(p, top3[i]); !s.ok())
+          return s;
 
-        current_board.set_is_locked_at(p, true);
+        cell.is_locked = true;
         locked_here.push_back(p);
       }
 
-      if (auto s = FindWordsRecursively(current_board); !s.ok()) return s;
+      if (absl::Status s = FindWordsRecursively(current_board); !s.ok())
+        return s;
 
       for (int i = 0; i < locked_here.size(); ++i) {
-        current_board.set_is_locked_at(locked_here[i], false);
-        if (auto s = current_board.ClearCell(locked_here[i]); !s.ok()) return s;
+        current_board[locked_here[i]].is_locked = false;
+        if (absl::Status s = current_board.ClearCell(locked_here[i]); !s.ok())
+          return s;
       }
     } while (std::next_permutation(top3.begin(), top3.end()));
   }
@@ -164,7 +168,7 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
   //           << current_board.letter_board()[2] << "]" << "["
   //           << current_board.letter_board()[3] << "]" << "["
   //           << current_board.letter_board()[4] << "]";
-  if (current_board.NumLetters() < 25) return absl::UnknownError("huh");
+  if (current_board.letters().size() < 25) return absl::UnknownError("huh");
   if (current_board.IsComplete()) {
     if (int current_score = Score(current_board); current_score > best_score_) {
       LOG(INFO) << absl::StrCat("New best score! (", current_score, ")");
@@ -189,16 +193,16 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
       {.min_length = 5,
        .max_length = 5,
        .min_letters =
-           LetterCount(current_board.LineString(current_board.row_line(row))),
+           LetterCount(current_board.LineString(current_board.line(row))),
        .max_letters =
            current_board.unplaced_letters() +
-           LetterCount(current_board.LineString(current_board.row_line(row))),
-       .matching_regex = current_board.LineRegex(current_board.row_line(row))});
+           LetterCount(current_board.LineString(current_board.line(row))),
+       .matching_regex = current_board.LineRegex(current_board.line(row))});
 
   // For each match, if it's possible to place it on the board, do so,
   // recurse, then backtrack.
   for (const auto &word : matches) {
-    if (auto s = current_board.FillLine(current_board.row_line(row), word);
+    if (absl::Status s = current_board.FillLine(current_board.line(row), word);
         !s.ok()) {
       return s;
     }
@@ -209,7 +213,7 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
       return s;
     }
 
-    auto s = current_board.ClearLine(current_board.row_line(row));
+    auto s = current_board.ClearLine(current_board.line(row));
     if (!s.ok()) return s;
   }
 
@@ -238,7 +242,7 @@ int Solver::PathScore(const Gamestate &bgs,
   int score = 0;
   for (int i = 0; i < word.size(); ++i) {
     char c = word[i];
-    score += (bgs.letter_values().at(c) * bgs.multiplier_at(path[i + offset]));
+    score += bgs.letter_values().at(c) * bgs[path[i + offset]].multiplier;
   }
   return std::ceil(score * (dict_.IsCommonWord(word) ? 1.3 : 1));
 }

@@ -22,7 +22,6 @@
 namespace puzzmo::bongo {
 
 constexpr char kBonusCell = '*';
-// The character used for an empty cell.
 constexpr char kEmptyCell = '_';
 constexpr char kDoubleMultiplier = '2';
 constexpr char kTripleMultiplier = '3';
@@ -57,17 +56,15 @@ class Gamestate {
   // board, a `LetterCount` representing the unplaced tiles, a map of letter
   // values, and another vector of strings indicating already-placed letters.
   // Both `board` and `letter_board` must be 5x5.
-  Gamestate(const std::vector<std::string> board,
-            absl::flat_hash_map<char, int> letter_values,
-            LetterCount unplaced_letters,
-            std::vector<std::string> letter_board);
+  Gamestate(const std::vector<std::string> grid_strings,
+            absl::flat_hash_map<char, int> letter_values, LetterCount letters,
+            std::vector<std::string> placed_letters);
 
   // A simpler constructor for the case when no letters have been placed.
   // `board` must be 5x5.
-  Gamestate(const std::vector<std::string> board,
-            absl::flat_hash_map<char, int> letter_values,
-            LetterCount unplaced_letters)
-      : Gamestate(board, letter_values, unplaced_letters,
+  Gamestate(const std::vector<std::string> grid_strings,
+            absl::flat_hash_map<char, int> letter_values, LetterCount letters)
+      : Gamestate(grid_strings, letter_values, letters,
                   std::vector<std::string>(5, std::string(5, kEmptyCell))) {};
 
   //-----------
@@ -208,9 +205,9 @@ class Gamestate {
 
  private:
   std::vector<std::vector<Cell>> grid_;
-  const LetterCount letters_;
+  LetterCount letters_;
   LetterCount unplaced_letters_;
-  const absl::flat_hash_map<char, int> letter_values_;
+  absl::flat_hash_map<char, int> letter_values_;
   std::vector<Point> bonus_line_;
 
   //------------------
