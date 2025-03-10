@@ -152,16 +152,24 @@ class Gamestate {
   // Clears the letter from unlocked cell p, if present.
   absl::Status ClearCell(const Point &p);
 
+  // Gamestate::FillCell()
+  //
   // Takes c from the remaining letters and places it in unlocked cell p.
   absl::Status FillCell(const Point &p, char c);
 
+  // Gamestate::ClearLine()
+  //
   // Clears all unlocked letters from cells along the line.
   absl::Status ClearLine(const std::vector<Point> &line);
 
+  // Gamestate::FillLine()
+  //
   // Fills cells along the line with `word`, unless it conflicts with the
   // contents of a locked cell.
   absl::Status FillLine(const std::vector<Point> &line, absl::string_view word);
 
+  // Gamestate::ClearBoard()
+  //
   // Clears all unlocked letters from the board.
   absl::Status ClearBoard();
 
@@ -178,10 +186,12 @@ class Gamestate {
   //---------
   // Scoring
 
+  // Gamestate::LinesToScore()
+  //
   // Returns the six lines used to score the board.
   std::vector<std::vector<Point>> LinesToScore() const;
 
-  // Solver::UpperBoundOnScore()
+  // Gamestate::UpperBoundOnScore()
   //
   // Returns the highest possible score for the gamestate with the assumption
   // that every string is a common word.
