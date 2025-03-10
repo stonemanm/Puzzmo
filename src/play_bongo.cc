@@ -15,12 +15,18 @@
 #include "bongo/gamestate.h"
 #include "bongo/solver.h"
 
+//-------
+// Files
+
 ABSL_FLAG(std::string, path_to_board_file, "data/bongo_board.txt",
           "Input file containing a 5x5 char grid.");
 
 ABSL_FLAG(std::string, path_to_tile_file, "data/bongo_tiles.txt",
           "Space-delimited input file where each line contains a letter, the "
           "number of that letter, and the value of that latter.");
+
+//------------
+// Parameters
 
 ABSL_FLAG(
     int, tiles_for_bonus_words, 7,
@@ -41,6 +47,9 @@ using LettersToWordsMap =
     absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>;
 
 namespace {
+
+//---------
+// Helpers
 
 absl::StatusOr<std::vector<std::string>> LoadStringVector(
     const std::string &path) {
@@ -103,11 +112,11 @@ int main(int argc, const char *argv[]) {
   }
 
   // std::vector<Point> path;
-  // int r = 4;
+  // int r = 3;
   // for (int i = 0; i < 5; ++i) {
   //   path.push_back({r, i});
   // }
-  // absl::Status s = starting_state->FillPath(path, "askew");
+  // absl::Status s = starting_state->FillPath(path, "tipsy");
   // if (!s.ok()) {
   //   LOG(ERROR) << s;
   //   return 1;

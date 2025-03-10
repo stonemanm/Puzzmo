@@ -75,3 +75,16 @@ cc_library(
         "@abseil-cpp//absl/strings",
     ],
 )
+
+cc_test(
+    name = "solver_test",
+    size = "small",
+    srcs = ["solver_test.cc"],
+    deps = [
+        ":solver",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

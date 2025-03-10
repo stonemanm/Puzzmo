@@ -8,6 +8,14 @@
 
 namespace puzzmo::bongo {
 
+Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
+    : dict_(dict),
+      starting_state_(state),
+      state_(state),
+      best_state_(state),
+      tiles_for_bonus_words_(params.tiles_for_bonus_words),
+      tiles_for_multiplier_tiles_(params.tiles_for_multiplier_tiles) {}
+
 int Solver::CeilingForScore() const {
   auto values = starting_state_.values();
   std::string tiles_in_value_order = starting_state_.NMostValuableTiles(25);
@@ -24,6 +32,8 @@ int Solver::CeilingForScore() const {
 
   return std::ceil(1.3 * score);
 }
+
+void Solver::reset() { state_ = starting_state_; }
 
 absl::StatusOr<Gamestate> Solver::FindSolutionWithScore(int score) const {
   return absl::UnimplementedError("To do");
@@ -137,14 +147,14 @@ absl::StatusOr<Gamestate> Solver::Solve() {
       }
     } while (std::next_permutation(top3.begin(), top3.end()));
   }
-  if (highest_score_ == 0) {
+  if (best_score_ == 0) {
     ++tiles_for_bonus_words_;
     ++tiles_for_multiplier_tiles_;
     LOG(INFO) << "No solutions found. Trying again with a broader "
                  "search.";
     return Solve();
   }
-  return highest_scoring_board_;
+  return best_state_;
 }
 
 absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
@@ -157,8 +167,7 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
   //           << current_board.letter_board()[4] << "]";
   if (current_board.NumLetters() < 25) return absl::UnknownError("huh");
   if (current_board.IsComplete()) {
-    if (int current_score = Score(current_board);
-        current_score > highest_score_) {
+    if (int current_score = Score(current_board); current_score > best_score_) {
       LOG(INFO) << absl::StrCat("New best score! (", current_score, ")");
       for (const auto &path : current_board.PathsToScore()) {
         std::string word = current_board.GetWord(path);
@@ -168,8 +177,8 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
       }
 
       LOG(INFO) << current_board;
-      highest_scoring_board_ = current_board;
-      highest_score_ = current_score;
+      best_state_ = current_board;
+      best_score_ = current_score;
     }
     return absl::OkStatus();
   }
