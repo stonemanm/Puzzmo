@@ -8,6 +8,8 @@
 
 namespace puzzmo::bongo {
 
+// Constructors
+
 Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
     : dict_(dict),
       starting_state_(state),
@@ -33,11 +35,9 @@ int Solver::CeilingForScore() const {
   return std::ceil(1.3 * score);
 }
 
-void Solver::reset() { state_ = starting_state_; }
+// Mutators
 
-absl::StatusOr<Gamestate> Solver::FindSolutionWithScore(int score) const {
-  return absl::UnimplementedError("To do");
-}
+void Solver::reset() { state_ = starting_state_; }
 
 absl::StatusOr<Gamestate> Solver::Solve() {
   std::vector<Point> bonus_path = starting_state_.bonus_line();
@@ -174,7 +174,7 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
       LOG(INFO) << absl::StrCat("New best score! (", current_score, ")");
       for (const auto &path : current_board.LinesToScore()) {
         std::string word = current_board.GetWord(path);
-        LOG(INFO) << absl::StrCat(PathScore(current_board, path), " - ", word,
+        LOG(INFO) << absl::StrCat(LineScore(current_board, path), " - ", word,
                                   (dict_.IsCommonWord(word) ? " is" : " isn't"),
                                   " a common word.");
       }
@@ -220,31 +220,33 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
   return absl::OkStatus();
 }
 
-int Solver::Score(const Gamestate &bgs) const {
-  int score = 0;
-  for (const auto &path : bgs.LinesToScore()) {
-    score += PathScore(bgs, path);
-  }
-  return score;
-}
+// Score
 
-int Solver::PathScore(const Gamestate &bgs,
-                      const std::vector<Point> &path) const {
-  std::string word = bgs.GetWord(path);
+int Solver::LineScore(const Gamestate &bgs,
+                      const std::vector<Point> &line) const {
+  std::string word = bgs.GetWord(line);
   if (!dict_.IsValidWord(word)) return 0;
 
   // Find the index in path where word begins.
   int offset = 0;
-  while (bgs.LineString(path).substr(offset, word.size()) != word) {
+  while (bgs.LineString(line).substr(offset, word.size()) != word) {
     ++offset;
   }
 
   int score = 0;
   for (int i = 0; i < word.size(); ++i) {
     char c = word[i];
-    score += bgs.letter_values().at(c) * bgs[path[i + offset]].multiplier;
+    score += bgs.letter_values().at(c) * bgs[line[i + offset]].multiplier;
   }
   return std::ceil(score * (dict_.IsCommonWord(word) ? 1.3 : 1));
+}
+
+int Solver::Score(const Gamestate &bgs) const {
+  int score = 0;
+  for (const auto &line : bgs.LinesToScore()) {
+    score += LineScore(bgs, line);
+  }
+  return score;
 }
 
 }  // namespace puzzmo::bongo

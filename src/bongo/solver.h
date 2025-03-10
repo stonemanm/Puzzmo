@@ -83,14 +83,36 @@ class Solver {
   // Returns the solver to its starting state.
   void reset();
 
-  absl::StatusOr<Gamestate> FindSolutionWithScore(int score) const;
-
+  // Solver::Solve()
+  //
+  // Tries permutations of the highest-scoring tiles on multiplier spaces or
+  // bonus path spaces. If no solutions are found, increments the parameter
+  // values and tries again.
   absl::StatusOr<Gamestate> Solve();
 
  private:
+  // Solver::FindWordsRecursively()
+  //
+  // A recursive helper method used by `Solve()`.
   absl::Status FindWordsRecursively(Gamestate &current_board);
+
+  //---------
+  // Scoring
+
+  // Solver::LineScore()
+  //
+  // Gets the word from `line` and checks whether it is a valid word. If not,
+  // returns 0. If it is, calculates the score from the letters and multipliers,
+  // and multiplies by 1.3 if the word is a common word before returning.
+  int LineScore(const Gamestate &bgs, const std::vector<Point> &line) const;
+
+  // Solver::Score()
+  //
+  // Sums `LineScore` for the six lines to be used in scoring.
   int Score(const Gamestate &bgs) const;
-  int PathScore(const Gamestate &bgs, const std::vector<Point> &path) const;
+
+  //---------
+  // Members
 
   const Dict dict_;
   const Gamestate starting_state_;
