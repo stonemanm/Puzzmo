@@ -129,6 +129,12 @@ class Path {
   // zero.
   int Delta() const;
 
+  // Path::MultiplierWhenScored()
+  //
+  // Returns the multiplier from the path, a function of its size and number of
+  // star tiles.
+  int MultiplierWhenScored() const { return size() * (1 + star_count_); }
+
   //----------
   // Mutators
 
