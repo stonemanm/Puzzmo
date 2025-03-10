@@ -20,6 +20,8 @@ constexpr absl::string_view kWordNotInTrieError =
 constexpr absl::string_view kVerboseLongestWord =
     "Searching for a path for word \"%s\".";
 
+// Constructors
+
 absl::StatusOr<Solver> Solver::CreateSolverWithSerializedDict(
     const Grid& grid) {
   absl::StatusOr<Dict> dict = Dict::LoadDictFromSerializedTrie();
@@ -33,6 +35,21 @@ absl::StatusOr<Solver> Solver::CreateSolverWithSerializedDict(
   if (!dict.ok()) return dict.status();
   return Solver(*dict, Grid(grid));
 }
+
+// Solutions
+
+absl::Status Solver::SolveGreedily() {
+  FillWordCache();
+  while (!word_cache_.empty()) {
+    auto& [score, highest_scoring_words] = *word_cache_.begin();
+    Path word = *highest_scoring_words.begin();
+    if (absl::Status s = PlayWord(word); !s.ok()) return s;
+    FillWordCache();
+  }
+  return absl::OkStatus();
+}
+
+// Helpers
 
 absl::StatusOr<Path> Solver::BestPossiblePathForWord(
     absl::string_view word) const {
@@ -133,25 +150,14 @@ absl::Status Solver::PlayWord(const Path& word) {
   return absl::OkStatus();
 }
 
-absl::Status Solver::SolveGreedily() {
-  FillWordCache();
-  while (!word_cache_.empty()) {
-    auto& [score, highest_scoring_words] = *word_cache_.begin();
-    Path word = *highest_scoring_words.begin();
-    if (absl::Status s = PlayWord(word); !s.ok()) return s;
-    FillWordCache();
-  }
-  return absl::OkStatus();
-}
-
 void Solver::BestPossiblePathForWordDFS(absl::string_view word, int i,
                                         Path& path, Path& best_path) const {
   // Check for success.
   if (i == word.length()) {
-    int score = grid_.ScorePath(path);
-    int best_score = grid_.ScorePath(best_path);
-    if (score > best_score ||
-        (score == best_score && path.Delta() < best_path.Delta())) {
+    int multiplier = path.MultiplierWhenScored();
+    int best_multiplier = best_path.MultiplierWhenScored();
+    if (multiplier > best_multiplier ||
+        (multiplier == best_multiplier && path.Delta() < best_path.Delta())) {
       best_path = path;
     }
     return;
@@ -174,10 +180,8 @@ void Solver::BestPossibleAllStarPathForWordDFS(absl::string_view word, int i,
   // Check for success.
   if (i == word.length()) {
     if (path.star_count() == grid_.star_tiles().size()) {
-      int score = grid_.ScorePath(path);
-      int best_score = grid_.ScorePath(best_path);
-      if (score > best_score ||
-          (score == best_score && path.Delta() < best_path.Delta())) {
+      if (best_path.size() < word.length() ||
+          path.Delta() < best_path.Delta()) {
         best_path = path;
       }
     }

@@ -23,7 +23,7 @@ TEST(SolverTest, WordCache) {
   EXPECT_THAT(solver.word_cache().begin()->second, testing::SizeIs(1));
 }
 
-TEST(SolverTest, BestPossiblePathForWord) {
+TEST(SolverTest, BestPossibleAllStarPathForWord) {
   Solver solver_with_unused_star(
       Trie({"set", "sets", "bet", "bets", "best", "bests", "test", "tests",
             "beset", "besets"}),
@@ -44,14 +44,14 @@ TEST(SolverTest, BestPossiblePathForWord) {
   Path best_path;
   ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
+  ASSERT_THAT(best_path.push_back(solver.grid()[{0, 2}]), IsOk());  // s
   EXPECT_THAT(solver.BestPossibleAllStarPathForWord("bests"),
               IsOkAndHolds(best_path));
 }
 
-TEST(SolverTest, BestPossibleAllStarPathForWord) {
+TEST(SolverTest, BestPossiblePathForWord) {
   Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
                       "tests", "beset", "besets"}),
                 Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
@@ -63,9 +63,9 @@ TEST(SolverTest, BestPossibleAllStarPathForWord) {
   Path best_path;
   ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
+  ASSERT_THAT(best_path.push_back(solver.grid()[{0, 2}]), IsOk());  // s
   EXPECT_THAT(solver.BestPossiblePathForWord("bests"), IsOkAndHolds(best_path));
 }
 
@@ -76,9 +76,9 @@ TEST(SolverTest, LongestPossibleAllStarWord) {
   Path best_path;
   ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
+  ASSERT_THAT(best_path.push_back(solver.grid()[{0, 2}]), IsOk());  // s
 
   EXPECT_THAT(solver.LongestPossibleAllStarWord(), IsOkAndHolds(best_path));
 }

@@ -111,6 +111,15 @@ class Solver {
   // Returns `true` if `grid_` no longer has tiles in it.
   bool FullClear() const { return grid_.FullClear(); }
 
+  //------------------
+  // Solution methods
+
+  // Solver::SolveGreedily()
+  //
+  // Repeatedly plays the highest-scoring word available until no more words can
+  // be found.
+  absl::Status SolveGreedily();
+
   //----------
   // Helpers
 
@@ -118,18 +127,15 @@ class Solver {
   //
   // Constructs and returns the best possible path for a given word. This path
   // is not necessarily continuous, and is likely not. "Best" is determined by
-  // which path returns the highest score. In the event of a tie, the path with
+  // which path has the highest multiplier. In the event of a tie, the path with
   // the lowest delta is chosen.
-  //
-  // TODO: using score here doesn't work, because it incentivizes larger gaps so
-  // more tiles are exposed. Use stars instead.
   absl::StatusOr<Path> BestPossiblePathForWord(absl::string_view word) const;
 
   // Solver::BestPossibleAllStarPathForWord()
   //
-  // Functions identically to `BestPossiblePathForWord()`, but with the added
-  // constraint that the resulting path must contain every star tile in the
-  // grid.
+  // Functions identically to `BestPossiblePathForWord()`, but necessitates that
+  // the path contain all star tiles on the grid. As a result, "best" will
+  // always come down to lowest delta.
   absl::StatusOr<Path> BestPossibleAllStarPathForWord(
       absl::string_view word) const;
 
@@ -168,15 +174,6 @@ class Solver {
   // Fails if `word` is empty, if `word` is non-continuous, or if `word.word()`
   // is not in `trie_`.
   absl::Status PlayWord(const Path& word);
-
-  //------------------
-  // Solution methods
-
-  // Solver::SolveGreedily()
-  //
-  // Repeatedly plays the highest-scoring word available until no more words can
-  // be found.
-  absl::Status SolveGreedily();
 
  private:
   // Solver::BestPossiblePathForWordDFS()
