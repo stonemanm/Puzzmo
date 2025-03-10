@@ -30,8 +30,7 @@ TEST(GameStateTest, Constructor) {
 
 TEST(GameStateTest, FillAndClear) {
   Gamestate bgs(kDummyBoard, kLetterValues,
-                LetterCount("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbcdefghi"),
-                kEmptyBoard);
+                LetterCount("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbcdefghi"));
   Point p1 = {1, 1};
   Point p2 = {2, 2};
   Point p3 = {3, 3};
@@ -156,7 +155,8 @@ TEST(GameStateTest, FillAndClear) {
 }
 
 TEST(GamestateTest, LowercaseLineMethods) {
-  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
+  Gamestate bgs(kDummyBoard, kLetterValues,
+                LetterCount("abcdefghijklmnopqrstuvwxy"),
                 {"abc_e", "fghi_", "kl_no", "_qrst", "u_wxy"});
   EXPECT_EQ(bgs.LineString(bgs.line(0)), "abc_e");
   EXPECT_EQ(bgs.LineString(bgs.line(1)), "fghi_");
@@ -167,7 +167,8 @@ TEST(GamestateTest, LowercaseLineMethods) {
 }
 
 TEST(GamestateTest, GetWord) {
-  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
+  Gamestate bgs(kDummyBoard, kLetterValues,
+                LetterCount("abcdefghijklmnopqrstuvwxy"),
                 {"abc_e", "fghi_", "kl_no", "_qrst", "u_wxy"});
   EXPECT_EQ(bgs.GetWord(bgs.line(0)), "abc");
   EXPECT_EQ(bgs.GetWord(bgs.line(1)), "fghi");
@@ -180,7 +181,8 @@ TEST(GamestateTest, GetWord) {
 }
 
 TEST(GamestateTest, IsComplete) {
-  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
+  Gamestate bgs(kDummyBoard, kLetterValues,
+                LetterCount("abcdefghijklmnopqrstuvwxy"),
                 {"abc_e", "fghi_", "kl_no", "pqr_t", "u_wxy"});
   EXPECT_FALSE(bgs.IsComplete());
   ASSERT_THAT(bgs.FillCell({2, 2}, 'm'), IsOk());
@@ -210,7 +212,7 @@ TEST(GamestateTest, MostRestrictedWordlessRow) {
 }
 
 TEST(GamestateTest, MultiplierCells) {
-  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount(""));
+  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount());
   Point p0 = {0, 4};
   Point p1 = {1, 4};
   Point p2 = {2, 4};
@@ -218,7 +220,8 @@ TEST(GamestateTest, MultiplierCells) {
 }
 
 TEST(GamestateTest, NMostValuableTiles) {
-  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("afggh"), kEmptyBoard);
+  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("afgghz"),
+                {"___z_", "_____", "_____", "_____", "_____"});
   EXPECT_EQ(bgs.NMostValuableLetters(0), "");
   EXPECT_EQ(bgs.NMostValuableLetters(1), "h");
   EXPECT_EQ(bgs.NMostValuableLetters(2), "hg");
@@ -229,7 +232,8 @@ TEST(GamestateTest, NMostValuableTiles) {
 }
 
 TEST(GamestateTest, RegexForLine) {
-  Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("jsmmmmmmmmmm"),
+  Gamestate bgs(kDummyBoard, kLetterValues,
+                LetterCount("abcdefghipqrtjsmmmmmmmmmm"),
                 {"abcde", "fghi_", "_____", "pqr_t", "_____"});
   EXPECT_EQ(bgs.LineRegex(bgs.line(0)), "abcde");
   EXPECT_EQ(bgs.LineRegex(bgs.line(1)), "fghi[jms]");
@@ -254,12 +258,11 @@ TEST(GamestateTest, AllOrNumLetters) {
 }
 
 TEST(GamestateTest, IsChildOf) {
-  Gamestate start(kDummyBoard, kLetterValues,
-                  LetterCount("abcdefghijklmnopqrstuvwxy"));
-  Gamestate partial(kDummyBoard, kLetterValues,
-                    LetterCount("bcdefhijklnopqrtuvwxy"),
+  const LetterCount letters("abcdefghijklmnopqrstuvwxy");
+  Gamestate start(kDummyBoard, kLetterValues, letters);
+  Gamestate partial(kDummyBoard, kLetterValues, letters,
                     {"a____", "_g___", "__m__", "___s_", "_____"});
-  Gamestate end(kDummyBoard, kLetterValues, LetterCount(),
+  Gamestate end(kDummyBoard, kLetterValues, letters,
                 {"abcde", "fghij", "klmno", "pqrst", "uvwxy"});
 
   // True if passed a copy of itself

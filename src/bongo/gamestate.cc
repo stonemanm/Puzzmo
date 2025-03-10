@@ -192,7 +192,7 @@ absl::Status Gamestate::ClearLine(const std::vector<Point> &line) {
 
 absl::Status Gamestate::FillLine(const std::vector<Point> &line,
                                  absl::string_view word) {
-  if (word.length() == line.size())
+  if (word.length() != line.size())
     return absl::InvalidArgumentError(absl::StrFormat(
         kLineWordLengthDifferenceError, word, word.length(), line.size()));
 
