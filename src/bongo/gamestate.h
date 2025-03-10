@@ -43,86 +43,40 @@ bool operator!=(const Cell &lhs, const Cell &rhs);
 
 // bongo::Gamestate
 //
-//
+// The `Gamestate` class represents the state of play in a Bongo game at any
+// given moment. Most of the information is defined within two data members: a
+// 5x5 matrix of `Cell` objects and a `LetterCount` of unplayed letters. It also
+// contains a vector of `Point` objects charting the location of the bonus line,
+// as well as a map of the values for each letter when scoring.
 class Gamestate {
  public:
-  // board and letter_grid should be vector of length 5, containing 5-long
-  // strings. If vectors or strings have length > 5, only the first 5 will be
-  // saved. If vectors or strings have length < 5, empty spaces will fill what
-  // remains.
+  //--------------
+  // Constructors
+
+  // Creates a `Gamestate` object from a vector of strings representing the
+  // board, a `LetterCount` representing the unplaced tiles, a map of letter
+  // values, and another vector of strings indicating already-placed letters.
+  // Both `board` and `letter_board` must be 5x5.
   Gamestate(const std::vector<std::string> board,
             absl::flat_hash_map<char, int> letter_values,
-            LetterCount letter_pool, std::vector<std::string> letter_board);
+            LetterCount unplaced_letters,
+            std::vector<std::string> letter_board);
+
+  // A simpler constructor for the case when no letters have been placed.
+  // `board` must be 5x5.
   Gamestate(const std::vector<std::string> board,
             absl::flat_hash_map<char, int> letter_values,
-            LetterCount letter_pool)
-      : Gamestate(board, letter_values, letter_pool,
+            LetterCount unplaced_letters)
+      : Gamestate(board, letter_values, unplaced_letters,
                   std::vector<std::string>(5, std::string(5, kEmptyCell))) {};
 
-  // Clears the letter from unlocked square p, if present.
-  absl::Status ClearCell(const Point &p);
+  //-----------
+  // Accessors
 
-  // Takes c from the remaining letters and places it in unlocked square p.
-  absl::Status FillCell(const Point &p, char c);
-
-  // Clears all unlocked letters from squares along the path.
-  absl::Status ClearPath(const std::vector<Point> &path);
-
-  // Fills squares along the path with the string_view, unless it conflicts with
-  // the contents of a locked square.
-  absl::Status FillPath(const std::vector<Point> &path, absl::string_view sv);
-
-  // Clears all unlocked letters from the board.
-  absl::Status ClearBoard();
-
-  // Returns the six paths used to score the board.
-  std::vector<std::vector<Point>> PathsToScore() const;
-
-  // Grabs the longest consecutive substring of letters from the path. If it is
-  // 3+ characters (or 4+ if it's the bonus path), return it; otherwise, returns
-  // an empty string. Note that whether or not this is a dictionary word is not
-  // validated.
-  std::string GetWord(const std::vector<Point> &path) const;
-
-  // Returns true iff `other` could have come from the same starting state and
-  // has placed a subset of the letters that this gamestate has. (On the
-  // same squares, of course.)
-  bool IsChildOf(const Gamestate &other) const;
-
-  // Returns true iff every row has a word.
-  bool IsComplete() const;
-
-  // Returns the index of the row with the most letters but doesn't have 3+
-  // consecutive letters. Breaks ties in favor of the lowest index.
-  int MostRestrictedWordlessRow() const;
-
-  LetterCount AllLetters() const;
-  int NumLetters() const;
-  int NumLettersLeft() const;
-  int NumLettersPlaced() const;
-
-  // Returns a vector of the points that have tile multipliers on them.
-  std::vector<Point> MultiplierCells() const;
-
-  // Returns the n remaining letters with the highest scores, with the highest
-  // values first. If fewer than n letters remain, returns all of them.
-  std::string NMostValuableTiles(int n) const;
-
-  // Returns regex to match the path as it currently exists. Any letters will
-  // match, and any nonalphabetical characters are replaced with regex matching
-  // any of the letters remaining.
-  std::string RegexForPath(const std::vector<Point> &path) const;
-
-  /** * * * * * * * * * * *
-   * Accessors & mutators *
-   * * * * * * * * * * * **/
-
+  // Gamestate::grid()
+  //
+  // Provides access to the underlying matrix of `Cell`s.
   std::vector<std::vector<Cell>> grid() const { return grid_; }
-  LetterCount letter_pool() const { return letter_pool_; }
-  absl::flat_hash_map<char, int> values() const { return values_; }
-  std::vector<Point> bonus_path() const { return bonus_line_; }
-  std::vector<Point> row_path(int row) const;
-  std::string path_string(const std::vector<Point> &path) const;
 
   // operator[]
   //
@@ -134,24 +88,140 @@ class Gamestate {
   Cell &operator[](Point p) { return grid_[p.row][p.col]; }
   const Cell &operator[](Point p) const { return grid_[p.row][p.col]; }
 
- private:
-  std::vector<std::vector<Cell>> grid_;
-  LetterCount letter_pool_;
-  absl::flat_hash_map<char, int> values_;
-  std::vector<Point> bonus_line_;
+  // Gamestate::MultiplierCells()
+  //
+  // Returns a vector of points to cells with multipliers greater than 1.
+  std::vector<Point> MultiplierCells() const;
 
-  /** * * * * * * * * *
-   * Abseil functions *
-   * * * * * * * * * **/
+  // Gamestate::letters()
+  //
+  // Returns a `LetterCount` of all letters in the gamestate, both placed and
+  // unplaced.
+  const LetterCount letters() const { return letters_; }
 
-  // Allows hashing of BongoGameState.
-  template <typename H>
-  friend H AbslHashValue(H h, const Gamestate &bgs) {
-    return H::combine(std::move(h), bgs.grid_, bgs.letter_pool_, bgs.values_,
-                      bgs.bonus_line_);
+  // Gamestate::placed_letters()
+  //
+  // Returns a `LetterCount` with all of the letters that have been placed on
+  // the board.
+  LetterCount placed_letters() const { return letters_ - unplaced_letters_; }
+
+  // Gamestate::unplaced_letters()
+  //
+  // Provides access to a `LetterCount` of the unplaced letters.
+  LetterCount unplaced_letters() const { return unplaced_letters_; }
+
+  // Gamestate::NMostValuableLetters()
+  //
+  // Returns the n letters in `unplaced_letters_` with the highest values,
+  // sorted from highest value to lowest. If fewer than n letters remain,
+  // returns all of them.
+  std::string NMostValuableLetters(int n) const;
+
+  // Gamestate::line()
+  //
+  // Returns a vector of points corresponding to the line in the given row.
+  std::vector<Point> line(int row) const;
+
+  // Gamestate::bonus_line()
+  //
+  // Returns a vector of points corresponding to the bonus line on the grid.
+  std::vector<Point> bonus_line() const { return bonus_line_; }
+
+  // Gamestate::LineRegex()
+  //
+  // Returns regex to match the line as it currently exists. Any letters will
+  // match, and any nonalphabetical characters will be replaced with regex
+  // matching any character in `unplaced_letters_`.
+  std::string LineRegex(const std::vector<Point> &line) const;
+
+  // Gamestate::LineString()
+  //
+  // Returns a string comprised of the letter in each `Cell` pointed to by the
+  // `Point` in `line`.
+  std::string LineString(const std::vector<Point> &line) const;
+
+  // Gamestate::letter_values()
+  //
+  // Provides access to a map from chars to their associated tile score.
+  absl::flat_hash_map<char, int> letter_values() const {
+    return letter_values_;
   }
 
-  // Allows easy conversion of BongoGameState to string.
+  //----------
+  // Mutators
+
+  // Gamestate::ClearCell()
+  //
+  // Clears the letter from unlocked cell p, if present.
+  absl::Status ClearCell(const Point &p);
+
+  // Takes c from the remaining letters and places it in unlocked cell p.
+  absl::Status FillCell(const Point &p, char c);
+
+  // Clears all unlocked letters from cells along the line.
+  absl::Status ClearLine(const std::vector<Point> &line);
+
+  // Fills cells along the line with `word`, unless it conflicts with the
+  // contents of a locked cell.
+  absl::Status FillLine(const std::vector<Point> &line, absl::string_view word);
+
+  // Clears all unlocked letters from the board.
+  absl::Status ClearBoard();
+
+  //------------
+  // Relational
+
+  // Gamestate::IsChildOf()
+  //
+  // Returns `true` if `other` could have come from the same starting state and
+  // this gamestate could be turned into `other` solely by placing letters into
+  // empty cells.
+  bool IsChildOf(const Gamestate &other) const;
+
+  //---------
+  // Scoring
+
+  // Returns the six lines used to score the board.
+  std::vector<std::vector<Point>> LinesToScore() const;
+
+  //-------
+  // Words
+
+  // Gamestate::GetWord()
+  //
+  // Grabs the longest consecutive substring of letters from the line. If it is
+  // 3+ characters (or 4+ if it's the bonus line), return it; otherwise, returns
+  // an empty string. Note that whether or not this is a dictionary word is not
+  // validated.
+  std::string GetWord(const std::vector<Point> &line) const;
+
+  // Gamestate::IsComplete()
+  //
+  // Returns `true` if every row has a word on it.
+  bool IsComplete() const;
+
+  // Gamestate::MostRestrictedWordlessRow()
+  //
+  // Returns the index of the row with the most letters but doesn't have 3+
+  // consecutive letters. Breaks ties in favor of the lowest index.
+  int MostRestrictedWordlessRow() const;
+
+ private:
+  std::vector<std::vector<Cell>> grid_;
+  const LetterCount letters_;
+  LetterCount unplaced_letters_;
+  const absl::flat_hash_map<char, int> letter_values_;
+  std::vector<Point> bonus_line_;
+
+  //------------------
+  // Abseil functions
+
+  template <typename H>
+  friend H AbslHashValue(H h, const Gamestate &bgs) {
+    return H::combine(std::move(h), bgs.grid_, bgs.unplaced_letters_,
+                      bgs.letter_values_, bgs.bonus_line_);
+  }
+
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Gamestate &bgs) {
     sink.Append(absl::StrJoin(

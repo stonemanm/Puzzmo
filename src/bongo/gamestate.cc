@@ -6,17 +6,30 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace puzzmo::bongo {
 
 namespace {
 
+constexpr absl::string_view kLineWordLengthDifferenceError =
+    "Word \"%s\" has length %d, but line has size %d.";
+constexpr absl::string_view kLockedCellError =
+    "The cell at %v is locked and cannot be altered.";
+constexpr absl::string_view kNoCellAtPointError =
+    "Point %v does not refer to a cell on the board.";
+
+// A helper function to validate a `Point`.
 bool HasCell(const Point &p) {
   return (0 <= p.row && p.row < 5 && 0 <= p.col && p.col < 5);
 }
 
+// A helper function to validate a row.
 bool HasRow(int row) { return (0 <= row && row < 5); }
 
+// A helper function to identify the longest substring of alphabetical
+// characters in `s`.
 std::string LongestAlphaSubstring(absl::string_view s) {
   int best_start = 0;
   int best_len = 0;
@@ -40,19 +53,16 @@ std::string LongestAlphaSubstring(absl::string_view s) {
 
 }  // namespace
 
-bool operator==(const Cell &lhs, const Cell &rhs) {
-  return lhs.letter == rhs.letter && lhs.multiplier == rhs.multiplier;
-}
-
-bool operator!=(const Cell &lhs, const Cell &rhs) { return !(lhs == rhs); }
+// Constructors
 
 Gamestate::Gamestate(const std::vector<std::string> board,
                      absl::flat_hash_map<char, int> letter_values,
-                     LetterCount letter_pool,
+                     LetterCount unplaced_letters,
                      std::vector<std::string> letter_board)
     : grid_(5, std::vector<Cell>(5)),
-      letter_pool_(letter_pool),
-      values_(letter_values) {
+      letters_(unplaced_letters),
+      unplaced_letters_(unplaced_letters),
+      letter_values_(letter_values) {
   CHECK_EQ(board.size(), 5);
   CHECK_EQ(letter_board.size(), 5);
 
@@ -63,6 +73,9 @@ Gamestate::Gamestate(const std::vector<std::string> board,
     for (int c = 0; c < 5; ++c) {
       Cell &cell = grid_[r][c];
       cell.letter = letter_board[r][c];
+      if (std::isalpha(cell.letter))
+        (void)unplaced_letters_.RemoveLetter(cell.letter);
+
       switch (board[r][c]) {
         case kBonusCell:
           bonus_line_.push_back({.row = r, .col = c});
@@ -80,150 +93,7 @@ Gamestate::Gamestate(const std::vector<std::string> board,
   }
 }
 
-absl::Status Gamestate::ClearCell(const Point &p) {
-  if (!HasCell(p))
-    return absl::InvalidArgumentError(absl::StrCat(
-        "Point ", p, " does not refer to a cell on the board.\n", *this));
-
-  if (grid_[p.row][p.col].is_locked)
-    return absl::FailedPreconditionError(
-        absl::StrCat("Cell ", p, " is locked and cannot be altered.\n", *this));
-
-  if (char b = grid_[p.row][p.col].letter; std::isalpha(b)) {
-    if (auto s = letter_pool_.AddLetter(b); !s.ok()) return s.status();
-  }
-
-  grid_[p.row][p.col].letter = kEmptyCell;
-  return absl::OkStatus();
-}
-
-absl::Status Gamestate::FillCell(const Point &p, char c) {
-  if (auto s = letter_pool_.RemoveLetter(c); !s.ok()) return s.status();
-
-  if (auto s = ClearCell(p); !s.ok()) return s;
-
-  grid_[p.row][p.col].letter = c;
-  return absl::OkStatus();
-}
-
-absl::Status Gamestate::ClearPath(const std::vector<Point> &path) {
-  for (const Point &p : path) {
-    if (!HasCell(p))
-      return absl::InvalidArgumentError(absl::StrCat(
-          "Point ", p, " does not refer to a cell on the board.\n", *this));
-    if (grid_[p.row][p.col].is_locked ||
-        !std::isalpha(grid_[p.row][p.col].letter))
-      continue;
-    if (auto s = ClearCell(p); !s.ok()) return s;
-  }
-  return absl::OkStatus();
-}
-
-absl::Status Gamestate::FillPath(const std::vector<Point> &path,
-                                 absl::string_view sv) {
-  if (path.size() != sv.length())
-    return absl::InvalidArgumentError(
-        absl::StrCat("Word has length ", sv.length(), " but path has size ",
-                     path.size(), ".\n", *this));
-
-  for (int i = 0; i < path.size(); ++i) {
-    const Point p = path[i];
-    if (grid_[p.row][p.col].letter == sv[i]) continue;
-    if (auto s = FillCell(p, sv[i]); !s.ok()) return s;
-  }
-  return absl::OkStatus();
-}
-
-absl::Status Gamestate::ClearBoard() {
-  for (int row = 0; row < 5; ++row) {
-    for (int col = 0; col < 5; ++col) {
-      const Point p = {row, col};
-      if (grid_[p.row][p.col].is_locked) continue;
-      if (auto s = ClearCell(p); !s.ok()) return s;
-    }
-  }
-  return absl::OkStatus();
-}
-
-std::vector<std::vector<Point>> Gamestate::PathsToScore() const {
-  std::vector<std::vector<Point>> paths;
-  paths.push_back(row_path(0));
-  paths.push_back(row_path(1));
-  paths.push_back(row_path(2));
-  paths.push_back(row_path(3));
-  paths.push_back(row_path(4));
-  paths.push_back(bonus_line_);
-  return paths;
-}
-
-std::string Gamestate::GetWord(const std::vector<Point> &path) const {
-  int threshold = (path == bonus_line_) ? 4 : 3;
-  std::string path_substr = LongestAlphaSubstring(path_string(path));
-  return (path_substr.length() >= threshold) ? path_substr : "";
-}
-
-bool Gamestate::IsChildOf(const Gamestate &other) const {
-  if (AllLetters() != other.AllLetters() || values_ != other.values() ||
-      bonus_line_ != other.bonus_path())
-    return false;
-  for (int r = 0; r < 5; ++r) {
-    for (int c = 0; c < 5; ++c) {
-      if (grid_[r][c].multiplier != other.grid()[r][c].multiplier) return false;
-      char l = other.grid()[r][c].letter;
-      if (std::isalpha(l) && grid_[r][c].letter != l) return false;
-    }
-  }
-  return true;
-}
-
-bool Gamestate::IsComplete() const {
-  for (const auto &path : PathsToScore()) {
-    if (path == bonus_line_) continue;
-    if (GetWord(path).empty()) return false;
-  }
-  return true;
-}
-
-int Gamestate::MostRestrictedWordlessRow() const {
-  int row_to_focus = 0;
-  int most_letters = INT_MIN;
-  for (int row = 0; row < 5; ++row) {
-    if (!GetWord(row_path(row)).empty()) continue;
-    int letters = absl::c_count_if(
-        grid_[row], [](const Cell &cell) { return cell.letter != kEmptyCell; });
-    if (letters > most_letters) {
-      most_letters = letters;
-      row_to_focus = row;
-    }
-  }
-  return row_to_focus;
-}
-
-LetterCount Gamestate::AllLetters() const {
-  LetterCount all = letter_pool_;
-  for (const std::vector<Cell> &row : grid_) {
-    for (const Cell &cell : row) {
-      (void)all.AddLetter(cell.letter);
-    }
-  }
-  return all;
-}
-
-int Gamestate::NumLetters() const {
-  return NumLettersLeft() + NumLettersPlaced();
-}
-
-int Gamestate::NumLettersLeft() const { return letter_pool_.size(); }
-
-int Gamestate::NumLettersPlaced() const {
-  int count = 0;
-  for (const std::vector<Cell> &row : grid_) {
-    for (const Cell &cell : row) {
-      if (cell.letter != kEmptyCell) ++count;
-    }
-  }
-  return count;
-}
+// Accessors
 
 std::vector<Point> Gamestate::MultiplierCells() const {
   std::vector<Point> multiplier_cells;
@@ -237,59 +107,189 @@ std::vector<Point> Gamestate::MultiplierCells() const {
   return multiplier_cells;
 }
 
-std::string Gamestate::NMostValuableTiles(int n) const {
+std::string Gamestate::NMostValuableLetters(int n) const {
   if (n <= 0) return "";
 
-  std::string letters = letter_pool_.CharsInOrder();
-  std::sort(letters.begin(), letters.end(),
-            [this](char l, char r) { return values_.at(l) > values_.at(r); });
+  std::string letters = unplaced_letters_.CharsInOrder();
+  std::sort(letters.begin(), letters.end(), [this](char l, char r) {
+    return letter_values_.at(l) > letter_values_.at(r);
+  });
   return letters.substr(0, n);
 }
 
-std::string Gamestate::RegexForPath(const std::vector<Point> &path) const {
+std::vector<Point> Gamestate::line(int row) const {
+  CHECK(HasRow(row));
+  std::vector<Point> line;
+  for (int col = 0; col < 5; ++col) line.push_back({.row = row, .col = col});
+  return line;
+}
+
+std::string Gamestate::LineRegex(const std::vector<Point> &line) const {
   // TODO: Add the ability to search for 4 letter words.
 
-  std::string s = path_string(path);
+  std::string s = LineString(line);
   if (LetterCount(s).empty()) return "";
 
   std::string rgx = "";
-  for (char c : s) {
-    absl::StrAppend(&rgx, std::isalpha(c)
-                              ? std::string(1, c)
-                              : letter_pool_.RegexMatchingContents());
+  for (char l : s) {
+    absl::StrAppend(&rgx, std::isalpha(l)
+                              ? std::string(1, l)
+                              : unplaced_letters_.RegexMatchingContents());
   }
   return rgx;
 }
 
-/** * * * * * * * * * * *
- * Accessors & mutators *
- * * * * * * * * * * * **/
-
-std::vector<Point> Gamestate::row_path(int row) const {
-  if (!HasRow(row)) return {};
-  std::vector<Point> path;
-  for (int col = 0; col < 5; ++col) {
-    path.push_back({row, col});
-  }
-  return path;
-}
-
-std::string Gamestate::path_string(const std::vector<Point> &path) const {
+std::string Gamestate::LineString(const std::vector<Point> &line) const {
   std::string s = "";
-  for (const Point &p : path) {
-    s += grid_[p.row][p.col].letter;
-  }
+  for (const Point &p : line) s.push_back(grid_[p.row][p.col].letter);
   return s;
 }
 
-/** * * * * * * * * * * *
- * Overloaded operators *
- * * * * * * * * * * * **/
+// Mutators
+
+absl::Status Gamestate::ClearCell(const Point &p) {
+  if (!HasCell(p))
+    return absl::InvalidArgumentError(absl::StrFormat(kNoCellAtPointError, p));
+  if (grid_[p.row][p.col].is_locked)
+    return absl::FailedPreconditionError(absl::StrFormat(kLockedCellError, p));
+
+  // If a letter is already in the cell, add it to `unplaced_letters_`.
+  char letter_in_cell = grid_[p.row][p.col].letter;
+  if (std::isalpha(letter_in_cell)) {
+    if (absl::StatusOr<int> s = unplaced_letters_.AddLetter(letter_in_cell);
+        !s.ok())
+      return s.status();
+  }
+
+  grid_[p.row][p.col].letter = kEmptyCell;
+  return absl::OkStatus();
+}
+
+absl::Status Gamestate::FillCell(const Point &p, char l) {
+  // Ensure we have that letter to place.
+  if (absl::StatusOr<int> s = unplaced_letters_.RemoveLetter(l); !s.ok())
+    return s.status();
+  if (absl::Status s = ClearCell(p); !s.ok()) return s;
+
+  grid_[p.row][p.col].letter = l;
+  return absl::OkStatus();
+}
+
+absl::Status Gamestate::ClearLine(const std::vector<Point> &line) {
+  for (const Point &p : line) {
+    if (!HasCell(p))
+      return absl::InvalidArgumentError(
+          absl::StrFormat(kNoCellAtPointError, p));
+
+    // If the cell isn't locked and contains a letter, clear it.
+    if (!grid_[p.row][p.col].is_locked &&
+        std::isalpha(grid_[p.row][p.col].letter)) {
+      if (absl::Status s = ClearCell(p); !s.ok()) return s;
+    }
+  }
+  return absl::OkStatus();
+}
+
+absl::Status Gamestate::FillLine(const std::vector<Point> &line,
+                                 absl::string_view word) {
+  if (word.length() == line.size())
+    return absl::InvalidArgumentError(absl::StrFormat(
+        kLineWordLengthDifferenceError, word, word.length(), line.size()));
+
+  for (int i = 0; i < line.size(); ++i) {
+    const Point p = line[i];
+    // If the letter in the cell already aligns with `word`, we don't call
+    // `FillCell()`.
+    if (grid_[p.row][p.col].letter == word[i]) continue;
+    if (absl::Status s = FillCell(p, word[i]); !s.ok()) return s;
+  }
+  return absl::OkStatus();
+}
+
+absl::Status Gamestate::ClearBoard() {
+  for (int r = 0; r < 5; ++r) {
+    for (int c = 0; c < 5; ++c) {
+      if (grid_[r][c].is_locked) continue;
+      if (absl::Status s = ClearCell({r, c}); !s.ok()) return s;
+    }
+  }
+  return absl::OkStatus();
+}
+
+// Relational
+
+bool Gamestate::IsChildOf(const Gamestate &other) const {
+  if (letters() != other.letters() || letter_values_ != other.letter_values() ||
+      bonus_line_ != other.bonus_line())
+    return false;
+  for (int r = 0; r < 5; ++r) {
+    for (int c = 0; c < 5; ++c) {
+      if (grid_[r][c].multiplier != other.grid()[r][c].multiplier) return false;
+      char l = other.grid()[r][c].letter;
+      if (std::isalpha(l) && grid_[r][c].letter != l) return false;
+    }
+  }
+  return true;
+}
+
+// Scoring
+
+std::vector<std::vector<Point>> Gamestate::LinesToScore() const {
+  std::vector<std::vector<Point>> lines;
+  lines.push_back(line(0));
+  lines.push_back(line(1));
+  lines.push_back(line(2));
+  lines.push_back(line(3));
+  lines.push_back(line(4));
+  lines.push_back(bonus_line_);
+  return lines;
+}
+
+// Words
+
+std::string Gamestate::GetWord(const std::vector<Point> &line) const {
+  int threshold = (line == bonus_line_) ? 4 : 3;
+  std::string line_substr = LongestAlphaSubstring(LineString(line));
+  return (line_substr.length() >= threshold) ? line_substr : "";
+}
+
+bool Gamestate::IsComplete() const {
+  for (const std::vector<Point> &line : LinesToScore()) {
+    if (line == bonus_line_) continue;
+    if (GetWord(line).empty()) return false;
+  }
+  return true;
+}
+
+int Gamestate::MostRestrictedWordlessRow() const {
+  int row_to_focus = 0;
+  int most_letters = INT_MIN;
+  for (int row = 0; row < 5; ++row) {
+    if (!GetWord(line(row)).empty()) continue;
+    int letters = absl::c_count_if(
+        grid_[row], [](const Cell &cell) { return cell.letter != kEmptyCell; });
+    if (letters > most_letters) {
+      most_letters = letters;
+      row_to_focus = row;
+    }
+  }
+  return row_to_focus;
+}
+
+// Operator
+
+bool operator==(const Cell &lhs, const Cell &rhs) {
+  return lhs.letter == rhs.letter && lhs.multiplier == rhs.multiplier;
+}
 
 bool operator==(const Gamestate &lhs, const Gamestate &rhs) {
-  return lhs.grid() == rhs.grid() && lhs.letter_pool() == rhs.letter_pool() &&
-         lhs.values() == rhs.values() && lhs.bonus_path() == rhs.bonus_path();
+  return lhs.grid() == rhs.grid() &&
+         lhs.unplaced_letters() == rhs.unplaced_letters() &&
+         lhs.letter_values() == rhs.letter_values() &&
+         lhs.bonus_line() == rhs.bonus_line();
 }
+
+bool operator!=(const Cell &lhs, const Cell &rhs) { return !(lhs == rhs); }
 
 bool operator!=(const Gamestate &lhs, const Gamestate &rhs) {
   return !(lhs == rhs);

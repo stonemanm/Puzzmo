@@ -17,8 +17,8 @@ Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
       tiles_for_multiplier_tiles_(params.tiles_for_multiplier_tiles) {}
 
 int Solver::CeilingForScore() const {
-  auto values = starting_state_.values();
-  std::string tiles_in_value_order = starting_state_.NMostValuableTiles(25);
+  auto values = starting_state_.letter_values();
+  std::string tiles_in_value_order = starting_state_.NMostValuableLetters(25);
   int score = 0;
   // 1 tile gets 3x score, 6 get 2x, and the rest get 1x.
   // Then multiply that all by 1.3.
@@ -40,7 +40,7 @@ absl::StatusOr<Gamestate> Solver::FindSolutionWithScore(int score) const {
 }
 
 absl::StatusOr<Gamestate> Solver::Solve() {
-  std::vector<Point> bonus_path = starting_state_.bonus_path();
+  std::vector<Point> bonus_path = starting_state_.bonus_line();
   std::vector<Point> multiplier_squares = starting_state_.MultiplierCells();
 
   // // Get the triple multiplier square,,,
@@ -89,9 +89,9 @@ absl::StatusOr<Gamestate> Solver::Solve() {
   absl::flat_hash_set<std::string> bonus_words_to_try;
   // If there are already letters in the bonus path, adjust this phase
   // accordingly
-  LetterCount bplc(starting_state_.path_string(starting_state_.bonus_path()));
+  LetterCount bplc(starting_state_.LineString(starting_state_.bonus_line()));
   LetterCount valuable_letters(
-      starting_state_.NMostValuableTiles(tiles_for_bonus_words_));
+      starting_state_.NMostValuableLetters(tiles_for_bonus_words_));
   absl::flat_hash_set<std::string> combos =
       valuable_letters.CombinationsOfSize(3 - bplc.size());
   for (const auto &combo : combos) {
@@ -99,8 +99,8 @@ absl::StatusOr<Gamestate> Solver::Solve() {
         {.min_length = 4,
          .max_length = 4,
          .min_letters = LetterCount(combo),
-         .max_letters = starting_state_.letter_pool() + bplc,
-         .matching_regex = starting_state_.RegexForPath(bonus_path)});
+         .max_letters = starting_state_.unplaced_letters() + bplc,
+         .matching_regex = starting_state_.LineRegex(bonus_path)});
     bonus_words_to_try.insert(words.begin(), words.end());
   }
   LOG(INFO) << "Found " << bonus_words_to_try.size() << " bonus words to try.";
@@ -114,7 +114,7 @@ absl::StatusOr<Gamestate> Solver::Solve() {
 
     // Place the bonus word on the board
     Gamestate current_board = starting_state_;
-    if (auto s = current_board.FillPath(bonus_path, bonus_word); !s.ok())
+    if (auto s = current_board.FillLine(bonus_path, bonus_word); !s.ok())
       return s;
     for (const Point &p : bonus_path) {
       current_board.set_is_locked_at(p, true);
@@ -123,7 +123,7 @@ absl::StatusOr<Gamestate> Solver::Solve() {
     // Grab the high-scoring tiles not used by the bonus word, and try all the
     // permutations of them on the open multiplier_squares.
     std::string top3 =
-        current_board.NMostValuableTiles(tiles_for_multiplier_tiles_);
+        current_board.NMostValuableLetters(tiles_for_multiplier_tiles_);
     std::sort(top3.begin(), top3.end());
     do {
       std::vector<Point> locked_here;
@@ -168,7 +168,7 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
   if (current_board.IsComplete()) {
     if (int current_score = Score(current_board); current_score > best_score_) {
       LOG(INFO) << absl::StrCat("New best score! (", current_score, ")");
-      for (const auto &path : current_board.PathsToScore()) {
+      for (const auto &path : current_board.LinesToScore()) {
         std::string word = current_board.GetWord(path);
         LOG(INFO) << absl::StrCat(PathScore(current_board, path), " - ", word,
                                   (dict_.IsCommonWord(word) ? " is" : " isn't"),
@@ -189,17 +189,16 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
       {.min_length = 5,
        .max_length = 5,
        .min_letters =
-           LetterCount(current_board.path_string(current_board.row_path(row))),
+           LetterCount(current_board.LineString(current_board.row_line(row))),
        .max_letters =
-           current_board.letter_pool() +
-           LetterCount(current_board.path_string(current_board.row_path(row))),
-       .matching_regex =
-           current_board.RegexForPath(current_board.row_path(row))});
+           current_board.unplaced_letters() +
+           LetterCount(current_board.LineString(current_board.row_line(row))),
+       .matching_regex = current_board.LineRegex(current_board.row_line(row))});
 
   // For each match, if it's possible to place it on the board, do so,
   // recurse, then backtrack.
   for (const auto &word : matches) {
-    if (auto s = current_board.FillPath(current_board.row_path(row), word);
+    if (auto s = current_board.FillLine(current_board.row_line(row), word);
         !s.ok()) {
       return s;
     }
@@ -210,7 +209,7 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
       return s;
     }
 
-    auto s = current_board.ClearPath(current_board.row_path(row));
+    auto s = current_board.ClearLine(current_board.row_line(row));
     if (!s.ok()) return s;
   }
 
@@ -219,7 +218,7 @@ absl::Status Solver::FindWordsRecursively(Gamestate &current_board) {
 
 int Solver::Score(const Gamestate &bgs) const {
   int score = 0;
-  for (const auto &path : bgs.PathsToScore()) {
+  for (const auto &path : bgs.LinesToScore()) {
     score += PathScore(bgs, path);
   }
   return score;
@@ -232,14 +231,14 @@ int Solver::PathScore(const Gamestate &bgs,
 
   // Find the index in path where word begins.
   int offset = 0;
-  while (bgs.path_string(path).substr(offset, word.size()) != word) {
+  while (bgs.LineString(path).substr(offset, word.size()) != word) {
     ++offset;
   }
 
   int score = 0;
   for (int i = 0; i < word.size(); ++i) {
     char c = word[i];
-    score += (bgs.values().at(c) * bgs.multiplier_at(path[i + offset]));
+    score += (bgs.letter_values().at(c) * bgs.multiplier_at(path[i + offset]));
   }
   return std::ceil(score * (dict_.IsCommonWord(word) ? 1.3 : 1));
 }

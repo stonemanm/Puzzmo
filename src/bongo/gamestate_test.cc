@@ -24,8 +24,8 @@ const absl::flat_hash_map<char, int> kLetterValues = {
 
 TEST(GameStateTest, Constructor) {
   Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"));
-  EXPECT_EQ(bgs.values(), kLetterValues);
-  EXPECT_EQ(bgs.letter_pool().CharsInOrder(), "aaaabbbcdefgh");
+  EXPECT_EQ(bgs.letter_values(), kLetterValues);
+  EXPECT_EQ(bgs.unplaced_letters().CharsInOrder(), "aaaabbbcdefgh");
 }
 
 TEST(GameStateTest, FillAndClear) {
@@ -39,23 +39,23 @@ TEST(GameStateTest, FillAndClear) {
   Point ip1 = {-1, 2};
   Point ip2 = {2, 5};
 
-  std::vector<Point> path = {{2, 0}, {2, 1}, {2, 2}, {2, 3}, {2, 4}};
+  std::vector<Point> line = {{2, 0}, {2, 1}, {2, 2}, {2, 3}, {2, 4}};
 
   /**
    * FillCell
    */
 
   // Uses letter from letter count
-  EXPECT_EQ(bgs.letter_pool().count('a'), 37);
+  EXPECT_EQ(bgs.unplaced_letters().count('a'), 37);
   EXPECT_THAT(bgs.FillCell(p1, 'a'), IsOk());
-  EXPECT_EQ(bgs.letter_pool().count('a'), 36);
+  EXPECT_EQ(bgs.unplaced_letters().count('a'), 36);
   EXPECT_EQ(bgs[p1].letter, 'a');
 
   // Removes placed letter if present
   EXPECT_THAT(bgs.FillCell(p2, 'a'), IsOk());
-  EXPECT_EQ(bgs.letter_pool().count('a'), 35);
+  EXPECT_EQ(bgs.unplaced_letters().count('a'), 35);
   EXPECT_THAT(bgs.FillCell(p2, 'b'), IsOk());
-  EXPECT_EQ(bgs.letter_pool().count('a'), 36);
+  EXPECT_EQ(bgs.unplaced_letters().count('a'), 36);
   EXPECT_EQ(bgs[p2].letter, 'b');
 
   // Fails for letter not in bgs
@@ -66,10 +66,10 @@ TEST(GameStateTest, FillAndClear) {
 
   // Fails if cell is locked
   bgs[p4].is_locked = true;
-  EXPECT_EQ(bgs.letter_pool().count('d'), 1);
+  EXPECT_EQ(bgs.unplaced_letters().count('d'), 1);
   EXPECT_THAT(bgs.FillCell(p4, 'd'),
               StatusIs(absl::StatusCode::kFailedPrecondition));
-  EXPECT_EQ(bgs.letter_pool().count('d'), 0);
+  EXPECT_EQ(bgs.unplaced_letters().count('d'), 0);
   EXPECT_EQ(bgs[p4].letter, kEmptyCell);
 
   // Fails if cell is out of bounds
@@ -79,32 +79,32 @@ TEST(GameStateTest, FillAndClear) {
               StatusIs(absl::StatusCode::kInvalidArgument));
 
   /**
-   * FillPath
+   * FillLine
    */
 
   // Fails if given too few characters
-  EXPECT_THAT(bgs.FillPath(path, "aaa"),
+  EXPECT_THAT(bgs.FillLine(line, "aaa"),
               StatusIs(absl::StatusCode(absl::StatusCode::kInvalidArgument)));
-  EXPECT_EQ(bgs.path_string(path), "__b__");
+  EXPECT_EQ(bgs.LineString(line), "__b__");
 
   // Fails if given too many characters
-  EXPECT_THAT(bgs.FillPath(path, "aaaaaaaa"),
+  EXPECT_THAT(bgs.FillLine(line, "aaaaaaaa"),
               StatusIs(absl::StatusCode(absl::StatusCode::kInvalidArgument)));
-  EXPECT_EQ(bgs.path_string(path), "__b__");
+  EXPECT_EQ(bgs.LineString(line), "__b__");
 
-  // Fails if point on path locked and doesn't align with the word being placed
+  // Fails if point on line locked and doesn't align with the word being placed
   bgs[p2].is_locked = true;
-  EXPECT_THAT(bgs.FillPath(path, "aaaaa"),
+  EXPECT_THAT(bgs.FillLine(line, "aaaaa"),
               StatusIs(absl::StatusCode::kFailedPrecondition));
-  EXPECT_EQ(bgs.path_string(path), "aab__");
+  EXPECT_EQ(bgs.LineString(line), "aab__");
   // NOTE: places letters until it reaches the failure.
 
   // Succeeds even if point locked, if it matches
   // Overwrites tiles that aren't matched.
-  EXPECT_THAT(bgs.FillCell(path[1], 'e'), IsOk());
-  EXPECT_EQ(bgs.path_string(path), "aeb__");
-  EXPECT_THAT(bgs.FillPath(path, "aabaa"), IsOk());
-  EXPECT_EQ(bgs.path_string(path), "aabaa");
+  EXPECT_THAT(bgs.FillCell(line[1], 'e'), IsOk());
+  EXPECT_EQ(bgs.LineString(line), "aeb__");
+  EXPECT_THAT(bgs.FillLine(line, "aabaa"), IsOk());
+  EXPECT_EQ(bgs.LineString(line), "aabaa");
 
   /**
    * ClearCell
@@ -124,24 +124,24 @@ TEST(GameStateTest, FillAndClear) {
   EXPECT_EQ(bgs[p4].letter, kEmptyCell);
 
   /**
-   * ClearPath
+   * ClearLine
    */
 
   // Ignores already blank spaces, even if locked
-  EXPECT_THAT(bgs.ClearPath({p1, p4}), IsOk());
+  EXPECT_THAT(bgs.ClearLine({p1, p4}), IsOk());
 
   // Succeeds but skips locked spaces
   bgs[p2].is_locked = false;
-  bgs[path[1]].is_locked = true;
-  bgs[path[4]].is_locked = true;
-  EXPECT_THAT(bgs.ClearPath(path), IsOk());
-  EXPECT_EQ(bgs.path_string(path), "_a__a");
+  bgs[line[1]].is_locked = true;
+  bgs[line[4]].is_locked = true;
+  EXPECT_THAT(bgs.ClearLine(line), IsOk());
+  EXPECT_EQ(bgs.LineString(line), "_a__a");
 
-  // Fails if path contains invalid point, but does the work before that.
-  bgs[path[4]].is_locked = false;
-  EXPECT_THAT(bgs.ClearPath({path[4], ip1}),
+  // Fails if line contains invalid point, but does the work before that.
+  bgs[line[4]].is_locked = false;
+  EXPECT_THAT(bgs.ClearLine({line[4], ip1}),
               StatusIs(absl::StatusCode::kInvalidArgument));
-  EXPECT_EQ(bgs[path[4]].letter, kEmptyCell);
+  EXPECT_EQ(bgs[line[4]].letter, kEmptyCell);
 
   /**
    * ClearBoard
@@ -149,34 +149,34 @@ TEST(GameStateTest, FillAndClear) {
 
   // Locked tiles survive
   EXPECT_EQ(bgs[p3].letter, 'c');
-  EXPECT_EQ(bgs[path[1]].letter, 'a');
+  EXPECT_EQ(bgs[line[1]].letter, 'a');
   EXPECT_THAT(bgs.ClearBoard(), IsOk());
   EXPECT_EQ(bgs[p3].letter, kEmptyCell);
-  EXPECT_EQ(bgs[path[1]].letter, 'a');
+  EXPECT_EQ(bgs[line[1]].letter, 'a');
 }
 
-TEST(GamestateTest, LowercasePathMethods) {
+TEST(GamestateTest, LowercaseLineMethods) {
   Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
                 {"abc_e", "fghi_", "kl_no", "_qrst", "u_wxy"});
-  EXPECT_EQ(bgs.path_string(bgs.row_path(0)), "abc_e");
-  EXPECT_EQ(bgs.path_string(bgs.row_path(1)), "fghi_");
-  EXPECT_EQ(bgs.path_string(bgs.row_path(2)), "kl_no");
-  EXPECT_EQ(bgs.path_string(bgs.row_path(3)), "_qrst");
-  EXPECT_EQ(bgs.path_string(bgs.row_path(4)), "u_wxy");
-  EXPECT_EQ(bgs.path_string(bgs.bonus_path()), "ag_s");
+  EXPECT_EQ(bgs.LineString(bgs.line(0)), "abc_e");
+  EXPECT_EQ(bgs.LineString(bgs.line(1)), "fghi_");
+  EXPECT_EQ(bgs.LineString(bgs.line(2)), "kl_no");
+  EXPECT_EQ(bgs.LineString(bgs.line(3)), "_qrst");
+  EXPECT_EQ(bgs.LineString(bgs.line(4)), "u_wxy");
+  EXPECT_EQ(bgs.LineString(bgs.bonus_line()), "ag_s");
 }
 
 TEST(GamestateTest, GetWord) {
   Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
                 {"abc_e", "fghi_", "kl_no", "_qrst", "u_wxy"});
-  EXPECT_EQ(bgs.GetWord(bgs.row_path(0)), "abc");
-  EXPECT_EQ(bgs.GetWord(bgs.row_path(1)), "fghi");
-  EXPECT_EQ(bgs.GetWord(bgs.row_path(2)), "");
-  EXPECT_EQ(bgs.GetWord(bgs.row_path(3)), "qrst");
-  EXPECT_EQ(bgs.GetWord(bgs.row_path(4)), "wxy");
-  EXPECT_EQ(bgs.GetWord(bgs.bonus_path()), "");
+  EXPECT_EQ(bgs.GetWord(bgs.line(0)), "abc");
+  EXPECT_EQ(bgs.GetWord(bgs.line(1)), "fghi");
+  EXPECT_EQ(bgs.GetWord(bgs.line(2)), "");
+  EXPECT_EQ(bgs.GetWord(bgs.line(3)), "qrst");
+  EXPECT_EQ(bgs.GetWord(bgs.line(4)), "wxy");
+  EXPECT_EQ(bgs.GetWord(bgs.bonus_line()), "");
   ASSERT_THAT(bgs.FillCell({2, 2}, 'm'), IsOk());
-  EXPECT_EQ(bgs.GetWord(bgs.bonus_path()), "agms");
+  EXPECT_EQ(bgs.GetWord(bgs.bonus_line()), "agms");
 }
 
 TEST(GamestateTest, IsComplete) {
@@ -199,13 +199,13 @@ TEST(GamestateTest, MostRestrictedWordlessRow) {
   EXPECT_EQ(bgs.MostRestrictedWordlessRow(), 1);
 
   // If a row has 5 letters, it's not considered
-  ASSERT_THAT(bgs.FillPath(bgs.row_path(1), "fghij"), IsOk());
+  ASSERT_THAT(bgs.FillLine(bgs.line(1), "fghij"), IsOk());
   EXPECT_EQ(bgs.MostRestrictedWordlessRow(), 0);
 
   // Two rows with three letters each, but one has a subsequence, so it's
   // discounted
-  ASSERT_THAT(bgs.FillPath({{2, 1}, {2, 2}, {2, 3}}, "lmn"), IsOk());
-  ASSERT_THAT(bgs.FillPath({{3, 0}, {3, 2}, {3, 4}}, "prt"), IsOk());
+  ASSERT_THAT(bgs.FillLine({{2, 1}, {2, 2}, {2, 3}}, "lmn"), IsOk());
+  ASSERT_THAT(bgs.FillLine({{3, 0}, {3, 2}, {3, 4}}, "prt"), IsOk());
   EXPECT_EQ(bgs.MostRestrictedWordlessRow(), 3);
 }
 
@@ -219,38 +219,38 @@ TEST(GamestateTest, MultiplierCells) {
 
 TEST(GamestateTest, NMostValuableTiles) {
   Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("afggh"), kEmptyBoard);
-  EXPECT_EQ(bgs.NMostValuableTiles(0), "");
-  EXPECT_EQ(bgs.NMostValuableTiles(1), "h");
-  EXPECT_EQ(bgs.NMostValuableTiles(2), "hg");
-  EXPECT_EQ(bgs.NMostValuableTiles(3), "hgg");
-  EXPECT_EQ(bgs.NMostValuableTiles(4), "hggf");
-  EXPECT_EQ(bgs.NMostValuableTiles(5), "hggfa");
-  EXPECT_EQ(bgs.NMostValuableTiles(6), "hggfa");
+  EXPECT_EQ(bgs.NMostValuableLetters(0), "");
+  EXPECT_EQ(bgs.NMostValuableLetters(1), "h");
+  EXPECT_EQ(bgs.NMostValuableLetters(2), "hg");
+  EXPECT_EQ(bgs.NMostValuableLetters(3), "hgg");
+  EXPECT_EQ(bgs.NMostValuableLetters(4), "hggf");
+  EXPECT_EQ(bgs.NMostValuableLetters(5), "hggfa");
+  EXPECT_EQ(bgs.NMostValuableLetters(6), "hggfa");
 }
 
-TEST(GamestateTest, RegexForPath) {
+TEST(GamestateTest, RegexForLine) {
   Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("jsmmmmmmmmmm"),
                 {"abcde", "fghi_", "_____", "pqr_t", "_____"});
-  EXPECT_EQ(bgs.RegexForPath(bgs.row_path(0)), "abcde");
-  EXPECT_EQ(bgs.RegexForPath(bgs.row_path(1)), "fghi[jms]");
-  EXPECT_EQ(bgs.RegexForPath(bgs.row_path(2)), "");
-  EXPECT_EQ(bgs.RegexForPath(bgs.row_path(3)), "pqr[jms]t");
-  EXPECT_EQ(bgs.RegexForPath(bgs.bonus_path()), "ag[jms][jms]");
+  EXPECT_EQ(bgs.LineRegex(bgs.line(0)), "abcde");
+  EXPECT_EQ(bgs.LineRegex(bgs.line(1)), "fghi[jms]");
+  EXPECT_EQ(bgs.LineRegex(bgs.line(2)), "");
+  EXPECT_EQ(bgs.LineRegex(bgs.line(3)), "pqr[jms]t");
+  EXPECT_EQ(bgs.LineRegex(bgs.bonus_line()), "ag[jms][jms]");
 }
 
 TEST(GamestateTest, AllOrNumLetters) {
   const LetterCount all_letters("aaaabbbcdefgh");
   Gamestate bgs(kDummyBoard, kLetterValues, all_letters);
-  EXPECT_EQ(bgs.AllLetters(), all_letters);
-  EXPECT_EQ(bgs.NumLetters(), 13);
-  EXPECT_EQ(bgs.NumLettersLeft(), 13);
-  EXPECT_EQ(bgs.NumLettersPlaced(), 0);
+  EXPECT_EQ(bgs.letters(), all_letters);
+  EXPECT_EQ(bgs.letters().size(), 13);
+  EXPECT_EQ(bgs.unplaced_letters().size(), 13);
+  EXPECT_EQ(bgs.placed_letters().size(), 0);
 
-  ASSERT_THAT(bgs.FillPath(bgs.bonus_path(), "abcd"), IsOk());
-  EXPECT_EQ(bgs.AllLetters(), all_letters);
-  EXPECT_EQ(bgs.NumLetters(), 13);
-  EXPECT_EQ(bgs.NumLettersLeft(), 9);
-  EXPECT_EQ(bgs.NumLettersPlaced(), 4);
+  ASSERT_THAT(bgs.FillLine(bgs.bonus_line(), "abcd"), IsOk());
+  EXPECT_EQ(bgs.letters(), all_letters);
+  EXPECT_EQ(bgs.letters().size(), 13);
+  EXPECT_EQ(bgs.unplaced_letters().size(), 9);
+  EXPECT_EQ(bgs.placed_letters().size(), 4);
 }
 
 TEST(GamestateTest, IsChildOf) {
@@ -295,12 +295,12 @@ TEST(GamestateTest, IsChildOf) {
   EXPECT_FALSE(start.IsChildOf(different_multipliers));
   EXPECT_FALSE(different_multipliers.IsChildOf(start));
 
-  // Different bonus path returns false.
-  Gamestate different_bonus_path({"___*2", "__*_2", "_*__3", "*____", "_____"},
+  // Different bonus line returns false.
+  Gamestate different_bonus_line({"___*2", "__*_2", "_*__3", "*____", "_____"},
                                  kLetterValues,
                                  LetterCount("abcdefghijklmnopqrstuvwxy"));
-  EXPECT_FALSE(start.IsChildOf(different_bonus_path));
-  EXPECT_FALSE(different_bonus_path.IsChildOf(start));
+  EXPECT_FALSE(start.IsChildOf(different_bonus_line));
+  EXPECT_FALSE(different_bonus_line.IsChildOf(start));
 
   // Different values returns false.
   Gamestate different_values(
