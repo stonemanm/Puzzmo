@@ -18,23 +18,6 @@ Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
       tiles_for_bonus_words_(params.tiles_for_bonus_words),
       tiles_for_multiplier_tiles_(params.tiles_for_multiplier_tiles) {}
 
-int Solver::CeilingForScore() const {
-  auto values = starting_state_.letter_values();
-  std::string tiles_in_value_order = starting_state_.NMostValuableLetters(25);
-  int score = 0;
-  // 1 tile gets 3x score, 6 get 2x, and the rest get 1x.
-  // Then multiply that all by 1.3.
-  score += values[tiles_in_value_order[0]] * 3;
-  for (int i = 1; i < 8; ++i) {
-    score += values[tiles_in_value_order[i]] * 2;
-  }
-  for (int i = 8; i < tiles_in_value_order.size(); ++i) {
-    score += values[tiles_in_value_order[i]];
-  }
-
-  return std::ceil(1.3 * score);
-}
-
 // Mutators
 
 void Solver::reset() { state_ = starting_state_; }

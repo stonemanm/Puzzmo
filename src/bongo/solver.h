@@ -69,12 +69,6 @@ class Solver {
   // Returns the `Gamestate` that scored `best_score`.
   Gamestate best_state() const { return best_state_; }
 
-  // Solver::CeilingForScore()
-  //
-  // Returns the highest possible score for the gamestate with the assumption
-  // that every string is a common word.
-  int CeilingForScore() const;
-
   //----------
   // Mutators
 

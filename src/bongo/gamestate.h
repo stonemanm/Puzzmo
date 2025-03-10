@@ -181,6 +181,12 @@ class Gamestate {
   // Returns the six lines used to score the board.
   std::vector<std::vector<Point>> LinesToScore() const;
 
+  // Solver::UpperBoundOnScore()
+  //
+  // Returns the highest possible score for the gamestate with the assumption
+  // that every string is a common word.
+  int UpperBoundOnScore() const;
+
   //-------
   // Words
 

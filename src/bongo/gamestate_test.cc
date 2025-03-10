@@ -28,6 +28,12 @@ TEST(GameStateTest, Constructor) {
   EXPECT_EQ(bgs.unplaced_letters().CharsInOrder(), "aaaabbbcdefgh");
 }
 
+TEST(GameStateTest, UpperBoundOnScore) {
+  Gamestate bgs(kDummyBoard, kLetterValues,
+                LetterCount("abcdefghijklmnopqrstuvwxy"));
+  EXPECT_EQ(bgs.UpperBoundOnScore(), 679);
+}
+
 TEST(GameStateTest, FillAndClear) {
   Gamestate bgs(kDummyBoard, kLetterValues,
                 LetterCount("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbcdefghi"));

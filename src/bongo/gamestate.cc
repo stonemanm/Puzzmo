@@ -245,6 +245,19 @@ std::vector<std::vector<Point>> Gamestate::LinesToScore() const {
   return lines;
 }
 
+int Gamestate::UpperBoundOnScore() const {
+  std::string tiles_in_value_order = NMostValuableLetters(25);
+  int score = 0;
+  score += letter_values_.at(tiles_in_value_order[0]) * 3;
+  for (int i = 1; i < 8; ++i) {
+    score += letter_values_.at(tiles_in_value_order[i]) * 2;
+  }
+  for (int i = 8; i < tiles_in_value_order.size(); ++i) {
+    score += letter_values_.at(tiles_in_value_order[i]);
+  }
+  return std::ceil(1.3 * score);
+}
+
 // Words
 
 std::string Gamestate::GetWord(const std::vector<Point> &line) const {
