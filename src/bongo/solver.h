@@ -88,7 +88,7 @@ class Solver {
   // Solver::FindWordsRecursively()
   //
   // A recursive helper method used by `Solve()`.
-  absl::Status FindWordsRecursively(Gamestate &current_board);
+  absl::Status FindWordsRecursively();
 
   //---------
   // Scoring
@@ -98,17 +98,40 @@ class Solver {
   // Gets the word from `line` and checks whether it is a valid word. If not,
   // returns 0. If it is, calculates the score from the letters and multipliers,
   // and multiplies by 1.3 if the word is a common word before returning.
-  int LineScore(const Gamestate &bgs, const std::vector<Point> &line) const;
+  int LineScore(const std::vector<Point> &line) const;
 
   // Solver::Score()
   //
   // Sums `LineScore` for the six lines to be used in scoring.
-  int Score(const Gamestate &bgs) const;
+  int Score() const;
+
+  //-------
+  // Words
+
+  // Solver::GetWord()
+  //
+  // Returns the word that will be scored from the line in `state_`. Word must
+  // consist of 3+ consecutive letters (or 4 exactly if in the bonus line) and
+  // be a valid word in `dict_`. If these conditions are failed, returns an
+  // empty string.
+  std::string GetWord(const std::vector<Point> &line) const;
+
+  // Solver::IsComplete()
+  //
+  // Returns `true` if every row of `state_` has a word on it.
+  bool IsComplete() const;
+
+  // Solver::MostRestrictedWordlessRow()
+  //
+  // Returns the index of the row with the most letters that doesn't have a word
+  // in it. Breaks ties in favor of the lowest index.
+  int MostRestrictedWordlessRow() const;
 
   //---------
   // Members
 
   const Dict dict_;
+  const std::vector<std::vector<Point>> lines_;
   const Gamestate starting_state_;
   Gamestate state_;
   Gamestate best_state_;

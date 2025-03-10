@@ -51,6 +51,7 @@ namespace {
 //---------
 // Helpers
 
+// Turns the lines of a file into strings in a vector.
 absl::StatusOr<std::vector<std::string>> LoadStringVector(
     const std::string &path) {
   std::ifstream file(path);
@@ -67,27 +68,32 @@ absl::StatusOr<std::vector<std::string>> LoadStringVector(
   return strs;
 }
 
+// Loads data from the board and tile files and creates the starting state.
 absl::StatusOr<Gamestate> LoadStartingState() {
-  auto board = LoadStringVector(absl::GetFlag(FLAGS_path_to_board_file));
-  if (!board.ok()) return board.status();
+  absl::StatusOr<std::vector<std::string>> grid_strings =
+      LoadStringVector(absl::GetFlag(FLAGS_path_to_board_file));
+  if (!grid_strings.ok()) return grid_strings.status();
 
-  absl::flat_hash_map<char, int> letter_values;
-  LetterCount letter_pool;
-  auto tile_triples = LoadStringVector(absl::GetFlag(FLAGS_path_to_tile_file));
+  absl::StatusOr<std::vector<std::string>> tile_triples =
+      LoadStringVector(absl::GetFlag(FLAGS_path_to_tile_file));
   if (!tile_triples.ok()) return tile_triples.status();
 
+  absl::flat_hash_map<char, int> letter_values;
+  LetterCount letters;
   for (const std::string &triple : *tile_triples) {
     std::vector<std::string> v = absl::StrSplit(triple, " ");
-    if (v.size() != 3) {
+    if (v.size() != 3)
       return absl::InvalidArgumentError(absl::StrCat(
-          "Error: line in ", absl::GetFlag(FLAGS_path_to_tile_file),
-          " not properly formatted: ", triple));
-    }
-    char c = v[0][0];
-    auto s = letter_pool.AddLetter(c, std::stoi(v[1]));
-    letter_values[c] = std::stoi(v[2]);
+          "Error: line in tile file not properly formatted: ", triple));
+
+    char letter = v[0][0];
+    int count = std::stoi(v[1]);
+    int value = std::stoi(v[2]);
+    if (absl::StatusOr<int> s = letters.AddLetter(letter, count); !s.ok())
+      return s.status();
+    letter_values[letter] = value;
   }
-  return Gamestate(*board, letter_values, letter_pool);
+  return Gamestate(*grid_strings, letter_values, letters);
 }
 
 }  // namespace
@@ -106,7 +112,7 @@ int main(int argc, const char *argv[]) {
     LOG(ERROR) << starting_state.status();
     return 1;
   }
-  if (starting_state->NumLetters() < 25) {
+  if (starting_state->letters().size() < 25) {
     LOG(ERROR) << "Fewer than 25 letters provided in letter pool.";
     return 1;
   }
