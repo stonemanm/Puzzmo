@@ -1,0 +1,11 @@
+# Exports the files used as input for the solvers.
+
+exports_files(["bongo_board.txt"])
+
+exports_files(["bongo_tiles.txt"])
+
+exports_files(["pile_up_poker_cards.txt"])
+
+exports_files(["spelltower_board.txt"])
+
+exports_files(["typeshift_board.txt"])

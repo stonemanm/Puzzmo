@@ -8,8 +8,8 @@ cc_binary(
     name = "play_bongo",
     srcs = ["play_bongo.cc"],
     data = [
-        "//data:bongo_board.txt",
-        "//data:bongo_tiles.txt",
+        "//inputs:bongo_board.txt",
+        "//inputs:bongo_tiles.txt",
     ],
     deps = [
         "//src/bongo:dict",
@@ -29,7 +29,7 @@ cc_binary(
     name = "play_pile_up_poker",
     srcs = ["play_pile_up_poker.cc"],
     data = [
-        "//data:pile_up_poker_cards.txt",
+        "//inputs:pile_up_poker_cards.txt",
     ],
     deps = [
         "//src/pileuppoker:pile_up_poker_solver",
@@ -42,7 +42,7 @@ cc_binary(
     name = "play_spelltower",
     srcs = ["play_spelltower.cc"],
     data = [
-        "//data:spelltower_board.txt",
+        "//inputs:spelltower_board.txt",
     ],
     deps = [
         "//src/spelltower:path",
@@ -58,7 +58,7 @@ cc_binary(
     name = "play_typeshift",
     srcs = ["play_typeshift.cc"],
     data = [
-        "//data:typeshift_board.txt",
+        "//inputs:typeshift_board.txt",
     ],
     deps = [
         "//src/shared:dictionary_utils",

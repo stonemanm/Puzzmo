@@ -1,16 +1,6 @@
-# Exports the input files and the word lists for the puzzles
-
-exports_files(["bongo_board.txt"])
-
-exports_files(["bongo_tiles.txt"])
-
-exports_files(["pile_up_poker_cards.txt"])
+# Exports the word lists and other data for the puzzles.
 
 exports_files(["serialized_trie.txt"])
-
-exports_files(["spelltower_board.txt"])
-
-exports_files(["typeshift_board.txt"])
 
 exports_files(["words_bongo_common.txt"])
 
