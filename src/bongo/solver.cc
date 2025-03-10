@@ -41,7 +41,7 @@ absl::StatusOr<Gamestate> Solver::FindSolutionWithScore(int score) const {
 
 absl::StatusOr<Gamestate> Solver::Solve() {
   std::vector<Point> bonus_path = starting_state_.bonus_path();
-  std::vector<Point> multiplier_squares = starting_state_.MultiplierSquares();
+  std::vector<Point> multiplier_squares = starting_state_.MultiplierCells();
 
   // // Get the triple multiplier square,,,
   // Point triple_square;
@@ -132,7 +132,7 @@ absl::StatusOr<Gamestate> Solver::Solve() {
         if (std::isalpha(current_board.char_at(p))) continue;
         // If we have an error placing tiles, clean up the ones we have placed
         // so far and then move on.
-        if (auto s = current_board.FillSquare(p, top3[i]); !s.ok()) return s;
+        if (auto s = current_board.FillCell(p, top3[i]); !s.ok()) return s;
 
         current_board.set_is_locked_at(p, true);
         locked_here.push_back(p);
@@ -142,8 +142,7 @@ absl::StatusOr<Gamestate> Solver::Solve() {
 
       for (int i = 0; i < locked_here.size(); ++i) {
         current_board.set_is_locked_at(locked_here[i], false);
-        if (auto s = current_board.ClearSquare(locked_here[i]); !s.ok())
-          return s;
+        if (auto s = current_board.ClearCell(locked_here[i]); !s.ok()) return s;
       }
     } while (std::next_permutation(top3.begin(), top3.end()));
   }

@@ -21,6 +21,26 @@
 
 namespace puzzmo::bongo {
 
+constexpr char kBonusCell = '*';
+// The character used for an empty cell.
+constexpr char kEmptyCell = '_';
+constexpr char kDoubleMultiplier = '2';
+constexpr char kTripleMultiplier = '3';
+
+// bongo::Cell
+//
+// The `Cell` struct is an atomic component of a Bongo grid. It has a multiplier
+// value of 1x, 2x, or 3x, and may or may not contain a letter. It can also be
+// locked, which prevents it from being filled or cleared.
+struct Cell {
+  bool is_locked = false;
+  char letter = kEmptyCell;
+  int multiplier = 1;
+};
+
+bool operator==(const Cell &lhs, const Cell &rhs);
+bool operator!=(const Cell &lhs, const Cell &rhs);
+
 // bongo::Gamestate
 //
 //
@@ -36,13 +56,14 @@ class Gamestate {
   Gamestate(const std::vector<std::string> board,
             absl::flat_hash_map<char, int> letter_values,
             LetterCount letter_pool)
-      : Gamestate(board, letter_values, letter_pool, {}) {};
+      : Gamestate(board, letter_values, letter_pool,
+                  std::vector<std::string>(5, std::string(5, kEmptyCell))) {};
 
   // Clears the letter from unlocked square p, if present.
-  absl::Status ClearSquare(const Point &p);
+  absl::Status ClearCell(const Point &p);
 
   // Takes c from the remaining letters and places it in unlocked square p.
-  absl::Status FillSquare(const Point &p, char c);
+  absl::Status FillCell(const Point &p, char c);
 
   // Clears all unlocked letters from squares along the path.
   absl::Status ClearPath(const std::vector<Point> &path);
@@ -81,7 +102,7 @@ class Gamestate {
   int NumLettersPlaced() const;
 
   // Returns a vector of the points that have tile multipliers on them.
-  std::vector<Point> MultiplierSquares() const;
+  std::vector<Point> MultiplierCells() const;
 
   // Returns the n remaining letters with the highest scores, with the highest
   // values first. If fewer than n letters remain, returns all of them.
@@ -96,12 +117,10 @@ class Gamestate {
    * Accessors & mutators *
    * * * * * * * * * * * **/
 
+  std::vector<std::vector<Cell>> grid() const { return grid_; }
   LetterCount letter_pool() const { return letter_pool_; }
-  std::vector<std::string> letter_board() const { return letter_board_; }
-  std::vector<std::vector<int>> mult_board() const { return mult_board_; }
-  std::vector<std::vector<bool>> lock_board() const { return lock_board_; }
   absl::flat_hash_map<char, int> values() const { return values_; }
-  std::vector<Point> bonus_path() const { return bonus_path_; }
+  std::vector<Point> bonus_path() const { return bonus_line_; }
   std::vector<Point> row_path(int row) const;
   std::string path_string(const std::vector<Point> &path) const;
 
@@ -118,12 +137,10 @@ class Gamestate {
   void set_char_at(const Point &p, char c);
   void set_char_at(int row, int col, char c);
 
+  std::vector<std::vector<Cell>> grid_;
   LetterCount letter_pool_;
-  std::vector<std::string> letter_board_;
-  std::vector<std::vector<int>> mult_board_;
-  std::vector<std::vector<bool>> lock_board_;
   absl::flat_hash_map<char, int> values_;
-  std::vector<Point> bonus_path_;
+  std::vector<Point> bonus_line_;
 
   /** * * * * * * * * *
    * Abseil functions *
@@ -132,18 +149,23 @@ class Gamestate {
   // Allows hashing of BongoGameState.
   template <typename H>
   friend H AbslHashValue(H h, const Gamestate &bgs) {
-    return H::combine(std::move(h), bgs.letter_pool_, bgs.letter_board_,
-                      bgs.mult_board_, bgs.lock_board_, bgs.values_,
-                      bgs.bonus_path_);
+    return H::combine(std::move(h), bgs.grid_, bgs.letter_pool_, bgs.values_,
+                      bgs.bonus_line_);
   }
 
   // Allows easy conversion of BongoGameState to string.
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Gamestate &bgs) {
-    absl::Format(&sink, "%v\n[%s]\n[%s]\n[%s]\n[%s]\n[%s]", bgs.letter_pool_,
-                 bgs.letter_board_[0], bgs.letter_board_[1],
-                 bgs.letter_board_[2], bgs.letter_board_[3],
-                 bgs.letter_board_[4]);
+    sink.Append(absl::StrJoin(
+        bgs.grid_, "\n", [](std::string *out, const std::vector<Cell> &row) {
+          absl::StrAppend(out, "[",
+                          absl::StrJoin(row, "",
+                                        [](std::string *out, const Cell &cell) {
+                                          absl::StrAppend(
+                                              out, std::string(1, cell.letter));
+                                        }),
+                          "]");
+        }));
   }
 };
 

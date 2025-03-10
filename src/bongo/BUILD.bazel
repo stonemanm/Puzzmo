@@ -41,6 +41,8 @@ cc_library(
         "//src/shared:letter_count",
         "//src/shared:point",
         "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/log:log",
         "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/strings",
     ],

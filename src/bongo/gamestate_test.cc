@@ -25,7 +25,6 @@ const absl::flat_hash_map<char, int> kLetterValues = {
 TEST(GameStateTest, Constructor) {
   Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("aaaabbbcdefgh"));
   EXPECT_EQ(bgs.values(), kLetterValues);
-  EXPECT_EQ(bgs.letter_board(), kEmptyBoard);
   EXPECT_EQ(bgs.letter_pool().CharsInOrder(), "aaaabbbcdefgh");
 }
 
@@ -43,40 +42,40 @@ TEST(GameStateTest, FillAndClear) {
   std::vector<Point> path = {{2, 0}, {2, 1}, {2, 2}, {2, 3}, {2, 4}};
 
   /**
-   * FillSquare
+   * FillCell
    */
 
   // Uses letter from letter count
   EXPECT_EQ(bgs.letter_pool().count('a'), 37);
-  EXPECT_THAT(bgs.FillSquare(p1, 'a'), IsOk());
+  EXPECT_THAT(bgs.FillCell(p1, 'a'), IsOk());
   EXPECT_EQ(bgs.letter_pool().count('a'), 36);
   EXPECT_EQ(bgs.char_at(p1), 'a');
 
   // Removes placed letter if present
-  EXPECT_THAT(bgs.FillSquare(p2, 'a'), IsOk());
+  EXPECT_THAT(bgs.FillCell(p2, 'a'), IsOk());
   EXPECT_EQ(bgs.letter_pool().count('a'), 35);
-  EXPECT_THAT(bgs.FillSquare(p2, 'b'), IsOk());
+  EXPECT_THAT(bgs.FillCell(p2, 'b'), IsOk());
   EXPECT_EQ(bgs.letter_pool().count('a'), 36);
   EXPECT_EQ(bgs.char_at(p2), 'b');
 
   // Fails for letter not in bgs
-  EXPECT_THAT(bgs.FillSquare(p3, 'c'), IsOk());
-  EXPECT_THAT(bgs.FillSquare(p3, 'z'),
+  EXPECT_THAT(bgs.FillCell(p3, 'c'), IsOk());
+  EXPECT_THAT(bgs.FillCell(p3, 'z'),
               StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_EQ(bgs.char_at(p3), 'c');
 
-  // Fails if square is locked
+  // Fails if cell is locked
   bgs.set_is_locked_at(p4, true);
   EXPECT_EQ(bgs.letter_pool().count('d'), 1);
-  EXPECT_THAT(bgs.FillSquare(p4, 'd'),
+  EXPECT_THAT(bgs.FillCell(p4, 'd'),
               StatusIs(absl::StatusCode::kFailedPrecondition));
   EXPECT_EQ(bgs.letter_pool().count('d'), 0);
   EXPECT_EQ(bgs.char_at(p4), '_');
 
-  // Fails if square is out of bounds
-  EXPECT_THAT(bgs.FillSquare(ip1, 'a'),
+  // Fails if cell is out of bounds
+  EXPECT_THAT(bgs.FillCell(ip1, 'a'),
               StatusIs(absl::StatusCode::kInvalidArgument));
-  EXPECT_THAT(bgs.FillSquare(ip2, 'a'),
+  EXPECT_THAT(bgs.FillCell(ip2, 'a'),
               StatusIs(absl::StatusCode::kInvalidArgument));
 
   /**
@@ -102,26 +101,26 @@ TEST(GameStateTest, FillAndClear) {
 
   // Succeeds even if point locked, if it matches
   // Overwrites tiles that aren't matched.
-  EXPECT_THAT(bgs.FillSquare(path[1], 'e'), IsOk());
+  EXPECT_THAT(bgs.FillCell(path[1], 'e'), IsOk());
   EXPECT_EQ(bgs.path_string(path), "aeb__");
   EXPECT_THAT(bgs.FillPath(path, "aabaa"), IsOk());
   EXPECT_EQ(bgs.path_string(path), "aabaa");
 
   /**
-   * ClearSquare
+   * ClearCell
    */
 
-  EXPECT_THAT(bgs.ClearSquare(p1), IsOk());
+  EXPECT_THAT(bgs.ClearCell(p1), IsOk());
   EXPECT_EQ(bgs.char_at(p1), '_');
 
-  // Fails if square locked
-  EXPECT_THAT(bgs.ClearSquare(p2),
+  // Fails if cell locked
+  EXPECT_THAT(bgs.ClearCell(p2),
               StatusIs(absl::StatusCode::kFailedPrecondition));
   EXPECT_EQ(bgs.char_at(p2), 'b');
 
-  // Succeeds if square already empty
+  // Succeeds if cell already empty
   bgs.set_is_locked_at(p4, false);
-  EXPECT_THAT(bgs.ClearSquare(p4), IsOk());
+  EXPECT_THAT(bgs.ClearCell(p4), IsOk());
   EXPECT_EQ(bgs.char_at(p4), '_');
 
   /**
@@ -176,7 +175,7 @@ TEST(GamestateTest, GetWord) {
   EXPECT_EQ(bgs.GetWord(bgs.row_path(3)), "qrst");
   EXPECT_EQ(bgs.GetWord(bgs.row_path(4)), "wxy");
   EXPECT_EQ(bgs.GetWord(bgs.bonus_path()), "");
-  ASSERT_THAT(bgs.FillSquare({2, 2}, 'm'), IsOk());
+  ASSERT_THAT(bgs.FillCell({2, 2}, 'm'), IsOk());
   EXPECT_EQ(bgs.GetWord(bgs.bonus_path()), "agms");
 }
 
@@ -184,7 +183,7 @@ TEST(GamestateTest, IsComplete) {
   Gamestate bgs(kDummyBoard, kLetterValues, LetterCount("djmpv"),
                 {"abc_e", "fghi_", "kl_no", "pqr_t", "u_wxy"});
   EXPECT_FALSE(bgs.IsComplete());
-  ASSERT_THAT(bgs.FillSquare({2, 2}, 'm'), IsOk());
+  ASSERT_THAT(bgs.FillCell({2, 2}, 'm'), IsOk());
   // Now every row has a word, even though the bonus does not
   EXPECT_TRUE(bgs.IsComplete());
 }
@@ -196,7 +195,7 @@ TEST(GamestateTest, MostRestrictedWordlessRow) {
   EXPECT_EQ(bgs.MostRestrictedWordlessRow(), 0);
 
   // Adding a letter makes it default to that option
-  ASSERT_THAT(bgs.FillSquare({1, 0}, 'f'), IsOk());
+  ASSERT_THAT(bgs.FillCell({1, 0}, 'f'), IsOk());
   EXPECT_EQ(bgs.MostRestrictedWordlessRow(), 1);
 
   // If a row has 5 letters, it's not considered
@@ -210,12 +209,12 @@ TEST(GamestateTest, MostRestrictedWordlessRow) {
   EXPECT_EQ(bgs.MostRestrictedWordlessRow(), 3);
 }
 
-TEST(GamestateTest, MultiplierSquares) {
+TEST(GamestateTest, MultiplierCells) {
   Gamestate bgs(kDummyBoard, kLetterValues, LetterCount(""));
   Point p0 = {0, 4};
   Point p1 = {1, 4};
   Point p2 = {2, 4};
-  EXPECT_THAT(bgs.MultiplierSquares(), ::testing::ElementsAre(p0, p1, p2));
+  EXPECT_THAT(bgs.MultiplierCells(), ::testing::ElementsAre(p0, p1, p2));
 }
 
 TEST(GamestateTest, NMostValuableTiles) {

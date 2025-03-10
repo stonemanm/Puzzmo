@@ -4,17 +4,14 @@
 #include <climits>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 
 namespace puzzmo::bongo {
 
-constexpr char kBonusSpace = '*';
-constexpr char kDoubleMultiplier = '2';
-constexpr char kTripleMultiplier = '3';
-
 namespace {
 
-bool HasSquare(const Point &p) {
+bool HasCell(const Point &p) {
   return (0 <= p.row && p.row < 5 && 0 <= p.col && p.col < 5);
 }
 
@@ -43,47 +40,54 @@ std::string LongestAlphaSubstring(absl::string_view s) {
 
 }  // namespace
 
+bool operator==(const Cell &lhs, const Cell &rhs) {
+  return lhs.letter == rhs.letter && lhs.multiplier == rhs.multiplier;
+}
+
+bool operator!=(const Cell &lhs, const Cell &rhs) { return !(lhs == rhs); }
+
 Gamestate::Gamestate(const std::vector<std::string> board,
                      absl::flat_hash_map<char, int> letter_values,
                      LetterCount letter_pool,
                      std::vector<std::string> letter_board)
-    : letter_pool_(letter_pool),
-      letter_board_(std::vector<std::string>(5, std::string(5, '_'))),
-      mult_board_(5, std::vector<int>(5)),
-      lock_board_(5, std::vector<bool>(5)),
+    : grid_(5, std::vector<Cell>(5)),
+      letter_pool_(letter_pool),
       values_(letter_values) {
-  // Parse the inputs one space at a time.
-  for (int row = 0; row < 5; ++row) {
-    for (int col = 0; col < 5; ++col) {
-      if (row < letter_board.size() && col < letter_board[row].size())
-        set_char_at(row, col, letter_board[row][col]);
-      switch (board[row][col]) {
-        case kBonusSpace:
-          bonus_path_.push_back({row, col});
-          mult_board_[row][col] = 1;
+  CHECK_EQ(board.size(), 5);
+  CHECK_EQ(letter_board.size(), 5);
+
+  for (int r = 0; r < 5; ++r) {
+    CHECK_EQ(board[r].size(), 5);
+    CHECK_EQ(letter_board[r].size(), 5);
+
+    for (int c = 0; c < 5; ++c) {
+      Cell &cell = grid_[r][c];
+      cell.letter = letter_board[r][c];
+      switch (board[r][c]) {
+        case kBonusCell:
+          bonus_line_.push_back({.row = r, .col = c});
           break;
         case kDoubleMultiplier:
-          mult_board_[row][col] = 2;
+          cell.multiplier = 2;
           break;
         case kTripleMultiplier:
-          mult_board_[row][col] = 3;
+          cell.multiplier = 3;
           break;
         default:
-          mult_board_[row][col] = 1;
           break;
       }
     }
   }
 }
 
-absl::Status Gamestate::ClearSquare(const Point &p) {
-  if (!HasSquare(p))
+absl::Status Gamestate::ClearCell(const Point &p) {
+  if (!HasCell(p))
     return absl::InvalidArgumentError(absl::StrCat(
-        "Point ", p, " does not refer to a square on the board.\n", *this));
+        "Point ", p, " does not refer to a cell on the board.\n", *this));
 
   if (is_locked_at(p))
-    return absl::FailedPreconditionError(absl::StrCat(
-        "Square ", p, " is locked and cannot be altered.\n", *this));
+    return absl::FailedPreconditionError(
+        absl::StrCat("Cell ", p, " is locked and cannot be altered.\n", *this));
 
   if (char b = char_at(p); std::isalpha(b)) {
     if (auto s = letter_pool_.AddLetter(b); !s.ok()) return s.status();
@@ -93,10 +97,10 @@ absl::Status Gamestate::ClearSquare(const Point &p) {
   return absl::OkStatus();
 }
 
-absl::Status Gamestate::FillSquare(const Point &p, char c) {
+absl::Status Gamestate::FillCell(const Point &p, char c) {
   if (auto s = letter_pool_.RemoveLetter(c); !s.ok()) return s.status();
 
-  if (auto s = ClearSquare(p); !s.ok()) return s;
+  if (auto s = ClearCell(p); !s.ok()) return s;
 
   set_char_at(p, c);
   return absl::OkStatus();
@@ -104,11 +108,11 @@ absl::Status Gamestate::FillSquare(const Point &p, char c) {
 
 absl::Status Gamestate::ClearPath(const std::vector<Point> &path) {
   for (const Point &p : path) {
-    if (!HasSquare(p))
+    if (!HasCell(p))
       return absl::InvalidArgumentError(absl::StrCat(
-          "Point ", p, " does not refer to a square on the board.\n", *this));
+          "Point ", p, " does not refer to a cell on the board.\n", *this));
     if (is_locked_at(p) || !std::isalpha(char_at(p))) continue;
-    if (auto s = ClearSquare(p); !s.ok()) return s;
+    if (auto s = ClearCell(p); !s.ok()) return s;
   }
   return absl::OkStatus();
 }
@@ -123,7 +127,7 @@ absl::Status Gamestate::FillPath(const std::vector<Point> &path,
   for (int i = 0; i < path.size(); ++i) {
     const Point p = path[i];
     if (char_at(path[i]) == sv[i]) continue;
-    if (auto s = FillSquare(p, sv[i]); !s.ok()) return s;
+    if (auto s = FillCell(p, sv[i]); !s.ok()) return s;
   }
   return absl::OkStatus();
 }
@@ -133,7 +137,7 @@ absl::Status Gamestate::ClearBoard() {
     for (int col = 0; col < 5; ++col) {
       const Point p = {row, col};
       if (is_locked_at(row, col)) continue;
-      if (auto s = ClearSquare(p); !s.ok()) return s;
+      if (auto s = ClearCell(p); !s.ok()) return s;
     }
   }
   return absl::OkStatus();
@@ -146,25 +150,25 @@ std::vector<std::vector<Point>> Gamestate::PathsToScore() const {
   paths.push_back(row_path(2));
   paths.push_back(row_path(3));
   paths.push_back(row_path(4));
-  paths.push_back(bonus_path_);
+  paths.push_back(bonus_line_);
   return paths;
 }
 
 std::string Gamestate::GetWord(const std::vector<Point> &path) const {
-  int threshold = (path == bonus_path_) ? 4 : 3;
+  int threshold = (path == bonus_line_) ? 4 : 3;
   std::string path_substr = LongestAlphaSubstring(path_string(path));
   return (path_substr.length() >= threshold) ? path_substr : "";
 }
 
 bool Gamestate::IsChildOf(const Gamestate &other) const {
-  if (AllLetters() != other.AllLetters() || mult_board_ != other.mult_board() ||
-      values_ != other.values() || bonus_path_ != other.bonus_path())
+  if (AllLetters() != other.AllLetters() || values_ != other.values() ||
+      bonus_line_ != other.bonus_path())
     return false;
-
-  for (int row = 0; row < 5; ++row) {
-    for (int col = 0; col < 5; ++col) {
-      char c = other.char_at(row, col);
-      if (std::isalpha(c) && char_at(row, col) != c) return false;
+  for (int r = 0; r < 5; ++r) {
+    for (int c = 0; c < 5; ++c) {
+      if (grid_[r][c].multiplier != other.grid()[r][c].multiplier) return false;
+      char l = other.char_at(r, c);
+      if (std::isalpha(l) && char_at(r, c) != l) return false;
     }
   }
   return true;
@@ -172,7 +176,7 @@ bool Gamestate::IsChildOf(const Gamestate &other) const {
 
 bool Gamestate::IsComplete() const {
   for (const auto &path : PathsToScore()) {
-    if (path == bonus_path_) continue;
+    if (path == bonus_line_) continue;
     if (GetWord(path).empty()) return false;
   }
   return true;
@@ -183,7 +187,8 @@ int Gamestate::MostRestrictedWordlessRow() const {
   int most_letters = INT_MIN;
   for (int row = 0; row < 5; ++row) {
     if (!GetWord(row_path(row)).empty()) continue;
-    int letters = LetterCount(letter_board_[row]).size();
+    int letters = absl::c_count_if(
+        grid_[row], [](const Cell &cell) { return cell.letter != kEmptyCell; });
     if (letters > most_letters) {
       most_letters = letters;
       row_to_focus = row;
@@ -194,8 +199,10 @@ int Gamestate::MostRestrictedWordlessRow() const {
 
 LetterCount Gamestate::AllLetters() const {
   LetterCount all = letter_pool_;
-  for (const auto &str : letter_board_) {
-    all.AddLetters(str);
+  for (const std::vector<Cell> &row : grid_) {
+    for (const Cell &cell : row) {
+      (void)all.AddLetter(cell.letter);
+    }
   }
   return all;
 }
@@ -203,25 +210,29 @@ LetterCount Gamestate::AllLetters() const {
 int Gamestate::NumLetters() const {
   return NumLettersLeft() + NumLettersPlaced();
 }
+
 int Gamestate::NumLettersLeft() const { return letter_pool_.size(); }
+
 int Gamestate::NumLettersPlaced() const {
   int count = 0;
-  for (const auto &rowstr : letter_board_) {
-    count += LetterCount(rowstr).size();
+  for (const std::vector<Cell> &row : grid_) {
+    for (const Cell &cell : row) {
+      if (cell.letter != kEmptyCell) ++count;
+    }
   }
   return count;
 }
 
-std::vector<Point> Gamestate::MultiplierSquares() const {
-  std::vector<Point> mult_squares;
+std::vector<Point> Gamestate::MultiplierCells() const {
+  std::vector<Point> multiplier_cells;
   for (int row = 0; row < 5; ++row) {
     for (int col = 0; col < 5; ++col) {
       if (multiplier_at({row, col}) >= 2) {
-        mult_squares.push_back({row, col});
+        multiplier_cells.push_back({row, col});
       }
     }
   }
-  return mult_squares;
+  return multiplier_cells;
 }
 
 std::string Gamestate::NMostValuableTiles(int n) const {
@@ -270,45 +281,47 @@ std::string Gamestate::path_string(const std::vector<Point> &path) const {
 }
 
 char Gamestate::char_at(const Point &p) const {
-  return HasSquare(p) ? letter_board_[p.row][p.col] : '\0';
+  return HasCell(p) ? grid_[p.row][p.col].letter : '\0';
 }
 
-char Gamestate::char_at(int row, int col) const { return char_at({row, col}); }
+char Gamestate::char_at(int row, int col) const {
+  return char_at({.row = row, .col = col});
+}
 
 void Gamestate::set_char_at(const Point &p, char c) {
-  if (!HasSquare(p)) return;
-  letter_board_[p.row][p.col] = c;
+  if (!HasCell(p)) return;
+  grid_[p.row][p.col].letter = c;
 }
 
 void Gamestate::set_char_at(int row, int col, char c) {
-  set_char_at({row, col}, c);
+  set_char_at({.row = row, .col = col}, c);
 }
 
 int Gamestate::multiplier_at(const Point &p) const {
-  if (!HasSquare(p)) return 0;
-  return mult_board_[p.row][p.col];
+  if (!HasCell(p)) return 0;
+  return grid_[p.row][p.col].multiplier;
 }
 
 int Gamestate::multiplier_at(int row, int col) const {
-  return multiplier_at({row, col});
+  return multiplier_at({.row = row, .col = col});
 }
 
 bool Gamestate::is_locked_at(const Point &p) const {
-  if (!HasSquare(p)) return false;
-  return lock_board_[p.row][p.col];
+  if (!HasCell(p)) return false;
+  return grid_[p.row][p.col].is_locked;
 }
 
 bool Gamestate::is_locked_at(int row, int col) const {
-  return is_locked_at({row, col});
+  return is_locked_at({.row = row, .col = col});
 }
 
 void Gamestate::set_is_locked_at(const Point &p, bool is_locked) {
-  if (!HasSquare(p)) return;
-  lock_board_[p.row][p.col] = is_locked;
+  if (!HasCell(p)) return;
+  grid_[p.row][p.col].is_locked = is_locked;
 }
 
 void Gamestate::set_is_locked_at(int row, int col, bool is_locked) {
-  set_is_locked_at({row, col}, is_locked);
+  set_is_locked_at({.row = row, .col = col}, is_locked);
 }
 
 /** * * * * * * * * * * *
@@ -316,11 +329,8 @@ void Gamestate::set_is_locked_at(int row, int col, bool is_locked) {
  * * * * * * * * * * * **/
 
 bool operator==(const Gamestate &lhs, const Gamestate &rhs) {
-  return lhs.letter_pool() == rhs.letter_pool() &&
-         lhs.letter_board() == rhs.letter_board() &&
-         lhs.mult_board() == rhs.mult_board() &&
-         lhs.lock_board() == rhs.lock_board() && lhs.values() == rhs.values() &&
-         lhs.bonus_path() == rhs.bonus_path();
+  return lhs.grid() == rhs.grid() && lhs.letter_pool() == rhs.letter_pool() &&
+         lhs.values() == rhs.values() && lhs.bonus_path() == rhs.bonus_path();
 }
 
 bool operator!=(const Gamestate &lhs, const Gamestate &rhs) {
