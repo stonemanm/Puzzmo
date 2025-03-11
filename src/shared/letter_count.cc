@@ -87,6 +87,13 @@ std::string LetterCount::CharsInOrder() const {
   return s;
 }
 
+std::string LetterCount::UniqueLetters() const {
+  std::string s = "";
+  for (int i = 0; i < 26; ++i)
+    if (counts_[i] > 0) s.push_back('a' + i);
+  return s;
+}
+
 absl::flat_hash_set<std::string> LetterCount::CombinationsOfSize(int k) const {
   absl::flat_hash_set<std::string> combinations;
   std::string s = "";
@@ -95,13 +102,7 @@ absl::flat_hash_set<std::string> LetterCount::CombinationsOfSize(int k) const {
 }
 
 std::string LetterCount::RegexMatchingContents() const {
-  std::string s = "[";
-  for (int i = 0; i < 26; ++i) {
-    if (counts_[i] > 0) {
-      absl::StrAppend(&s, std::string(1, 'a' + i));
-    }
-  }
-  return absl::StrCat(s, "]");
+  return absl::StrCat("[", UniqueLetters(), "]");
 }
 
 /** * * * * * * * * *

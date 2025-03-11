@@ -46,6 +46,9 @@ class LetterCount {
   // Returns an alphabetized string of the characters in this LetterCount.
   std::string CharsInOrder() const;
 
+  // Returns one of each letter with count > 0.
+  std::string UniqueLetters() const;
+
   // Returns a set of all k-letter combinations of the characters in this
   // LetterCount. Combinations are returned as alphabetized strings.
   absl::flat_hash_set<std::string> CombinationsOfSize(int k) const;

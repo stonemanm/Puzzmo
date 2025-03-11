@@ -209,10 +209,10 @@ TEST(GridTest, VisualizePath) {
                           "\n"));
 }
 
-TEST(GridTest, AllStarRegex) {
+TEST(GridTest, NStarRegex) {
   Grid grid({"AxxxDE"});
   EXPECT_THAT(
-      grid.AllStarRegex(),
+      grid.NStarRegex(3),
       testing::StrEq(
           "(.*a.{3,}d.{0,}e.*)|(.*a.{4,}e.{0,}d.*)|(.*d.{3,}a.{4,}e.*)|(.*d.{0,"
           "}e.{4,}a.*)|(.*e.{4,}a.{3,}d.*)|(.*e.{0,}d.{3,}a.*)"));

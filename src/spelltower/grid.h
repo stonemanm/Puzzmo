@@ -111,11 +111,12 @@ class Grid {
   //---------
   // Strings
 
-  // Grid::AllStarRegex()
+  // Grid::NStarRegex()
   //
-  // Returns a regular expression matching words that have all the star letters
-  // in them, with enough letters between them to correspond to the column gaps.
-  std::string AllStarRegex() const;
+  // Returns a regular expression matching words that use `n` of the star
+  // letters, with enough letters between them to correspond to the
+  // column gaps. If fewer than `n` remain, returns an empty string.
+  std::string NStarRegex(int n) const;
 
   // Grid::VisualizePath()
   //

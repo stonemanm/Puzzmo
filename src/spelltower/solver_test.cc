@@ -23,14 +23,14 @@ TEST(SolverTest, WordCache) {
   EXPECT_THAT(solver.word_cache().begin()->second, testing::SizeIs(1));
 }
 
-TEST(SolverTest, BestPossibleAllStarPathForWord) {
+TEST(SolverTest, BestPossibleThreeStarPathForWord) {
   Solver solver_with_unused_star(
       Trie({"set", "sets", "bet", "bets", "best", "bests", "test", "tests",
             "beset", "besets"}),
       Grid({"BXsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
 
   // Word doesn't use a star.
-  EXPECT_THAT(solver_with_unused_star.BestPossibleAllStarPathForWord("bests"),
+  EXPECT_THAT(solver_with_unused_star.BestPossibleThreeStarPathForWord("bests"),
               StatusIs(absl::StatusCode::kNotFound));
 
   Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
@@ -38,7 +38,7 @@ TEST(SolverTest, BestPossibleAllStarPathForWord) {
                 Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
 
   // Word not in trie.
-  EXPECT_THAT(solver.BestPossibleAllStarPathForWord("exit"),
+  EXPECT_THAT(solver.BestPossibleThreeStarPathForWord("exit"),
               StatusIs(absl::StatusCode::kInvalidArgument));
 
   Path best_path;
@@ -47,7 +47,7 @@ TEST(SolverTest, BestPossibleAllStarPathForWord) {
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
   ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
   ASSERT_THAT(best_path.push_back(solver.grid()[{0, 2}]), IsOk());  // s
-  EXPECT_THAT(solver.BestPossibleAllStarPathForWord("bests"),
+  EXPECT_THAT(solver.BestPossibleThreeStarPathForWord("bests"),
               IsOkAndHolds(best_path));
 }
 
@@ -69,7 +69,7 @@ TEST(SolverTest, BestPossiblePathForWord) {
   EXPECT_THAT(solver.BestPossiblePathForWord("bests"), IsOkAndHolds(best_path));
 }
 
-TEST(SolverTest, LongestPossibleAllStarWord) {
+TEST(SolverTest, BestPossibleGoalWord) {
   Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
                       "tests", "beset", "besets", "unavailable"}),
                 Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
@@ -80,7 +80,7 @@ TEST(SolverTest, LongestPossibleAllStarWord) {
   ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
   ASSERT_THAT(best_path.push_back(solver.grid()[{0, 2}]), IsOk());  // s
 
-  EXPECT_THAT(solver.LongestPossibleAllStarWord(), IsOkAndHolds(best_path));
+  EXPECT_THAT(solver.BestPossibleGoalWord(), IsOkAndHolds(best_path));
 }
 
 TEST(SolverTest, PlayWordSuccess) {

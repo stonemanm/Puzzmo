@@ -71,10 +71,10 @@ void PrintCurrentOptions(const Solver &solver) {
 }
 
 absl::Status PrintLongestAllStarWord(const Solver &solver) {
-  absl::StatusOr<Path> path = solver.LongestPossibleAllStarWord();
+  absl::StatusOr<Path> path = solver.BestPossibleGoalWord();
   if (!path.ok()) return path.status();
 
-  LOG(INFO) << absl::StrCat("Longest possible all-star word: ", path->word());
+  LOG(INFO) << absl::StrCat("Best possible goal word: ", path->word());
   for (int i = 0; i < path->size(); ++i) {
     LOG(INFO) << absl::StrCat(
         (*path)[i]->letter_on_board(), " ", (*path)[i]->coords(), " -> ",

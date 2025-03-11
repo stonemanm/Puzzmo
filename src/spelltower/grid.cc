@@ -199,23 +199,33 @@ std::vector<std::string> Grid::AsCharMatrix() const {
   return v;
 }
 
-std::string Grid::AllStarRegex() const {
-  if (star_tiles_.empty()) return "";
+std::string Grid::NStarRegex(int n) const {
+  if (n < 2 || star_tiles_.size() < n) return "";
 
-  std::vector<std::shared_ptr<Tile>> stars(star_tiles_);
+  std::vector<std::vector<int>> permutations;
+  if (star_tiles_.size() == 2) {
+    permutations = {{0, 1}, {1, 0}};
+  } else if (n == 2) {
+    permutations = {{0, 1}, {1, 0}, {0, 2}, {2, 0}, {1, 2}, {2, 1}};
+  } else {
+    permutations = {{0, 1, 2}, {0, 2, 1}, {1, 0, 2},
+                    {1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
+  }
+
   std::vector<std::string> regexes;
-  do {
+  for (const std::vector<int>& pmtn : permutations) {
     std::string rgx = ".*";
-    rgx.push_back(stars[0]->letter());
-    for (int i = 1; i < stars.size(); ++i) {
-      int gap = std::abs(stars[i - 1]->col() - stars[i]->col());
+    rgx.push_back(star_tiles_[pmtn[0]]->letter());
+    for (int i = 1; i < n; ++i) {
+      int gap = std::abs(star_tiles_[pmtn[i - 1]]->col() -
+                         star_tiles_[pmtn[i]]->col());
       if (gap > 0) --gap;
       absl::StrAppend(&rgx, ".{", gap, ",}");
-      rgx.push_back(stars[i]->letter());
+      rgx.push_back(star_tiles_[pmtn[i]]->letter());
     }
     absl::StrAppend(&rgx, ".*");
     regexes.push_back(rgx);
-  } while (std::next_permutation(stars.begin(), stars.end(), tile_comparator));
+  }
 
   return absl::StrJoin(regexes, "|",
                        [](std::string* out, const std::string& in) {

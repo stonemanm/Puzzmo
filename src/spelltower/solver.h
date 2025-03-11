@@ -111,52 +111,6 @@ class Solver {
   // Returns `true` if `grid_` no longer has tiles in it.
   bool FullClear() const { return grid_.FullClear(); }
 
-  //------------------
-  // Solution methods
-
-  // Solver::SolveGreedily()
-  //
-  // Repeatedly plays the highest-scoring word available until no more words can
-  // be found.
-  absl::Status SolveGreedily();
-
-  //----------
-  // Helpers
-
-  // Solver::BestPossiblePathForWord()
-  //
-  // Constructs and returns the best possible path for a given word. This path
-  // is not necessarily continuous, and is likely not. "Best" is determined by
-  // which path has the highest multiplier. In the event of a tie, the path with
-  // the lowest delta is chosen.
-  absl::StatusOr<Path> BestPossiblePathForWord(absl::string_view word) const;
-
-  // Solver::BestPossibleAllStarPathForWord()
-  //
-  // Functions identically to `BestPossiblePathForWord()`, but necessitates that
-  // the path contain all star tiles on the grid. As a result, "best" will
-  // always come down to lowest delta.
-  absl::StatusOr<Path> BestPossibleAllStarPathForWord(
-      absl::string_view word) const;
-
-  // Solver::LongestPossibleAllStarWord()
-  //
-  // Gets the letter count and all-star regex of `grid_`, then searches `dict_`
-  // for them. Starting from the longest word, calls
-  // `BestPossibleAllStarPathForWord()` on the word, and when one becomes
-  // possible, returns it.
-  //
-  // TODO: rename this and implement it to prioritize maximizing multipliers.
-  // i.e. a 22-long word with only two stars is x66, whereas a 16-long word with
-  // all three stars is x64.
-  absl::StatusOr<Path> LongestPossibleAllStarWord() const;
-
-  // Solver::FillWordCache()
-  //
-  // If `word_cache_` is empty, runs DFS on the grid and populates `word_cache_`
-  // with the results. Does not run if `word_cache_` is populated.
-  void FillWordCache();
-
   //----------
   // Mutators
 
@@ -175,16 +129,86 @@ class Solver {
   // is not in `trie_`.
   absl::Status PlayWord(const Path& word);
 
+  //------------------
+  // Solution methods
+
+  // Solver::SolveGreedily()
+  //
+  // Repeatedly plays the highest-scoring word available until no more words can
+  // be found.
+  absl::Status SolveGreedily();
+
+  //----------
+  // Helpers
+
+  // Solver::BestPossibleGoalWord()
+  //
+  // Gets the letter count and both 2* and 3* regexes from `grid_`, then
+  // searches `dict_` for them. Starting from the longest word returned, calls
+  // `BestPossibleTwoStarPathForWord()` on the word. When we have a hit, if it's
+  // a 3* word, returns the path immediately; if it's a 2* word, continues the
+  // search using only 3* words and requiring three-star paths until we reach a
+  // short enough length that a three-star word would no longer have a higher
+  // multiplier.
+  //
+  // Example: If we find a 22-long word using only 2 stars, the multiplier will
+  // be x66. After we finish searching the length-22 words, we loop length-21
+  // words that use all 3 stars, then 20, down until we finish length-17 (x68)
+  absl::StatusOr<Path> BestPossibleGoalWord() const;
+
+  // Solver::BestPossiblePathForWord()
+  //
+  // Constructs and returns the best possible path for a given word. This path
+  // is not necessarily continuous, and is likely not. "Best" is determined by
+  // which path has the highest multiplier. In the event of a tie, the path with
+  // the lowest delta is chosen.
+  absl::StatusOr<Path> BestPossiblePathForWord(absl::string_view word) const;
+
+  // Solver::BestPossibleTwoStarPathForWord()
+  //
+  // Functions identically to `BestPossiblePathForWord()`, but necessitates that
+  // the path contain at least two of the star tiles on the grid.
+  absl::StatusOr<Path> BestPossibleTwoStarPathForWord(
+      absl::string_view word) const;
+
+  // Solver::BestPossibleThreeStarPathForWord()
+  //
+  // Functions identically to `BestPossiblePathForWord()`, but necessitates that
+  // the path contain all three star tiles on the grid. As a result, "best" will
+  // always come down to lowest delta.
+  absl::StatusOr<Path> BestPossibleThreeStarPathForWord(
+      absl::string_view word) const;
+
+  // Solver::FillWordCache()
+  //
+  // If `word_cache_` is empty, runs DFS on the grid and populates `word_cache_`
+  // with the results. Does not run if `word_cache_` is populated.
+  void FillWordCache();
+
  private:
-  // Solver::BestPossiblePathForWordDFS()
+  // Solver::BestPathDFS()
   //
   // A recursive helper method called by `BestPossiblePathForWord()`.
-  void BestPossiblePathForWordDFS(absl::string_view word, int i, Path& path,
-                                  Path& best_path) const;
+  void BestPathDFS(absl::string_view word, int i, Path& path,
+                   Path& best_path) const;
 
-  // Solver::BestPossibleAllStarPathForWordDFS()
+  // Solver::TwoStarDFS()
   //
-  // A recursive helper method called by `BestPossibleAllStarPathForWord()`.
+  // A recursive helper method called by `BestPossibleTwoStarPathForWord()`.
+  // Works the same as `BestPossiblePathForWord()`, with these changes:
+  // - If a star tile is added to `path`, that letter is removed from
+  //   `unused_star_letters` before recursing, and added back after.
+  // - If at any point the rest of the word does not contain two of the
+  //   `unused_star_letters`, cuts the branch short immediately.
+  // - If the path contains the whole word but doesn't have at least two stars
+  //   in it, does not consider it for `best_path`.
+  void TwoStarDFS(absl::string_view word, int i,
+                  LetterCount& unused_star_letters, Path& path,
+                  Path& best_path) const;
+
+  // Solver::ThreeStarDFS()
+  //
+  // A recursive helper method called by `BestPossibleThreeStarPathForWord()`.
   // Works the same as `BestPossiblePathForWord()`, with these changes:
   // - If a star tile is added to `path`, that letter is removed from
   //   `unused_star_letters` before recursing, and added back after.
@@ -192,16 +216,16 @@ class Solver {
   //   `unused_star_letters`, cuts the branch short immediately.
   // - If the path contains the whole word but doesn't have all stars in it,
   //   does not consider it for `best_path`.
-  void BestPossibleAllStarPathForWordDFS(absl::string_view word, int i,
-                                         LetterCount& unused_star_letters,
-                                         Path& path, Path& best_path) const;
+  void ThreeStarDFS(absl::string_view word, int i,
+                    LetterCount& unused_star_letters, Path& path,
+                    Path& best_path) const;
 
-  // Solver::FillWordCcheDFS()
+  // Solver::CacheDFS()
   //
   // A recursive helper method called by `FillWordCache()`. In parallel,
   // searches `trie_` and `grid_` depth-first from the node and the last tile in
   // `path`.
-  void FillWordCacheDFS(const std::shared_ptr<TrieNode>& trie_node, Path& path);
+  void CacheDFS(const std::shared_ptr<TrieNode>& trie_node, Path& path);
 
   const Dict dict_;
   const Grid starting_grid_;
