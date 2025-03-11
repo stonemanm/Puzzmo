@@ -86,7 +86,12 @@ absl::StatusOr<Gamestate> Solver::Solve() {
     // Place the bonus word on the board
     if (absl::Status s = state_.FillLine(bonus_line, bonus_word); !s.ok())
       return s;
-    for (const Point &p : bonus_line) state_[p].is_locked = true;
+    absl::flat_hash_set<Point> bonus_line_locks;
+    for (const Point &p : bonus_line) {
+      if (state_[p].is_locked) continue;
+      state_[p].is_locked = true;
+      bonus_line_locks.insert(p);
+    }
 
     // Grab the high-scoring tiles not used by the bonus word, and try all the
     // permutations of them on the open multiplier_squares.
@@ -114,7 +119,8 @@ absl::StatusOr<Gamestate> Solver::Solve() {
           return s;
       }
     } while (std::next_permutation(mvls.begin(), mvls.end()));
-    for (const Point &p : bonus_line) state_[p].is_locked = false;
+    for (const Point &p : bonus_line_locks) state_[p].is_locked = false;
+    if (absl::Status s = state_.ClearLine(bonus_line); !s.ok()) return s;
   }
   if (best_score_ == 0) {
     ++tiles_for_bonus_words_;
@@ -134,14 +140,14 @@ absl::Status Solver::FindWordsRecursively() {
   // Check for success.
   if (state_.IsComplete()) {
     if (int score = Score(); score > best_score_) {
-      VLOG(1) << absl::StrCat("New best score! (", score, ")");
+      LOG(INFO) << absl::StrCat("New best score! (", score, ")");
       for (const std::vector<Point> &line : lines_) {
         std::string word = state_.GetWord(line);
-        VLOG(2) << absl::StrCat(LineScore(line), " - ", word,
-                                (dict_.IsCommonWord(word) ? " is" : " isn't"),
-                                " a common word.");
+        LOG(INFO) << absl::StrCat(LineScore(line), " - ", word,
+                                  (dict_.IsCommonWord(word) ? " is" : " isn't"),
+                                  " a common word.");
       }
-      VLOG(1) << state_;
+      LOG(INFO) << state_;
       best_state_ = state_;
       best_score_ = score;
     }
