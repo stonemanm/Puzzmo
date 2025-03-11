@@ -17,7 +17,8 @@ using ::spelltower::Solver;
 //-------
 // Files
 
-ABSL_FLAG(std::string, spelltower_board_file_path, "data/spelltower_board.txt",
+ABSL_FLAG(std::string, spelltower_board_file_path,
+          "inputs/spelltower_board.txt",
           "Path to the input file containing a string representation of the "
           "board, with star letters capitalized.");
 

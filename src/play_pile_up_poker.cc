@@ -12,7 +12,7 @@ using namespace puzzmo;
 int main(int argc, const char *argv[]) {
   // Read in the board
   std::vector<Card> cards;
-  std::ifstream cardfile("data/pile_up_poker_cards.txt");
+  std::ifstream cardfile("inputs/pile_up_poker_cards.txt");
   if (!cardfile.is_open()) {
     LOG(ERROR) << "Error: Could not open pile_up_poker_cards.txt";
     return 1;

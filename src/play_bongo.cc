@@ -18,10 +18,10 @@
 //-------
 // Files
 
-ABSL_FLAG(std::string, path_to_board_file, "data/bongo_board.txt",
+ABSL_FLAG(std::string, path_to_board_file, "inputs/bongo_board.txt",
           "Input file containing a 5x5 char grid.");
 
-ABSL_FLAG(std::string, path_to_tile_file, "data/bongo_tiles.txt",
+ABSL_FLAG(std::string, path_to_tile_file, "inputs/bongo_tiles.txt",
           "Space-delimited input file where each line contains a letter, the "
           "number of that letter, and the value of that latter.");
 
