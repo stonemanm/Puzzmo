@@ -173,33 +173,42 @@ absl::Status Path::FindNewAdjustedPoints() {
   }
   std::vector<Point> points = adjusted_points_.back();
 
-  // Now we have to place `new_p` among the adjusted points.
-  // Either `new_idx` is the top entry in `simple_col`, or it is not.
+  // Now we have to determine if `new_p` must have already been removed. If it
+  // has, then obviously it cannot be added to the path. If not, then we need to
+  // determine its highest possible row as of the most recent entry in
+  // `adjusted_points_`.
   std::vector<int> simple_col = simple_board_[new_p.col];
-  if (new_idx == simple_col.back()) {
-    // If it is, we know for certain that `new_p` is not currently occupied by
-    // any path tile. We can leave it there for now.
-    points.push_back(new_p);
-  } else {
-    // If that isn't the case, then we need to check if the tile above it is
-    // already at its minimum row. If not, it is possible to shift points to
-    // make room, and we should do so.
-    int idx_above = simple_col[lowest_legal_row_[new_idx] + 1];
-    if (lowest_legal_row_[idx_above] - 1 == points[idx_above].row)
-      return absl::OutOfRangeError(kPushBackError);
-    new_p.row = points[idx_above].row - 1;
-    int ceiling_row = new_p.row;
-    for (int i = lowest_legal_row_[new_idx] - 1; i >= 0; --i) {
-      // If `idx` needs adjusting, lower it as little as possible.
-      int idx = simple_col[i];
-      if (ceiling_row > points[idx].row) break;
-      points[idx].row = ceiling_row - 1;
+  bool has_path_point_above = (simple_col.back() != new_idx);
+  bool has_path_point_below = (simple_col[0] != new_idx);
+  int floor_row = 0;
 
-      // Update `ceiling_row` to apply to the next point.
-      ceiling_row = points[idx].row;
-    }
-    points.push_back(new_p);
+  // If it has something below it, then it will have dropped, at minimum, as
+  // many rows as the point beneath it has.
+  if (has_path_point_below) {
+    int idx_below = simple_col[lowest_legal_row_[new_idx] - 1];
+    int rows_dropped_by_point_below =
+        tiles_[idx_below]->row() - points[idx_below].row;
+    new_p.row -= rows_dropped_by_point_below;
+    floor_row = points[idx_below].row + 1;
   }
+
+  // If it has something above it, then the movement of that point may have
+  // dropped `new_p` as well.
+  if (has_path_point_above) {
+    int idx_above = simple_col[lowest_legal_row_[new_idx] + 1];
+    // `tiles_between_them` is the amount that above can have dropped without
+    // affecting `new_p` at all.
+    int tiles_between_them = tiles_[idx_above]->row() - tiles_[new_idx]->row();
+    if (tiles_between_them > 0) --tiles_between_them;
+    int rows_dropped_by_point_above =
+        tiles_[idx_above]->row() - points[idx_above].row;
+    int rows_new_p_must_drop = rows_dropped_by_point_above - tiles_between_them;
+    if (rows_new_p_must_drop > 0) new_p.row -= rows_new_p_must_drop;
+  }
+
+  if (new_p.row < floor_row)
+    return absl::OutOfRangeError("Tile has already been removed.");
+  points.push_back(new_p);
 
   // LOG(INFO) << "After inserting new_p (size " << size()
   //           << "): " << absl::StrJoin(points, ", ");

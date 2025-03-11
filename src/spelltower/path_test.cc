@@ -281,6 +281,35 @@ TEST(PathTest, Antiestablishment) {
               StatusIs(absl::StatusCode::kOutOfRange));
 }
 
+TEST(PathTest, Compassionatenesses) {
+  Path path;
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(10, 0, 'c')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(12, 1, 'o')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(2, 0, 'M')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(10, 1, 'p')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(5, 2, 'a')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(11, 3, 'S')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(7, 4, 's')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(5, 4, 'i')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(6, 5, 'o')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(1, 6, 'N')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(0, 5, 'a')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(2, 6, 't')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(5, 6, 'e')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(9, 5, 'n')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(0, 4, 'e')),
+              StatusIs(absl::StatusCode::kOutOfRange));
+}
+
+TEST(PathTest, MaxRow) {
+  Path path;
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 6, 'e')),      IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(6, 7, 'p')), IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(3, 6, 'r')), IsOk());
+  EXPECT_THAT(path.push_back(std::make_shared<Tile>(7, 7, 'e')), IsOk());
+  EXPECT_EQ(path.adjusted_points()[3].row, 2);
+}
+
 TEST(PathTest, AbslStringify) {
   Path path;
   EXPECT_EQ(absl::StrFormat("%v", path), "");
