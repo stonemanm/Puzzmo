@@ -16,7 +16,7 @@ constexpr absl::string_view kPathNotContinuousError =
 constexpr absl::string_view kStarLettersNotInWord =
     "Word \"%s\" does not use enough of the star letters (%s).";
 constexpr absl::string_view kVerboseLongestWord =
-    "Searching for a path for word \"%s\".";
+    "[%d/%d] Searching for a path for word \"%s\".";
 constexpr absl::string_view kWordNotInGridError =
     "No possible path for \"%s\" found in grid.";
 constexpr absl::string_view kWordNotInTrieError =
@@ -100,41 +100,51 @@ absl::StatusOr<Path> Solver::BestPossibleGoalWord() const {
   Path best_two_star_path;
   // We start by casting a wide (2*) net until we get a path.
   for (int len = 28; len >= 3; --len) {
-    LOG(INFO) << best_two_star_path;
-    LOG(INFO) << len;
     // If we have `best_two_star_path`, we determine when to stop looking for a
     // 3* one.
     if (4 * len < 3 * best_two_star_path.size()) return best_two_star_path;
+    LOG(INFO) << "";
+    LOG(INFO) << absl::StrCat(
+        "Searching words of length ", len, " for possible ",
+        best_two_star_path.empty() ? "2* or " : "", "3* words.");
+
     auto words_to_try = dict_.WordsMatchingParameters(
         {.min_length = len,
          .max_length = len,
          .letter_superset = letters_in_grid,
          .matching_regex =
              best_two_star_path.empty() ? two_star_regex : three_star_regex});
-    LOG(INFO) << words_to_try.size();
+    LOG(INFO) << absl::StrCat(words_to_try.size(), " candidates found.");
 
+    int ct = 0;
     for (const std::string& word : words_to_try) {
+      LOG(INFO) << absl::StrFormat(kVerboseLongestWord, ++ct,
+                                   words_to_try.size(), word);
+      if (word == "compassionatenesses") continue;
       if (best_two_star_path.empty()) {
         absl::StatusOr<Path> path = BestPossibleTwoStarPathForWord(word);
         if (!path.ok()) continue;
-        LOG(INFO) << absl::StrFormat(kVerboseLongestWord, word);
 
         // If we have all the stars used, this is the best case! Just return.
         if (path->star_count() == 3) {
-          LOG(INFO) << "Found 3* path for \"" << word << "\"!";
+          LOG(INFO) << "Found 3* path for \"" << word << "\"!\n" << *path;
           return *std::move(path);
         }
         // Otherwise, we save the two-star path and continue searching with
         // a tighter net.
-        LOG(INFO) << "Found 2* path for \"" << word
-                  << "\"! Continuing the search.";
         best_two_star_path = *path;
-
+        LOG(INFO) << "Found 2* path for \"" << word << "\"!\n"
+                  << best_two_star_path;
+        LOG(INFO) << "A 3* word of length "
+                  << best_two_star_path.size() * 3 / 4 +
+                         (best_two_star_path.size() * 3 % 4 != 0)
+                  << " or higher would have a higher multiplier. Continuing to "
+                     "search.";
       } else {
         absl::StatusOr<Path> path = BestPossibleThreeStarPathForWord(word);
         if (!path.ok()) continue;
 
-        LOG(INFO) << "Found 3* path for \"" << word << "\"!";
+        LOG(INFO) << "Found 3* path for \"" << word << "\"!\n" << *path;
         return *std::move(path);
       }
     }
@@ -196,7 +206,6 @@ absl::StatusOr<Path> Solver::BestPossibleTwoStarPathForWord(
                     }));
   bool has_letters = false;
   for (absl::string_view subset : star_letters.CombinationsOfSize(2)) {
-    LOG(INFO) << ".";
     if (lc.contains(subset)) {
       has_letters = true;
       break;
@@ -298,7 +307,10 @@ void Solver::ThreeStarDFS(absl::string_view word, int i,
   // Try all the options.
   absl::flat_hash_set<std::shared_ptr<Tile>> options =
       grid_.letter_map()[word[i]];
+  // int ct = 0;
   for (const std::shared_ptr<Tile>& next : options) {
+    // LOG(INFO) << "Index " << i << ", option " << ++ct << " of "
+    //           << options.size();
     if (absl::Status s = path.push_back(next); !s.ok()) continue;
     if (next->is_star()) (void)unused_star_letters.RemoveLetter(next->letter());
     ThreeStarDFS(word, i + 1, unused_star_letters, path, best_path);

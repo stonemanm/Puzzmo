@@ -28,10 +28,9 @@ ABSL_FLAG(std::string, spelltower_board_file_path,
 ABSL_FLAG(bool, print_current_options, false,
           "Print all playable words and their scores to the command line.");
 
-ABSL_FLAG(
-    bool, print_longest_allstar_word, false,
-    "Find and print the longest possible word including all star tiles to the "
-    "command line.");
+ABSL_FLAG(bool, print_best_goal_word, false,
+          "Find and print the possible word with the highest multiplier to the "
+          "command line.");
 
 ABSL_FLAG(bool, solve_greedily, false,
           "Solve the Spelltower board greedily and print the solution to the "
@@ -71,8 +70,10 @@ void PrintCurrentOptions(const Solver &solver) {
   }
 }
 
-absl::Status PrintLongestAllStarWord(const Solver &solver) {
+absl::Status PrintBestGoalWord(const Solver &solver) {
   absl::StatusOr<Path> path = solver.BestPossibleGoalWord();
+  // absl::StatusOr<Path> path =
+  //     solver.BestPossibleTwoStarPathForWord("nonrepresentationalisms");
   if (!path.ok()) return path.status();
 
   LOG(INFO) << absl::StrCat("Best possible goal word: ", path->word());
@@ -82,6 +83,7 @@ absl::Status PrintLongestAllStarWord(const Solver &solver) {
         (*path).adjusted_points()[i], " --- (needs to drop ",
         (*path)[i]->row() - (*path).adjusted_points()[i].row, " rows)");
   }
+  return absl::OkStatus();
 }
 
 }  // namespace
@@ -101,8 +103,8 @@ int main(int argc, const char *argv[]) {
     PrintCurrentOptions(*solver);
   }
 
-  if (absl::GetFlag(FLAGS_print_longest_allstar_word)) {
-    if (absl::Status s = PrintLongestAllStarWord(*solver); !s.ok()) {
+  if (absl::GetFlag(FLAGS_print_best_goal_word)) {
+    if (absl::Status s = PrintBestGoalWord(*solver); !s.ok()) {
       LOG(ERROR) << s;
       return 1;
     }
