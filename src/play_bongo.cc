@@ -117,19 +117,19 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  std::vector<Point> path;
-  int r = 0;
-  for (int i = 0; i < 5; ++i) {
-    path.push_back({r, i});
-  }
-  absl::Status s = starting_state->FillLine(path, "swabs");
-  if (!s.ok()) {
-    LOG(ERROR) << s;
-    return 1;
-  }
-  for (const auto &p : path) {
-    (*starting_state)[p].is_locked = true;
-  }
+  // std::vector<Point> path;
+  // int r = 0;
+  // for (int i = 0; i < 5; ++i) {
+  //   path.push_back({r, i});
+  // }
+  // absl::Status s = starting_state->FillLine(path, "swabs");
+  // if (!s.ok()) {
+  //   LOG(ERROR) << s;
+  //   return 1;
+  // }
+  // for (const auto &p : path) {
+  //   (*starting_state)[p].is_locked = true;
+  // }
 
   Solver bongo_solver(
       *dict, *starting_state,
