@@ -59,16 +59,14 @@ bool Path::IsContinuous() const {
   return true;
 }
 
-bool Path::IsStillPossible() {
+bool Path::IsStillPossible() const {
   std::vector<Point> points;
   for (const std::shared_ptr<Tile> &tile : tiles_) {
     if (!tile->is_on_grid()) return false;
     points.push_back(tile->coords());
   }
-  if (absl::Status s = AdjustPoints(points); !s.ok()) return false;
-  adjusted_points_.pop_back();
-  adjusted_points_.push_back(points);
-  return true;
+  absl::Status s = AdjustPoints(points);
+  return s.ok();
 }
 
 int Path::Delta() const {

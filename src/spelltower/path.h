@@ -126,9 +126,8 @@ class Path {
   // Path::IsStillPossible()
   //
   // Returns `true` if the coordinates of the path have not been adjusted so as
-  // to make the path impossible. In the process, replaces the most recent entry
-  // in `adjusted_points`.
-  bool IsStillPossible();
+  // to make the path impossible.
+  bool IsStillPossible() const;
 
   // Path::Delta()
   //
