@@ -127,7 +127,7 @@ int main(int argc, const char *argv[]) {
   //   LOG(ERROR) << s;
   //   return 1;
   // }
-  // for (const auto &p : path) {
+  // for (const Point &p : path) {
   //   (*starting_state)[p].is_locked = true;
   // }
 
@@ -136,11 +136,12 @@ int main(int argc, const char *argv[]) {
       {.tiles_for_bonus_words = absl::GetFlag(FLAGS_tiles_for_bonus_words),
        .tiles_for_multiplier_tiles =
            absl::GetFlag(FLAGS_tiles_for_multiplier_tiles)});
-  if (auto s = bongo_solver.Solve(); !s.ok()) {
-    LOG(ERROR) << s.status();
+  if (absl::StatusOr<Gamestate> solution = bongo_solver.Solve();
+      !solution.ok()) {
+    LOG(ERROR) << solution.status();
     return 1;
   } else {
-    LOG(INFO) << *s;
+    LOG(INFO) << *solution;
     return 0;
   }
 }

@@ -62,7 +62,7 @@ absl::StatusOr<std::vector<std::string>> ReadDictionaryFileToVector(
 const absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>
 CreateAnagramDictionary(const std::vector<std::string> words) {
   absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>> dict;
-  for (const auto &word : words) {
+  for (const std::string &word : words) {
     LetterCount lc(word);
     dict[lc].insert(word);
   }

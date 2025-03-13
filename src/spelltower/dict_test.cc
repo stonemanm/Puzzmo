@@ -7,7 +7,7 @@ namespace puzzmo::spelltower {
 namespace {
 
 TEST(DictTest, LoadDictFromSerializedTrie) {
-  auto dict = Dict::LoadDictFromSerializedTrie();
+  absl::StatusOr<Dict> dict = Dict::LoadDictFromSerializedTrie();
   EXPECT_THAT(dict.status(), absl_testing::IsOk());
   EXPECT_EQ(dict->trie().contains("gargantuan"),
             dict->words().at(LetterCount("gargantuan")).contains("gargantuan"));

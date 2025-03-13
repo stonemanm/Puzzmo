@@ -69,7 +69,7 @@ int main(int argc, const char *argv[]) {
   boardfile.close();
 
   // Read in the dictionary
-  auto words = ReadDictionaryFileToVector(
+  absl::StatusOr<std::vector<std::string>> words = ReadDictionaryFileToVector(
       {.min_letters = word_length, .max_letters = word_length});
   if (!words.ok()) {
     LOG(ERROR) << words.status();

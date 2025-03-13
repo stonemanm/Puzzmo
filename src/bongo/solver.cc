@@ -65,8 +65,8 @@ absl::StatusOr<Gamestate> Solver::Solve() {
       state_.NMostValuableLetters(tiles_for_bonus_words_));
   absl::flat_hash_set<std::string> combos =
       valuable_letters.CombinationsOfSize(3 - bplc.size());
-  for (const auto &combo : combos) {
-    auto words = dict_.WordsMatchingParameters(
+  for (const std::string &combo : combos) {
+    absl::flat_hash_set<std::string> words = dict_.WordsMatchingParameters(
         {.min_length = 4,
          .max_length = 4,
          .min_letters = LetterCount(combo),

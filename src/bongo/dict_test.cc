@@ -8,7 +8,7 @@ namespace puzzmo::bongo {
 namespace {
 
 TEST(DictTest, LoadFromFiles) {
-  auto dict = Dict::LoadFromFiles();
+  absl::StatusOr<Dict> dict = Dict::LoadFromFiles();
   EXPECT_THAT(dict, absl_testing::IsOk());
 }
 

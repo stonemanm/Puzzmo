@@ -67,17 +67,23 @@ int Grid::ScorePath(const Path& path) const {
 }
 
 bool Grid::AlmostThere() const {
-  return std::all_of(tiles_.begin(), tiles_.end(), [](const auto& column) {
-    return absl::c_count_if(
-               column, [](const auto& tile) { return tile != nullptr; }) <= 2;
-  });
+  return std::all_of(
+      tiles_.begin(), tiles_.end(),
+      [](const std::vector<std::shared_ptr<Tile>>& column) {
+        return absl::c_count_if(column, [](const std::shared_ptr<Tile>& tile) {
+                 return tile != nullptr;
+               }) <= 2;
+      });
 }
 
 bool Grid::FullClear() const {
-  return std::all_of(tiles_.begin(), tiles_.end(), [](const auto& column) {
-    return std::all_of(column.begin(), column.end(),
-                       [](const auto& tile) { return tile == nullptr; });
-  });
+  return std::all_of(
+      tiles_.begin(), tiles_.end(),
+      [](const std::vector<std::shared_ptr<Tile>>& column) {
+        return std::all_of(
+            column.begin(), column.end(),
+            [](const std::shared_ptr<Tile>& tile) { return tile == nullptr; });
+      });
 }
 
 absl::flat_hash_set<std::shared_ptr<Tile>> Grid::AccessibleTilesFrom(
@@ -255,8 +261,8 @@ std::string Grid::VisualizePath(const Path& path) const {
 
 absl::Status Grid::ClearPath(const Path& path) {
   absl::flat_hash_set<std::shared_ptr<Tile>> affected = TilesRemovedBy(path);
-  for (const auto& tile : affected) {
-    if (auto s = ClearTile(tile); !s.ok()) return s;
+  for (const std::shared_ptr<Tile>& tile : affected) {
+    if (absl::Status s = ClearTile(tile); !s.ok()) return s;
   }
   return absl::OkStatus();
 }
@@ -280,7 +286,8 @@ absl::Status Grid::ClearTile(const std::shared_ptr<Tile>& tile) {
   if (!tile->is_blank()) {
     char l = tile->letter();
     letter_map_[l].erase(tile);
-    if (auto s = column_letter_counts_[col].RemoveLetter(l); !s.ok()) {
+    if (absl::StatusOr<int> s = column_letter_counts_[col].RemoveLetter(l);
+        !s.ok()) {
       return s.status();
     }
   }
@@ -289,7 +296,7 @@ absl::Status Grid::ClearTile(const std::shared_ptr<Tile>& tile) {
   std::vector<std::shared_ptr<Tile>>& column = tiles_[col];
   for (int r = row + 1; r < kNumRows; ++r) {
     if (column[r] == nullptr) break;
-    if (auto s = column[r]->Drop(1); !s.ok()) return s;
+    if (absl::Status s = column[r]->Drop(1); !s.ok()) return s;
   }
 
   // Remove the tile itself, and insert a nullptr at the end of the column.

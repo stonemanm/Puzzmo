@@ -51,7 +51,7 @@ void DFS(absl::string_view prefix,
          const std::vector<std::vector<PathThroughNode>>& nodes, int node,
          std::ofstream& file) {
   // LOG(ERROR) << node;
-  for (const auto& path_through_node : nodes[node]) {
+  for (const PathThroughNode& path_through_node : nodes[node]) {
     if (path_through_node.completes_word) {
       std::string word = absl::StrCat(prefix, path_through_node.text);
       file << word << std::endl;

@@ -323,7 +323,7 @@ void Solver::FillWordCache() {
   if (!word_cache_.empty()) return;
 
   Path path;
-  for (const auto& column : grid_.tiles()) {
+  for (const std::vector<std::shared_ptr<Tile>>& column : grid_.tiles()) {
     for (const std::shared_ptr<Tile>& tile : column) {
       if (absl::Status s = path.push_back(tile); !s.ok()) continue;
       CacheDFS(dict_.trie().root()->children[tile->letter() - 'a'], path);
