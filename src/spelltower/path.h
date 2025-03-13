@@ -123,6 +123,13 @@ class Path {
   // Returns `true` if each pair of adjacent tiles are Moore neighbors.
   bool IsContinuous() const;
 
+  // Path::IsStillPossible()
+  //
+  // Returns `true` if the coordinates of the path have not been adjusted so as
+  // to make the path impossible. In the process, replaces the most recent entry
+  // in `adjusted_points`.
+  bool IsStillPossible();
+
   // Path::Delta()
   //
   // Returns the sum, for each tile in the path, of the difference between its
@@ -181,13 +188,13 @@ class Path {
   //
   // Returns the highest point at which the latest tile can be inserted into
   // `adjusted_points_`.
-  absl::StatusOr<Point> SafePointToInsertLatestTile();
+  absl::StatusOr<Point> SafePointToInsertLatestTile() const;
 
   // Path::AdjustPoints()
   //
   // Lowers the points as little as possible in order to make them continuous.
   // If this is impossible, returns an error.
-  absl::Status AdjustPoints(std::vector<Point> &points);
+  absl::Status AdjustPoints(std::vector<Point> &points) const;
 
   // Path::UpdatePoints()
   //

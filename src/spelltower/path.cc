@@ -59,6 +59,18 @@ bool Path::IsContinuous() const {
   return true;
 }
 
+bool Path::IsStillPossible() {
+  std::vector<Point> points;
+  for (const std::shared_ptr<Tile> &tile : tiles_) {
+    if (!tile->is_on_grid()) return false;
+    points.push_back(tile->coords());
+  }
+  if (absl::Status s = AdjustPoints(points); !s.ok()) return false;
+  adjusted_points_.pop_back();
+  adjusted_points_.push_back(points);
+  return true;
+}
+
 int Path::Delta() const {
   int delta = 0;
   for (int i = 0; i < tiles_.size(); ++i)
@@ -170,7 +182,7 @@ absl::Status Path::AddNewestTileToAdjustedPoints() {
   return absl::OkStatus();
 }
 
-absl::StatusOr<Point> Path::SafePointToInsertLatestTile() {
+absl::StatusOr<Point> Path::SafePointToInsertLatestTile() const {
   // It's possible that, for the path up to this point to be possible, the tile
   // we want to add must already have been removed. Even if not, we need to
   // ascertain how the number of rows that it must have dropped by this point.
@@ -209,7 +221,7 @@ absl::StatusOr<Point> Path::SafePointToInsertLatestTile() {
   return p;
 }
 
-absl::Status Path::AdjustPoints(std::vector<Point> &points) {
+absl::Status Path::AdjustPoints(std::vector<Point> &points) const {
   std::vector<int> sorted_indices(points.size());
   std::iota(sorted_indices.begin(), sorted_indices.end(), 0);
 
@@ -228,15 +240,15 @@ absl::Status Path::AdjustPoints(std::vector<Point> &points) {
       // it, drop the predecessor into the neighborhood of `p`.
       if (idx > 0 && p.row + 1 < points[idx - 1].row) {
         if (absl::Status s = MakePointsNeighbors(idx - 1, idx, points); !s.ok())
-            return s;
+          return s;
         break;  // Having adjusted a point, we restart the outer loop.
-        }
+      }
 
       // If `p` has a successor and that successor is 2+ rows higher than it,
       // drop the successor into the neighborhood of `p`.
       if (idx < points.size() - 1 && p.row + 1 < points[idx + 1].row) {
         if (absl::Status s = MakePointsNeighbors(idx, idx + 1, points); !s.ok())
-            return s;
+          return s;
         break;  // Having adjusted a point, we restart the outer loop.
       }
       // If we've made it here, this point (and all below it) can reach both of

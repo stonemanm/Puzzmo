@@ -282,6 +282,28 @@ TEST(PathTest, IsContinuous) {
   EXPECT_THAT(path.IsContinuous(), testing::IsFalse());  // row 1
 }
 
+TEST(PathTest, IsStillPossible) {
+  Path path;
+  ASSERT_THAT(
+      path.push_back(
+          {std::make_shared<Tile>(0, 0, 'a'), std::make_shared<Tile>(1, 0, 'b'),
+           std::make_shared<Tile>(2, 0, 'b'), std::make_shared<Tile>(3, 0, 'e'),
+           std::make_shared<Tile>(5, 1, 'y')}),
+      IsOk());
+  path[1]->set_is_on_grid(false);
+  EXPECT_THAT(path.IsStillPossible(), testing::IsFalse());
+  path[1]->set_is_on_grid(true);
+  EXPECT_THAT(path.IsStillPossible(), testing::IsTrue());  // row 5
+  ASSERT_THAT(path[4]->Drop(1), IsOk());
+  EXPECT_THAT(path.IsStillPossible(), testing::IsTrue());  // row 4
+  ASSERT_THAT(path[4]->Drop(1), IsOk());
+  EXPECT_THAT(path.IsStillPossible(), testing::IsTrue());  // row 3
+  ASSERT_THAT(path[4]->Drop(1), IsOk());
+  EXPECT_THAT(path.IsStillPossible(), testing::IsTrue());  // row 2
+  ASSERT_THAT(path[4]->Drop(1), IsOk());
+  EXPECT_THAT(path.IsStillPossible(), testing::IsFalse());  // row 1
+}
+
 TEST(PathTest, Antiestablishment) {
   Path path;
   EXPECT_THAT(path.push_back(std::make_shared<Tile>(0, 6, 'i')), IsOk());
