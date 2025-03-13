@@ -26,6 +26,8 @@ constexpr absl::string_view kInterruptedColumnError =
 constexpr absl::string_view kNullptrError = "Cannot add nullptr to the path.";
 constexpr absl::string_view kPushBackError =
     "Path becomes impossible to create with this tile added.";
+constexpr absl::string_view kTileNotOnGridError =
+    "Tiles not on the grid cannot be added to the path.";
 
 // A helper method for `Path::IsPossible()`. Returns the tile indices in
 // `path`, sorted so as to iterate from the lowest to the highest row.
@@ -89,6 +91,8 @@ void Path::pop_back() {
 absl::Status Path::push_back(const std::shared_ptr<Tile> &tile) {
   if (tile == nullptr) return absl::InvalidArgumentError(kNullptrError);
   if (tile->is_blank()) return absl::InvalidArgumentError(kBlankTileError);
+  if (!tile->is_on_grid())
+    return absl::InvalidArgumentError(kTileNotOnGridError);
   if (std::any_of(tiles_.begin(), tiles_.end(),
                   [tile](const std::shared_ptr<Tile> &path_tile) {
                     return path_tile->coords() == tile->coords();

@@ -85,6 +85,16 @@ TEST(PathTest, PushBackNullptrFails) {
   EXPECT_EQ(path, unchanged);
 }
 
+TEST(PathTest, PushBackTileNotOnGridFails) {
+  Path path;
+  Path unchanged = path;
+  std::shared_ptr<Tile> tile = std::make_shared<Tile>(0, 0, 'a');
+  tile->set_is_on_grid(false);
+  EXPECT_THAT(path.push_back(tile),
+              StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_EQ(path, unchanged);
+}
+
 TEST(PathTest, PushBackBlankTileFails) {
   std::shared_ptr<Tile> blank_tile = std::make_shared<Tile>(0, 0);
   Path path;
@@ -303,7 +313,7 @@ TEST(PathTest, Compassionatenesses) {
 
 TEST(PathTest, MaxRow) {
   Path path;
-  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 6, 'e')),      IsOk());
+  ASSERT_THAT(path.push_back(std::make_shared<Tile>(0, 6, 'e')), IsOk());
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(6, 7, 'p')), IsOk());
   ASSERT_THAT(path.push_back(std::make_shared<Tile>(3, 6, 'r')), IsOk());
   EXPECT_THAT(path.push_back(std::make_shared<Tile>(7, 7, 'e')), IsOk());

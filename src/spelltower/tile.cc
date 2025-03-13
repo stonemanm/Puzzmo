@@ -10,6 +10,7 @@ static constexpr int kLetterValues[] = {1, 4, 4, 3, 1, 5, 3, 5,  1,
 
 Tile::Tile(int row, int col, char letter)
     : coords_({.row = row, .col = col}),
+      is_on_grid_(true),
       letter_(std::isalpha(letter) ? std::tolower(letter) : kBlankTileLetter),
       is_star_(std::isupper(letter)),
       value_(std::isalpha(letter_) ? kLetterValues[letter_ - 'a'] : 0) {}

@@ -62,6 +62,11 @@ class Tile {
   // represented by a `Point`.
   Point coords() const { return coords_; }
 
+  // Tile::is_on_grid()
+  //
+  // Proides access to the underlying data member.
+  bool is_on_grid() const { return is_on_grid_; }
+
   // Tile::row()
   //
   // A shortcut to `Tile::coords().row`.
@@ -113,6 +118,11 @@ class Tile {
   //-----------
   // Mutators
 
+  // Tile::set_is_on_grid()
+  //
+  // A simple mutator for `is_on_grid_`.
+  void set_is_on_grid(bool is_on_grid) { is_on_grid_ = is_on_grid; }
+
   // Tile::Drop()
   //
   // Lowers the tile's row. Returns an OutOfRangeError if this would reduce
@@ -124,6 +134,7 @@ class Tile {
 
  private:
   Point coords_;
+  bool is_on_grid_;
   const char letter_;
   const bool is_star_;
   const int value_;

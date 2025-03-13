@@ -147,12 +147,14 @@ TEST(GridTest, ClearPath) {
   Grid grid({"nnnnnnn n", "mmmmmmm m", "lllllll l", "kkkkkkk k", "iiiijii i",
              "hhhhhhhhh", "ggggggggg", "fffffffff", "eeeeeeeee", "ddddddddd",
              "ccccccccc", "b*bbbbbbb", "aaaaaaaaa"});
+  std::shared_ptr<Tile> tile_8_5 = grid[{8, 5}];
 
   Path long_path;
-  ASSERT_THAT(long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}],
+  ASSERT_THAT(long_path.push_back({tile_8_5, grid[{9, 6}], grid[{10, 6}],
                                    grid[{11, 6}], grid[{12, 6}]}),
               IsOk());
   EXPECT_THAT(grid.ClearPath(long_path), IsOk());
+  EXPECT_THAT(tile_8_5->is_on_grid(), IsFalse());
 
   Path short_path;
   ASSERT_THAT(short_path.push_back({grid[{0, 0}], grid[{0, 1}], grid[{1, 2}]}),
@@ -168,15 +170,17 @@ TEST(GridTest, RevertPathAndReset) {
   Grid grid({"nnnnnnn n", "mmmmmmm m", "lllllll l", "kkkkkkk k", "iiiijii i",
              "hhhhhhhhh", "ggggggggg", "fffffffff", "eeeeeeeee", "ddddddddd",
              "ccccccccc", "b*bbbbbbb", "aaaaaaaaa"});
+  std::shared_ptr<Tile> tile_8_5 = grid[{8, 5}];
   EXPECT_THAT(grid.RevertLastClear(),
               StatusIs(absl::StatusCode::kFailedPrecondition));
 
   std::vector<std::vector<std::shared_ptr<Tile>>> starting_tiles = grid.tiles();
   Path long_path;
-  ASSERT_THAT(long_path.push_back({grid[{8, 5}], grid[{9, 6}], grid[{10, 6}],
+  ASSERT_THAT(long_path.push_back({tile_8_5, grid[{9, 6}], grid[{10, 6}],
                                    grid[{11, 6}], grid[{12, 6}]}),
               IsOk());
   ASSERT_THAT(grid.ClearPath(long_path), IsOk());
+  ASSERT_THAT(tile_8_5->is_on_grid(), IsFalse());
 
   std::vector<std::vector<std::shared_ptr<Tile>>> midway_tiles = grid.tiles();
   Path short_path;
@@ -189,6 +193,7 @@ TEST(GridTest, RevertPathAndReset) {
 
   EXPECT_THAT(grid.RevertLastClear(), IsOk());
   EXPECT_EQ(grid.tiles(), starting_tiles);
+  EXPECT_THAT(tile_8_5->is_on_grid(), IsTrue());
 
   EXPECT_THAT(grid.RevertLastClear(),
               StatusIs(absl::StatusCode::kFailedPrecondition));

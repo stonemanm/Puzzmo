@@ -276,6 +276,7 @@ absl::Status Grid::ClearPath(const Path& path) {
 
     // Remove the tile itself, and insert a nullptr at the end of the column.
     column.erase(column.begin() + row);
+    tile->set_is_on_grid(false);
     column.push_back(nullptr);
   }
   return absl::OkStatus();
@@ -297,6 +298,7 @@ absl::Status Grid::RevertLastClear() {
     auto [row, col] = tile->coords();
     std::vector<std::shared_ptr<Tile>>& column = tiles_[col];
     column.insert(column.begin() + row, tile);
+    tile->set_is_on_grid(true);
     column.pop_back();
 
     // Possibly add it back to `star_tiles_`.
