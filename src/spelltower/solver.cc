@@ -120,6 +120,10 @@ absl::Status Solver::SolveGreedily() {
   return absl::OkStatus();
 }
 
+absl::Status Solver::SolveWithOneLongWord() {
+  return absl::UnimplementedError("Still unimplmented.");
+}
+
 // Helpers
 
 absl::StatusOr<Path> Solver::BestPossibleGoalWord() const {

@@ -141,6 +141,12 @@ class Solver {
   // be found.
   absl::Status SolveGreedily();
 
+  // Solver::SolveWithOneLongWord()
+  //
+  // Plays a sequence of short words to align tiles, then one long,
+  // high-multiplier word. After playing the long word, solves greedily.
+  absl::Status SolveWithOneLongWord();
+
   //----------
   // Helpers
 
