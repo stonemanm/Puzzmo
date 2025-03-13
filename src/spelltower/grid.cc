@@ -6,17 +6,6 @@
 #include "absl/strings/str_join.h"
 
 namespace puzzmo::spelltower {
-namespace {
-
-// The order of the tiles here doesn't matter intrinsically--we just need a
-// comparator so that we can iterate over all permutations of the star tiles.
-auto tile_comparator = [](const std::shared_ptr<Tile>& lhs,
-                          const std::shared_ptr<Tile>& rhs) {
-  return (lhs->col() != rhs->col() ? lhs->col() < rhs->col()
-                                   : lhs->row() < rhs->row());
-};
-
-}  // namespace
 
 Grid::Grid(const std::vector<std::string>& grid_strings)
     : tiles_(kNumCols, std::vector<std::shared_ptr<Tile>>(kNumRows, nullptr)),
@@ -39,7 +28,6 @@ Grid::Grid(const std::vector<std::string>& grid_strings)
       (void)column_letter_counts_[c].AddLetter(tile->letter());
     }
   }
-  std::sort(star_tiles_.begin(), star_tiles_.end(), tile_comparator);
 }
 
 std::vector<std::shared_ptr<Tile>> Grid::row(int row) const {
@@ -52,8 +40,7 @@ std::vector<std::shared_ptr<Tile>> Grid::row(int row) const {
 }
 
 int Grid::ScorePath(const Path& path) const {
-  absl::flat_hash_set<std::shared_ptr<Tile>> affected_tiles =
-      TilesRemovedBy(path);
+  std::vector<std::shared_ptr<Tile>> affected_tiles = TilesRemovedBy(path);
 
   // Sum the values of all affected points, multiply by path.size(), and
   // multiply again by the number of stars used (plus one).
@@ -131,20 +118,7 @@ absl::flat_hash_set<Point> Grid::PointsAffectedBy(
   return affected_points;
 }
 
-absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesAffectedBy(
-    const std::shared_ptr<Tile>& tile) const {
-  absl::flat_hash_set<std::shared_ptr<Tile>> affected_tiles;
-
-  absl::flat_hash_set<Point> affected_points = PointsAffectedBy(tile);
-  for (const Point& p : affected_points) {
-    std::shared_ptr<Tile> tile = tiles_[p.col][p.row];
-    if (tile == nullptr) continue;
-    affected_tiles.insert(tile);
-  }
-  return affected_tiles;
-}
-
-absl::flat_hash_set<Point> Grid::PointsRemovedBy(const Path& path) const {
+std::vector<Point> Grid::PointsRemovedBy(const Path& path) const {
   absl::flat_hash_set<Point> affected_points;
   for (const std::shared_ptr<Tile>& tile : path.tiles()) {
     // Because `tile` is coming from `path`, we know it isn't `nullptr`.
@@ -161,28 +135,29 @@ absl::flat_hash_set<Point> Grid::PointsRemovedBy(const Path& path) const {
     // regardless, but if `path` has 5 or more tiles, we keep the letters as
     // well.
     absl::flat_hash_set<Point> points_affected_by = PointsAffectedBy(tile);
-    if (path.size() < 5) {
-      absl::erase_if(points_affected_by, [*this](const Point& p) {
-        return !tiles_[p.col][p.row]->is_blank();
-      });
+    for (const Point& p : points_affected_by) {
+      if (path.size() < 5 && !tiles_[p.col][p.row]->is_blank()) continue;
+      affected_points.insert(p);
     }
-    affected_points.insert(points_affected_by.begin(),
-                           points_affected_by.end());
   }
-  return affected_points;
+  std::vector<Point> vec(affected_points.begin(), affected_points.end());
+  std::sort(vec.begin(), vec.end(), [](const Point& lhs, const Point& rhs) {
+    return lhs.col != rhs.col ? lhs.col < rhs.col : lhs.row > rhs.row;
+  });
+  return vec;
 }
 
-absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
+std::vector<std::shared_ptr<Tile>> Grid::TilesRemovedBy(
     const Path& path) const {
-  absl::flat_hash_set<std::shared_ptr<Tile>> accessible_tiles;
+  std::vector<std::shared_ptr<Tile>> removed_tiles;
 
-  absl::flat_hash_set<Point> affected_points = PointsRemovedBy(path);
+  std::vector<Point> affected_points = PointsRemovedBy(path);
   for (const Point& p : affected_points) {
     // This should never be `nullptr` due to checks in `PointsRemovedBy()`.
     std::shared_ptr<Tile> tile = tiles_[p.col][p.row];
-    accessible_tiles.insert(tile);
+    removed_tiles.push_back(tile);
   }
-  return accessible_tiles;
+  return removed_tiles;
 }
 
 std::vector<std::string> Grid::AsCharMatrix() const {
@@ -240,7 +215,7 @@ std::string Grid::NStarRegex(int n) const {
 }
 
 std::string Grid::VisualizePath(const Path& path) const {
-  absl::flat_hash_set<Point> affected_points = PointsRemovedBy(path);
+  std::vector<Point> affected_points = PointsRemovedBy(path);
   std::vector<std::string> board = AsCharMatrix();
   for (int r = 0; r < board.size(); ++r) {
     for (int c = 0; c < board[r].size(); ++c) {
@@ -248,7 +223,7 @@ std::string Grid::VisualizePath(const Path& path) const {
       // In these cases, the character there is already correct.
       if (board[r][c] == kEmptySpaceLetter || path.contains(p)) continue;
 
-      if (affected_points.contains(p)) {
+      if (absl::c_contains(affected_points, p)) {
         board[r][c] = kAffectedSpaceLetter;
       } else {
         board[r][c] = kBlankTileLetter;
@@ -259,49 +234,92 @@ std::string Grid::VisualizePath(const Path& path) const {
   return absl::StrJoin(board, "\n");
 }
 
-absl::Status Grid::ClearPath(const Path& path) {
-  absl::flat_hash_set<std::shared_ptr<Tile>> affected = TilesRemovedBy(path);
-  for (const std::shared_ptr<Tile>& tile : affected) {
-    if (absl::Status s = ClearTile(tile); !s.ok()) return s;
+absl::Status Grid::reset() {
+  while (!tile_removal_history_.empty()) {
+    if (absl::Status s = RevertLastClear(); !s.ok()) return s;
   }
   return absl::OkStatus();
 }
 
-absl::Status Grid::ClearTile(const std::shared_ptr<Tile>& tile) {
-  if (tile == nullptr)
-    return absl::InvalidArgumentError(
-        "Cannot pass nullptr to Grid::CloseTile().");
-  if (!IsPointInRange(tile->coords()))
-    return absl::InvalidArgumentError("Tile is not on board.");
-  auto [row, col] = tile->coords();
+absl::Status Grid::ClearPath(const Path& path) {
+  std::vector<std::shared_ptr<Tile>> removed_tiles = TilesRemovedBy(path);
+  tile_removal_history_.push_back(removed_tiles);
 
-  // Remove it from the other data members.
-  if (tile->is_star()) {
-    auto it = std::find(star_tiles_.begin(), star_tiles_.end(), tile);
-    if (it == star_tiles_.end())
-      return absl::InvalidArgumentError(
-          "tile is a star tile, but is not contained in star_tiles_.");
-    star_tiles_.erase(it);
+  for (const std::shared_ptr<Tile>& tile : removed_tiles) {
+    auto [row, col] = tile->coords();
+
+    // Possibly remove it from `star_tiles_`.
+    if (tile->is_star()) {
+      auto it = std::find(star_tiles_.begin(), star_tiles_.end(), tile);
+      if (it == star_tiles_.end())
+        return absl::InvalidArgumentError(
+            "tile is a star tile, but is not contained in star_tiles_.");
+      star_tiles_.erase(it);
+    }
+
+    // Possibly remove it from `letter_map_` and `column_letter_counts_`.
+    if (!tile->is_blank()) {
+      char l = tile->letter();
+      letter_map_[l].erase(tile);
+      if (absl::StatusOr<int> s = column_letter_counts_[col].RemoveLetter(l);
+          !s.ok())
+        return s.status();
+    }
+
+    // Shift the coordinates of all tiles above it in the column down by one.
+    std::vector<std::shared_ptr<Tile>>& column = tiles_[col];
+    for (int r = row + 1; r < kNumRows; ++r) {
+      std::shared_ptr<Tile> curr_tile = column[r];
+      if (curr_tile == nullptr) break;
+      if (absl::Status s = curr_tile->Drop(1); !s.ok()) return s;
+    }
+
+    // Remove the tile itself, and insert a nullptr at the end of the column.
+    column.erase(column.begin() + row);
+    column.push_back(nullptr);
   }
-  if (!tile->is_blank()) {
-    char l = tile->letter();
-    letter_map_[l].erase(tile);
-    if (absl::StatusOr<int> s = column_letter_counts_[col].RemoveLetter(l);
-        !s.ok()) {
-      return s.status();
+  return absl::OkStatus();
+}
+
+absl::Status Grid::RevertLastClear() {
+  if (tile_removal_history_.empty())
+    return absl::FailedPreconditionError(
+        "Grid has not been altered from its initial state");
+
+  std::vector<std::shared_ptr<Tile>> removed_tiles =
+      tile_removal_history_.back();
+  // To ensure that we place tiles back in the correct places, we re-insert them
+  // from lowest to highest, one column at a time.
+  std::reverse(removed_tiles.begin(), removed_tiles.end());
+
+  for (const std::shared_ptr<Tile>& tile : removed_tiles) {
+    // Readd the tile to `tiles_`, and remove a `nullptr` from the end.
+    auto [row, col] = tile->coords();
+    std::vector<std::shared_ptr<Tile>>& column = tiles_[col];
+    column.insert(column.begin() + row, tile);
+    column.pop_back();
+
+    // Possibly add it back to `star_tiles_`.
+    if (tile->is_star()) star_tiles_.push_back(tile);
+
+    // Possibly readd it to `letter_map_` and `column_letter_counts_`.
+    if (!tile->is_blank()) {
+      char l = tile->letter();
+      letter_map_[l].insert(tile);
+      if (absl::StatusOr<int> s = column_letter_counts_[col].AddLetter(l);
+          !s.ok())
+        return s.status();
+    }
+
+    // Shift the coordinates of all tiles above it in the column up by one.
+    for (int r = row + 1; r < kNumRows; ++r) {
+      std::shared_ptr<Tile> curr_tile = column[r];
+      if (curr_tile == nullptr) break;
+      if (absl::Status s = curr_tile->Drop(-1); !s.ok()) return s;
     }
   }
 
-  // Shift the coordinates of all tiles above it in the column down by one.
-  std::vector<std::shared_ptr<Tile>>& column = tiles_[col];
-  for (int r = row + 1; r < kNumRows; ++r) {
-    if (column[r] == nullptr) break;
-    if (absl::Status s = column[r]->Drop(1); !s.ok()) return s;
-  }
-
-  // Remove the tile itself, and insert a nullptr at the end of the column.
-  column.erase(column.begin() + row);
-  column.push_back(nullptr);
+  tile_removal_history_.pop_back();
   return absl::OkStatus();
 }
 

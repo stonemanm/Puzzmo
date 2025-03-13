@@ -178,19 +178,6 @@ class Grid {
   absl::flat_hash_set<std::shared_ptr<Tile>> PossibleNextTilesForPath(
       const Path &path) const;
 
-  // Grid::PointsAffectedBy()
-  //
-  // Returns the von Neumann neighbors of `tile->coords()` that have tiles on
-  // them.
-  absl::flat_hash_set<Point> PointsAffectedBy(
-      const std::shared_ptr<Tile> &tile) const;
-
-  // Grid::TilesAffectedBy()
-  //
-  // Returns `tile`'s von Neumann neighbors. Empty spaces are not included.
-  absl::flat_hash_set<std::shared_ptr<Tile>> TilesAffectedBy(
-      const std::shared_ptr<Tile> &tile) const;
-
   // Grid::TilesRemovedBy()
   //
   // Returns every `Tile` that will be removed if `path` is played. This
@@ -201,11 +188,19 @@ class Grid {
   // - Every blank tile that is a von Neumann neighbor of a tile in `path`.
   // - If `path.size() >= 5`, every non-blank tile that is a von Neumann
   //   neighbor of a tile in `path`, as well.
-  absl::flat_hash_set<std::shared_ptr<Tile>> TilesRemovedBy(
-      const Path &path) const;
+  //
+  // Tiles are ordered by column from left to right, and within columns from
+  // highest to lowest.
+  std::vector<std::shared_ptr<Tile>> TilesRemovedBy(const Path &path) const;
 
   //----------
   // Mutators
+
+  // Grid::reset()
+  //
+  //  Restores the grid to the state it was in prior to any calls to
+  //  `ClearPath()`.
+  absl::Status reset();
 
   // Grid::ClearPath()
   //
@@ -213,22 +208,29 @@ class Grid {
   // them into the empty spaces created.
   absl::Status ClearPath(const Path &path);
 
- private:
-  // Grid::ClearTile()
+  // Grid::RevertLastClear()
   //
-  // Removes `tile` from the grid, dropping any tiles above it into the empty
-  // space created.
-  absl::Status ClearTile(const std::shared_ptr<Tile> &tile);
+  // Rolls back the effect of the last call to `ClearPath()`, resetting the grid
+  // to the state it was in at the time.
+  absl::Status RevertLastClear();
 
+ private:
   // Grid::AsCharMatrix()
   //
   // A helper method for `Grid::VisualizePath()` and `AbslStringify()`.
   std::vector<std::string> AsCharMatrix() const;
 
+  // Grid::PointsAffectedBy()
+  //
+  // Returns the von Neumann neighbors of `tile->coords()` that have tiles on
+  // them.
+  absl::flat_hash_set<Point> PointsAffectedBy(
+      const std::shared_ptr<Tile> &tile) const;
+
   // Grid::PointsRemovedBy()
   //
   // A helper method for `Grid::VisualizePath()` and `Grid::TilesRemovedBy()`.
-  absl::flat_hash_set<Point> PointsRemovedBy(const Path &path) const;
+  std::vector<Point> PointsRemovedBy(const Path &path) const;
 
   //---------
   // Members
@@ -238,6 +240,7 @@ class Grid {
   absl::flat_hash_map<char, absl::flat_hash_set<std::shared_ptr<Tile>>>
       letter_map_;
   std::vector<LetterCount> column_letter_counts_;
+  std::vector<std::vector<std::shared_ptr<Tile>>> tile_removal_history_;
 
   static constexpr int kNumRows = 13;
   static constexpr int kNumCols = 9;

@@ -25,12 +25,12 @@ TEST(SolverTest, WordCache) {
 
 TEST(SolverTest, BestPossibleThreeStarPathForWord) {
   Solver solver_with_unused_star(
-      Trie({"set", "sets", "bet", "bets", "best", "bests", "test", "tests",
-            "beset", "besets"}),
-      Grid({"BXsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
+      Trie({"ests", "set", "sets", "bet", "bets", "best", "bests", "test",
+            "tests", "beset", "besets"}),
+      Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
 
   // Word doesn't use a star.
-  EXPECT_THAT(solver_with_unused_star.BestPossibleThreeStarPathForWord("bests"),
+  EXPECT_THAT(solver_with_unused_star.BestPossibleThreeStarPathForWord("ests"),
               StatusIs(absl::StatusCode::kNotFound));
 
   Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
@@ -44,9 +44,9 @@ TEST(SolverTest, BestPossibleThreeStarPathForWord) {
   Path best_path;
   ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
   ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
-  ASSERT_THAT(best_path.push_back(solver.grid()[{0, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
   EXPECT_THAT(solver.BestPossibleThreeStarPathForWord("bests"),
               IsOkAndHolds(best_path));
 }
@@ -63,9 +63,9 @@ TEST(SolverTest, BestPossiblePathForWord) {
   Path best_path;
   ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
   ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
-  ASSERT_THAT(best_path.push_back(solver.grid()[{0, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
   EXPECT_THAT(solver.BestPossiblePathForWord("bests"), IsOkAndHolds(best_path));
 }
 
@@ -76,9 +76,9 @@ TEST(SolverTest, BestPossibleGoalWord) {
   Path best_path;
   ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
   ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
   ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
-  ASSERT_THAT(best_path.push_back(solver.grid()[{0, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
 
   EXPECT_THAT(solver.BestPossibleGoalWord(), IsOkAndHolds(best_path));
 }
@@ -96,6 +96,29 @@ TEST(SolverTest, PlayWordSuccess) {
   EXPECT_FALSE(solver.grid().IsPointInRange({1, 2}));
   EXPECT_THAT(solver.solution(), testing::SizeIs(1));
   EXPECT_EQ(solver.score(), 1021);  // almost there
+}
+
+TEST(SolverTest, UndoLastPlay) {
+  Solver solver(
+      Trie({"carb", "crab", "arb", "arc", "bar", "bra", "cab", "car"}),
+      Grid({"cab", "z.r"}));
+  auto starting_grid_vecs = solver.grid().tiles();
+
+  Path word;
+  ASSERT_THAT(word.push_back({solver.grid()[{1, 2}], solver.grid()[{1, 1}],
+                              solver.grid()[{0, 2}]}),
+              absl_testing::IsOk());  // "bar"
+  ASSERT_THAT(solver.PlayWord(word), IsOk());
+
+  EXPECT_THAT(solver.UndoLastPlay(), IsOk());
+  EXPECT_EQ(solver.grid().tiles(), starting_grid_vecs);
+  EXPECT_EQ(solver.score(), 1000);
+  EXPECT_THAT(solver.word_cache().empty(), testing::IsTrue());
+  EXPECT_THAT(solver.solution().empty(), testing::IsTrue());
+  EXPECT_THAT(solver.snapshots().empty(), testing::IsTrue());
+
+  EXPECT_THAT(solver.UndoLastPlay(),
+              StatusIs(absl::StatusCode::kFailedPrecondition));
 }
 
 TEST(SolverTest, PlayWordFailsForEmptyPath) {

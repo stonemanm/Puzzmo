@@ -43,6 +43,7 @@ cc_library(
         "//src/shared:point",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/strings",
     ],
@@ -55,6 +56,7 @@ cc_test(
     deps = [
         ":grid",
         "//src/shared:letter_count",
+        "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",

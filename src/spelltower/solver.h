@@ -35,13 +35,13 @@ class Solver {
   // The simplest constructor for a `Solver`, taking a `Dict` and a `Grid`. For
   // simplicity, the grid can be provided in the form of `grid_strings`.
   Solver(const Dict& dict, const Grid& grid)
-      : dict_(dict), starting_grid_(grid), grid_(grid), word_score_sum_(0) {}
+      : dict_(dict), grid_(grid), word_score_sum_(0) {}
   Solver(const Dict& dict, const std::vector<std::string>& grid_strings)
       : Solver(dict, Grid(grid_strings)) {}
 
   // The dict can also be created from a trie, although this is less efficient.
   Solver(const Trie& trie, const Grid& grid)
-      : dict_(trie), starting_grid_(grid), grid_(grid), word_score_sum_(0) {}
+      : dict_(trie), grid_(grid), word_score_sum_(0) {}
   Solver(const Trie& trie, const std::vector<std::string>& grid_strings)
       : Solver(trie, Grid(grid_strings)) {}
 
@@ -61,11 +61,6 @@ class Solver {
   // Provides access to the underlying `Dict`.
   const Dict dict() const { return dict_; }
 
-  // Solver::starting_grid()
-  //
-  // Provides access to the `Grid` with which the `Solver` was created.
-  const Grid starting_grid() const { return starting_grid_; }
-
   // Solver::grid()
   //
   // Provides access to the `Grid` to which the `Solver` has been making
@@ -83,8 +78,8 @@ class Solver {
   // Solver::solution()
   //
   // Provides access to the solution thus far, which is the vector of `Path`
-  // objects that have been played in sequence to transform `starting_grid_` to
-  // `grid_`.
+  // objects that have been played in sequence to transform `grid_` to its
+  // current state.
   std::vector<Path> solution() const { return solution_; }
 
   // Solver::snapshots()
@@ -117,7 +112,7 @@ class Solver {
   // Solver::reset()
   //
   // Returns the solver to its starting state.
-  void reset();
+  absl::Status reset();
 
   // Solver::PlayWord()
   //
@@ -128,6 +123,14 @@ class Solver {
   // Fails if `word` is empty, if `word` is non-continuous, or if `word.word()`
   // is not in `trie_`.
   absl::Status PlayWord(const Path& word);
+
+  // Solver::UndoLastPlay()
+  //
+  // Reverts all changes as if the last `PlayWord()` had never been called.
+  // Reverts `grid_`, subtracts the score from `words_score_`, and removes the
+  // most recent entries from `solution_` and `snapshots_`. Clears
+  // `word_cache_`.
+  absl::Status UndoLastPlay();
 
   //------------------
   // Solution methods
@@ -228,7 +231,6 @@ class Solver {
   void CacheDFS(const std::shared_ptr<TrieNode>& trie_node, Path& path);
 
   const Dict dict_;
-  const Grid starting_grid_;
   Grid grid_;
   absl::btree_map<int, absl::btree_set<Path>, std::greater<int>> word_cache_;
   std::vector<Path> solution_;

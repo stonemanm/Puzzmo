@@ -1,11 +1,14 @@
 #include "solver.h"
 
+#include <algorithm>
+
 #include "absl/container/btree_set.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace puzzmo::spelltower {
+namespace {
 
 constexpr absl::string_view kNotEnoughStars =
     "Not enough stars remain in the grid for this to succeed.";
@@ -21,6 +24,29 @@ constexpr absl::string_view kWordNotInGridError =
     "No possible path for \"%s\" found in grid.";
 constexpr absl::string_view kWordNotInTrieError =
     "Word \"%s\" is not contained in the trie.";
+
+int PathHeight(const Path& path) {
+  int height = 0;
+  for (const std::shared_ptr<Tile>& tile : path.tiles()) height += tile->row();
+  return height;
+}
+
+// We want to keep the greater of the two paths.
+auto path_comparator = [](const Path& lhs, const Path& rhs) {
+  if (lhs.MultiplierWhenScored() != rhs.MultiplierWhenScored())
+    return lhs.MultiplierWhenScored() < rhs.MultiplierWhenScored();
+  if (lhs.size() != rhs.size()) return lhs.size() < rhs.size();
+  if (lhs.Delta() != rhs.Delta()) return lhs.Delta() > rhs.Delta();
+  if (PathHeight(lhs) != PathHeight(rhs))
+    return PathHeight(lhs) < PathHeight(rhs);
+  for (int i = 0; i < lhs.size(); ++i)
+    if (lhs[i]->coords() != rhs[i]->coords())
+      return (lhs[i]->col() != rhs[i]->col()) ? lhs[i]->col() < rhs[i]->col()
+                                              : lhs[i]->row() > rhs[i]->row();
+  return false;
+};
+
+}  // namespace
 
 // Constructors
 
@@ -40,12 +66,12 @@ absl::StatusOr<Solver> Solver::CreateSolverWithSerializedDict(
 
 // Mutators
 
-void Solver::reset() {
-  grid_ = starting_grid_;
+absl::Status Solver::reset() {
   word_cache_.clear();
   solution_.clear();
   snapshots_.clear();
   word_score_sum_ = 0;
+  return grid_.reset();
 }
 
 absl::Status Solver::PlayWord(const Path& word) {
@@ -66,6 +92,18 @@ absl::Status Solver::PlayWord(const Path& word) {
   solution_.push_back(word);
   word_cache_.clear();
   word_score_sum_ += word_score;
+  return absl::OkStatus();
+}
+
+absl::Status Solver::UndoLastPlay() {
+  if (solution_.empty())
+    return absl::FailedPreconditionError("No words have been played!");
+
+  if (absl::Status s = grid_.RevertLastClear(); !s.ok()) return s;
+  word_score_sum_ -= grid_.ScorePath(solution_.back());
+  word_cache_.clear();
+  solution_.pop_back();
+  snapshots_.pop_back();
   return absl::OkStatus();
 }
 
@@ -170,12 +208,7 @@ void Solver::BestPathDFS(absl::string_view word, int i, Path& path,
                          Path& best_path) const {
   // Check for success.
   if (i == word.length()) {
-    int multiplier = path.MultiplierWhenScored();
-    int best_multiplier = best_path.MultiplierWhenScored();
-    if (multiplier > best_multiplier ||
-        (multiplier == best_multiplier && path.Delta() < best_path.Delta())) {
-      best_path = path;
-    }
+    best_path = std::max(path, best_path, path_comparator);
     return;
   }
 
@@ -228,13 +261,8 @@ void Solver::TwoStarDFS(absl::string_view word, int i,
                         Path& best_path) const {
   // Check for success.
   if (i == word.length()) {
-    if (path.star_count() >= 2) {
-      if (best_path.MultiplierWhenScored() < path.MultiplierWhenScored() ||
-          (best_path.MultiplierWhenScored() == path.MultiplierWhenScored() &&
-           path.Delta() < best_path.Delta())) {
-        best_path = path;
-      }
-    }
+    if (path.star_count() >= 2)
+      best_path = std::max(path, best_path, path_comparator);
     return;
   }
 
@@ -291,17 +319,13 @@ void Solver::ThreeStarDFS(absl::string_view word, int i,
                           Path& best_path) const {
   // Check for success.
   if (i == word.length()) {
-    if (path.star_count() == grid_.star_tiles().size()) {
-      if (best_path.size() < word.length() ||
-          path.Delta() < best_path.Delta()) {
-        best_path = path;
-      }
-    }
+    if (path.star_count() >= 3)
+      best_path = std::max(path, best_path, path_comparator);
     return;
   }
 
-  // Check for failure. If any of the unused star letters cannot be found in the
-  // rest of the word, no need to go further down this branch.
+  // Check for failure. If any of the unused star letters cannot be found in
+  // the rest of the word, no need to go further down this branch.
   if (!LetterCount(word.substr(i)).contains(unused_star_letters)) return;
 
   // Try all the options.
