@@ -11,7 +11,6 @@
 #include "src/shared/point.h"
 
 namespace puzzmo::spelltower {
-namespace {
 
 constexpr absl::string_view kBlankTileError =
     "Cannot add a blank tile to a path.";
@@ -28,19 +27,6 @@ constexpr absl::string_view kPushBackError =
     "Path becomes impossible to create with this tile added.";
 constexpr absl::string_view kTileNotOnGridError =
     "Tiles not on the grid cannot be added to the path.";
-
-// A helper method for `Path::IsPossible()`. Returns the tile indices in
-// `path`, sorted so as to iterate from the lowest to the highest row.
-std::vector<int> IndicesByRow(const std::vector<Point> &points) {
-  std::vector<int> indices(points.size());
-  std::iota(indices.begin(), indices.end(), 0);
-  std::sort(indices.begin(), indices.end(), [points](int lhs, int rhs) {
-    return points[lhs].row < points[rhs].row;
-  });
-  return indices;
-}
-
-}  // namespace
 
 bool Path::contains(const Point &p) const {
   for (const std::shared_ptr<Tile> &tile : tiles_) {
@@ -109,7 +95,7 @@ absl::Status Path::push_back(const std::shared_ptr<Tile> &tile) {
     return s;
   }
 
-  if (absl::Status s = FindNewAdjustedPoints(); !s.ok()) {
+  if (absl::Status s = AddNewestTileToAdjustedPoints(); !s.ok()) {
     RemoveNewestTileFromSimpleBoard();
     tiles_.pop_back();
     return s;
@@ -166,86 +152,92 @@ void Path::RemoveNewestTileFromSimpleBoard() {
   lowest_legal_row_.pop_back();
 }
 
-absl::Status Path::FindNewAdjustedPoints() {
-  const int new_idx = size() - 1;
-  Point new_p = tiles_.back()->coords();
-
+absl::Status Path::AddNewestTileToAdjustedPoints() {
   // If there is only one point, no adjustment is needed.
   if (adjusted_points_.empty()) {
-    adjusted_points_.push_back({new_p});
+    adjusted_points_.push_back({tiles_.back()->coords()});
     return absl::OkStatus();
   }
-  std::vector<Point> points = adjusted_points_.back();
 
-  // Now we have to determine if `new_p` must have already been removed. If it
-  // has, then obviously it cannot be added to the path. If not, then we need to
-  // determine its highest possible row as of the most recent entry in
-  // `adjusted_points_`.
-  std::vector<int> simple_col = simple_board_[new_p.col];
-  bool has_path_point_above = (simple_col.back() != new_idx);
-  bool has_path_point_below = (simple_col[0] != new_idx);
+  absl::StatusOr<Point> p = SafePointToInsertLatestTile();
+  if (!p.ok()) return p.status();
+
+  std::vector<Point> points = adjusted_points_.back();
+  points.push_back(*std::move(p));
+  if (absl::Status s = AdjustPoints(points); !s.ok()) return s;
+
+  adjusted_points_.push_back(points);
+  return absl::OkStatus();
+}
+
+absl::StatusOr<Point> Path::SafePointToInsertLatestTile() {
+  // It's possible that, for the path up to this point to be possible, the tile
+  // we want to add must already have been removed. Even if not, we need to
+  // ascertain how the number of rows that it must have dropped by this point.
+  std::vector<Point> points = adjusted_points_.back();
+  Point p = tiles_.back()->coords();
+  const int p_idx = size() - 1;
+  std::vector<int> simple_col = simple_board_[p.col];
+
+  // (There's no need for a `ceiling_row`, as we can just update p.row)
   int floor_row = 0;
 
-  // If it has something below it, then it will have dropped, at minimum, as
-  // many rows as the point beneath it has.
-  if (has_path_point_below) {
-    int idx_below = simple_col[lowest_legal_row_[new_idx] - 1];
-    int rows_dropped_by_point_below =
-        tiles_[idx_below]->row() - points[idx_below].row;
-    new_p.row -= rows_dropped_by_point_below;
+  // If `p` has another path tile beneath it, and that path tile has dropped `n`
+  // tiles, `p` will have dropped at minimum `n` tiles as well.
+  if (simple_col[0] != p_idx) {
+    int idx_below = simple_col[lowest_legal_row_[p_idx] - 1];
+    int n = tiles_[idx_below]->row() - points[idx_below].row;
+    p.row -= n;
+    // Additionally, it's impossible to place it at or below the row of that
+    // tile.
     floor_row = points[idx_below].row + 1;
   }
 
-  // If it has something above it, then the movement of that point may have
-  // dropped `new_p` as well.
-  if (has_path_point_above) {
-    int idx_above = simple_col[lowest_legal_row_[new_idx] + 1];
-    // `tiles_between_them` is the amount that above can have dropped without
-    // affecting `new_p` at all.
-    int tiles_between_them = tiles_[idx_above]->row() - tiles_[new_idx]->row();
-    if (tiles_between_them > 0) --tiles_between_them;
-    int rows_dropped_by_point_above =
-        tiles_[idx_above]->row() - points[idx_above].row;
-    int rows_new_p_must_drop = rows_dropped_by_point_above - tiles_between_them;
-    if (rows_new_p_must_drop > 0) new_p.row -= rows_new_p_must_drop;
+  // If it has another path tile above it, that tile may have dropped far enough
+  // to have pushed `latest_point` down as well.
+  if (simple_col.back() != p_idx) {
+    int idx_above = simple_col[lowest_legal_row_[p_idx] + 1];
+    int n = tiles_[idx_above]->row() - points[idx_above].row;
+    // We prioritize removing any non-path tiles sandwiched between `p` and the
+    // point above it. After that, any further drop will also affect `p`.
+    n -= std::max(tiles_[idx_above]->row() - tiles_[p_idx]->row() - 1, 0);
+    if (n > 0) p.row -= n;
   }
 
-  if (new_p.row < floor_row)
+  if (p.row < floor_row)
     return absl::OutOfRangeError("Tile has already been removed.");
-  points.push_back(new_p);
+  return p;
+}
 
-  // LOG(INFO) << "After inserting new_p (size " << size()
-  //           << "): " << absl::StrJoin(points, ", ");
+absl::Status Path::AdjustPoints(std::vector<Point> &points) {
+  std::vector<int> sorted_indices(points.size());
+  std::iota(sorted_indices.begin(), sorted_indices.end(), 0);
 
-  // Now that we've placed `new_p`, we need to make the path continuous by
-  // dropping points as needed.
   bool is_aligned = false;
   while (!is_aligned) {
-    std::vector<int> sorted_indices = IndicesByRow(points);
-
     // Start with the lowest point
+    std::sort(sorted_indices.begin(), sorted_indices.end(),
+              [points](int lhs, int rhs) {
+                return points[lhs].row < points[rhs].row;
+              });
     for (int i = 0; i < sorted_indices.size(); ++i) {
       int idx = sorted_indices[i];
-      Point &curr = points[idx];
+      Point &p = points[idx];
 
-      if (idx > 0) {
-        Point &prev = points[idx - 1];
-        if (!curr.MooreNeighbors().contains(prev)) {
-          if (absl::Status s = MakePointsNeighbors(idx - 1, idx, points);
-              !s.ok())
+      // If `p` has a predecessor and that predecessor is 2+ rows higher than
+      // it, drop the predecessor into the neighborhood of `p`.
+      if (idx > 0 && p.row + 1 < points[idx - 1].row) {
+        if (absl::Status s = MakePointsNeighbors(idx - 1, idx, points); !s.ok())
             return s;
-          break;  // Restarts the for loop.
+        break;  // Having adjusted a point, we restart the outer loop.
         }
-      }
 
-      if (idx < points.size() - 1) {
-        Point &next = points[idx + 1];
-        if (!curr.MooreNeighbors().contains(next)) {
-          if (absl::Status s = MakePointsNeighbors(idx, idx + 1, points);
-              !s.ok())
+      // If `p` has a successor and that successor is 2+ rows higher than it,
+      // drop the successor into the neighborhood of `p`.
+      if (idx < points.size() - 1 && p.row + 1 < points[idx + 1].row) {
+        if (absl::Status s = MakePointsNeighbors(idx, idx + 1, points); !s.ok())
             return s;
-          break;  // Restarts the for loop.
-        }
+        break;  // Having adjusted a point, we restart the outer loop.
       }
       // If we've made it here, this point (and all below it) can reach both of
       // their neighbors! If this is the final loop, set is_aligned = true so we
@@ -254,14 +246,6 @@ absl::Status Path::FindNewAdjustedPoints() {
     }
     if (is_aligned) break;
   }
-  // LOG(INFO) << "Adjusted points after adding point #" << size() << ":";
-  // for (int i = 0; i < size() - 1; ++i) {
-  //   LOG(INFO) << tiles_[i]->letter_on_board() << " " << tiles_[i]->coords()
-  //             << " -> " << points[i];
-  // }
-  // LOG(INFO) << tiles_[size() - 1]->letter_on_board() << " "
-  //           << tiles_[size() - 1]->coords() << " -> " << points[size() - 1];
-  adjusted_points_.push_back(points);
   return absl::OkStatus();
 }
 

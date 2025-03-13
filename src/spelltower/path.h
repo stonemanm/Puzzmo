@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "tile.h"
@@ -169,12 +170,24 @@ class Path {
   // A helper method for `pop_back()`.
   void RemoveNewestTileFromSimpleBoard();
 
-  // Path::FindNewAdjustedPoints()
+  // Path::AddNewestTileToAdjustedPoints()
   //
   // Determines the least each tile in the path has to drop in order for the
   // path to become continuous, and saves the vector of updated points in
   // `adjusted_points`_.
-  absl::Status FindNewAdjustedPoints();
+  absl::Status AddNewestTileToAdjustedPoints();
+
+  // Path::SafePlaceToInsertLatestTile()
+  //
+  // Returns the highest point at which the latest tile can be inserted into
+  // `adjusted_points_`.
+  absl::StatusOr<Point> SafePointToInsertLatestTile();
+
+  // Path::AdjustPoints()
+  //
+  // Lowers the points as little as possible in order to make them continuous.
+  // If this is impossible, returns an error.
+  absl::Status AdjustPoints(std::vector<Point> &points);
 
   // Path::UpdatePoints()
   //

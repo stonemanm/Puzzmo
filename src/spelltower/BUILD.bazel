@@ -72,6 +72,7 @@ cc_library(
         "//src/shared:point",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
     ],
 )
