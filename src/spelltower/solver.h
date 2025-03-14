@@ -67,6 +67,16 @@ class Solver {
   // changes.
   Grid grid() const { return grid_; }
 
+  // Solver::TileAt()
+  //
+  // Syntactic sugar for accessing grid tiles directly.
+  std::shared_ptr<Tile> TileAt(const Point& p) const {
+    return TileAt(p.row, p.col);
+  }
+  std::shared_ptr<Tile> TileAt(int row, int col) const {
+    return grid_[{.row = row, .col = col}];
+  }
+
   // Solver::word_cache()
   //
   // Returns a data structure containing all the words currently on `grid_`.

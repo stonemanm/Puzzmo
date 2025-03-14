@@ -42,11 +42,11 @@ TEST(SolverTest, BestPossibleThreeStarPathForWord) {
               StatusIs(absl::StatusCode::kInvalidArgument));
 
   Path best_path;
-  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 0)), IsOk());  // B
+  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 1)), IsOk());  // E
+  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 2)), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.TileAt(2, 3)), IsOk());  // T
+  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 2)), IsOk());  // s
   EXPECT_THAT(solver.BestPossibleThreeStarPathForWord("bests"),
               IsOkAndHolds(best_path));
 }
@@ -61,11 +61,11 @@ TEST(SolverTest, BestPossiblePathForWord) {
               StatusIs(absl::StatusCode::kInvalidArgument));
 
   Path best_path;
-  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 0)), IsOk());  // B
+  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 1)), IsOk());  // E
+  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 2)), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.TileAt(2, 3)), IsOk());  // T
+  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 2)), IsOk());  // s
   EXPECT_THAT(solver.BestPossiblePathForWord("bests"), IsOkAndHolds(best_path));
 }
 
@@ -74,11 +74,11 @@ TEST(SolverTest, BestPossibleGoalWord) {
                       "tests", "beset", "besets", "unavailable"}),
                 Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
   Path best_path;
-  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 0}]), IsOk());  // B
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 1}]), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.grid()[{6, 2}]), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.grid()[{2, 3}]), IsOk());  // T
-  ASSERT_THAT(best_path.push_back(solver.grid()[{4, 2}]), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 0)), IsOk());  // B
+  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 1)), IsOk());  // E
+  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 2)), IsOk());  // s
+  ASSERT_THAT(best_path.push_back(solver.TileAt(2, 3)), IsOk());  // T
+  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 2)), IsOk());  // s
 
   EXPECT_THAT(solver.BestPossibleGoalWord(), IsOkAndHolds(best_path));
 }
@@ -89,8 +89,8 @@ TEST(SolverTest, PlayWordSuccess) {
       Grid({"cab", "z.r"}));
 
   Path word;
-  ASSERT_THAT(word.push_back({solver.grid()[{1, 2}], solver.grid()[{1, 1}],
-                              solver.grid()[{0, 2}]}),
+  ASSERT_THAT(word.push_back({solver.TileAt(1, 2), solver.TileAt(1, 1),
+                              solver.TileAt(0, 2)}),
               absl_testing::IsOk());  // "bar"
   EXPECT_THAT(solver.PlayWord(word), absl_testing::IsOk());
   EXPECT_FALSE(solver.grid().IsPointInRange({1, 2}));
@@ -105,8 +105,8 @@ TEST(SolverTest, UndoLastPlay) {
   auto starting_grid_vecs = solver.grid().tiles();
 
   Path word;
-  ASSERT_THAT(word.push_back({solver.grid()[{1, 2}], solver.grid()[{1, 1}],
-                              solver.grid()[{0, 2}]}),
+  ASSERT_THAT(word.push_back({solver.TileAt(1, 2), solver.TileAt(1, 1),
+                              solver.TileAt(0, 2)}),
               absl_testing::IsOk());  // "bar"
   ASSERT_THAT(solver.PlayWord(word), IsOk());
 
@@ -137,9 +137,9 @@ TEST(SolverTest, PlayWordFailsForNonContinuousPath) {
       Grid({"cab", "...", "z.r"}));
 
   Path word;
-  ASSERT_THAT(word.push_back(solver.grid()[{2, 0}]), IsOk());  // c
-  ASSERT_THAT(word.push_back(solver.grid()[{2, 1}]), IsOk());  // a
-  ASSERT_THAT(word.push_back(solver.grid()[{0, 2}]),
+  ASSERT_THAT(word.push_back(solver.TileAt(2, 0)), IsOk());  // c
+  ASSERT_THAT(word.push_back(solver.TileAt(2, 1)), IsOk());  // a
+  ASSERT_THAT(word.push_back(solver.TileAt(0, 2)),
               IsOk());  // r, but not continuous.
   EXPECT_THAT(solver.PlayWord(word),
               StatusIs(absl::StatusCode::kInvalidArgument));
@@ -149,9 +149,9 @@ TEST(SolverTest, PlayWordFailsForWordNotInTrie) {
   Solver solver(Trie({"nope", "not", "here"}), Grid({"cab"}));
 
   Path word;
-  ASSERT_THAT(word.push_back(solver.grid()[{0, 0}]), IsOk());  // c
-  ASSERT_THAT(word.push_back(solver.grid()[{0, 1}]), IsOk());  // a
-  ASSERT_THAT(word.push_back(solver.grid()[{0, 2}]),
+  ASSERT_THAT(word.push_back(solver.TileAt(0, 0)), IsOk());  // c
+  ASSERT_THAT(word.push_back(solver.TileAt(0, 1)), IsOk());  // a
+  ASSERT_THAT(word.push_back(solver.TileAt(0, 2)),
               IsOk());  // b
   EXPECT_THAT(solver.PlayWord(word),
               StatusIs(absl::StatusCode::kInvalidArgument));
@@ -172,8 +172,8 @@ TEST(SolverTest, AbslStringify) {
             absl::StrFormat("%v", solver.grid()));
 
   Path scat;
-  ASSERT_THAT(scat.push_back({solver.grid()[{2, 0}], solver.grid()[{2, 1}],
-                              solver.grid()[{2, 2}], solver.grid()[{1, 3}]}),
+  ASSERT_THAT(scat.push_back({solver.TileAt(2, 0), solver.TileAt(2, 1),
+                              solver.TileAt(2, 2), solver.TileAt(1, 3)}),
               absl_testing::IsOk());
   std::string scat_str =
       absl::StrCat("1. \"scat\"\n", solver.grid().VisualizePath(scat));
@@ -183,8 +183,8 @@ TEST(SolverTest, AbslStringify) {
       absl::StrCat(scat_str, "\n\n", absl::StrFormat("%v", solver.grid())));
 
   Path carb;
-  ASSERT_THAT(carb.push_back({solver.grid()[{1, 0}], solver.grid()[{1, 1}],
-                              solver.grid()[{0, 2}], solver.grid()[{1, 2}]}),
+  ASSERT_THAT(carb.push_back({solver.TileAt(1, 0), solver.TileAt(1, 1),
+                              solver.TileAt(0, 2), solver.TileAt(1, 2)}),
               absl_testing::IsOk());
   std::string carb_str =
       absl::StrCat("2. \"carb\"\n", solver.grid().VisualizePath(carb));
