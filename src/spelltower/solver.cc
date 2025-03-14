@@ -10,16 +10,29 @@
 namespace puzzmo::spelltower {
 namespace {
 
+constexpr absl::string_view kVerboseBestGoalWordLoop =
+    "Searching %d words of length %d for paths that use %d or more stars.";
+constexpr absl::string_view kVerboseFoundPathForWord =
+    "Found playable %d* path for \"%s\": %v";
+constexpr absl::string_view kVerboseLongestWord =
+    "[%03d/%03d] Searching for a path for word \"%s\".";
+constexpr absl::string_view kVerboseThreeStarCouldBeBetter =
+    "A 3* word of length %d or higher would have a higher multiplier. "
+    "Continuing the search in case one can be found.";
+
+constexpr absl::string_view kGoalPathNotPossible =
+    "No longer possible--undoing the last word.";
 constexpr absl::string_view kNotEnoughStars =
     "Not enough stars remain in the grid for this to succeed.";
 constexpr absl::string_view kPathEmptyError =
     "Path is empty and cannot be played.";
 constexpr absl::string_view kPathNotContinuousError =
     "Path is noncontinuous and cannot be played: %v.";
+constexpr absl::string_view kPathNotOnGridError =
+    "Not all tiles in the path are on the grid; therefore, it cannot be "
+    "played: %v.";
 constexpr absl::string_view kStarLettersNotInWord =
     "Word \"%s\" does not use enough of the star letters (%s).";
-constexpr absl::string_view kVerboseLongestWord =
-    "[%d/%d] Searching for a path for word \"%s\".";
 constexpr absl::string_view kWordNotInGridError =
     "No possible path for \"%s\" found in grid.";
 constexpr absl::string_view kWordNotInTrieError =
@@ -76,6 +89,9 @@ absl::Status Solver::reset() {
 
 absl::Status Solver::PlayWord(const Path& word) {
   if (word.empty()) return absl::InvalidArgumentError(kPathEmptyError);
+  if (!word.IsOnGrid())
+    return absl::InvalidArgumentError(
+        absl::StrFormat(kPathNotOnGridError, word));
   if (!word.IsContinuous())
     return absl::InvalidArgumentError(
         absl::StrFormat(kPathNotContinuousError, word));
@@ -347,33 +363,94 @@ void Solver::ThreeStarDFS(absl::string_view word, int i,
   }
 }
 
-void Solver::FillWordCache() {
-  if (!word_cache_.empty()) return;
+void Solver::FillWordCache(
+    absl::btree_map<int, absl::btree_set<Path>, std::greater<int>>& cache) {
+  if (!cache.empty()) return;
 
   Path path;
   for (const std::vector<std::shared_ptr<Tile>>& column : grid_.tiles()) {
     for (const std::shared_ptr<Tile>& tile : column) {
       if (absl::Status s = path.push_back(tile); !s.ok()) continue;
-      CacheDFS(dict_.trie().root()->children[tile->letter() - 'a'], path);
+      CacheDFS(dict_.trie().root()->children[tile->letter() - 'a'], path,
+               cache);
       path.pop_back();
     }
   }
 }
 
-void Solver::CacheDFS(const std::shared_ptr<TrieNode>& trie_node, Path& path) {
+void Solver::CacheDFS(
+    const std::shared_ptr<TrieNode>& trie_node, Path& path,
+    absl::btree_map<int, absl::btree_set<Path>, std::greater<int>>& cache) {
   // Check for failure.
   if (trie_node == nullptr) return;
 
   // Check for success.
-  if (trie_node->is_word) word_cache_[grid_.ScorePath(path)].insert(path);
+  if (trie_node->is_word) cache[grid_.ScorePath(path)].insert(path);
 
   absl::flat_hash_set<std::shared_ptr<Tile>> options =
       grid_.PossibleNextTilesForPath(path);
   for (const std::shared_ptr<Tile>& next : options) {
     if (absl::Status s = path.push_back(next); !s.ok()) continue;
-    CacheDFS(trie_node->children[next->letter() - 'a'], path);
+    CacheDFS(trie_node->children[next->letter() - 'a'], path, cache);
     path.pop_back();
   }
+}
+
+absl::StatusOr<std::vector<Path>> Solver::StepsToPlayGoalWordDFS(
+    const Path& goal_word) {
+  // Check for success
+  if (goal_word.IsContinuous()) {
+    std::vector<Path> partial_solution = solution_;
+    partial_solution.push_back(goal_word);
+    return partial_solution;
+  }
+
+  // Check for failure
+  if (!goal_word.IsStillPossible())
+    return absl::OutOfRangeError(kGoalPathNotPossible);
+
+  // Get all options by calling CacheDFS. We store them locally rather than
+  // using `word_cache_` because backtracking would continually clear it.
+  absl::btree_map<int, absl::btree_set<Path>, std::greater<int>> cache;
+  FillWordCache(cache);
+  for (const auto& [_, paths] : cache) {
+    for (const Path& path : paths) {
+      std::vector<std::shared_ptr<Tile>> affected_tiles =
+          grid_.TilesRemovedBy(path);
+      bool interferes_with_goal_path = false;
+      for (const std::shared_ptr<Tile>& tile : goal_word.tiles()) {
+        if (absl::c_contains(affected_tiles, tile)) {
+          interferes_with_goal_path = true;
+          break;
+        }
+      }
+      if (interferes_with_goal_path) continue;
+
+      // For each viable option, use it, recurse, then backtrack if
+      // unsuccessful.
+      if (absl::Status s = PlayWord(path); !s.ok()) continue;
+      if (absl::StatusOr<std::vector<Path>> s =
+              StepsToPlayGoalWordDFS(goal_word);
+          s.ok())
+        return s;
+
+      if (absl::Status s = UndoLastPlay(); !s.ok())
+        return s;  // Shouldn't happen, but if it does we want to see the error!
+    }
+  }
+  return absl::NotFoundError(
+      absl::StrFormat(kWordNotInGridError, goal_word.word()));
+}
+
+absl::Status Solver::PlayGoalWord(const Path& goal_word) {
+  absl::StatusOr<std::vector<Path>> steps = StepsToPlayGoalWordDFS(goal_word);
+  if (!steps.ok()) return steps.status();
+  if (absl::Status s = reset(); !s.ok()) return s;
+
+  for (const Path& path : *steps)
+    if (absl::Status s = PlayWord(path); !s.ok()) return s;
+
+  return absl::OkStatus();
 }
 
 }  // namespace puzzmo::spelltower

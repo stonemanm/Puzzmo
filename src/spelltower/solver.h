@@ -175,6 +175,10 @@ class Solver {
   // words that use all 3 stars, then 20, down until we finish length-17 (x68)
   absl::StatusOr<Path> BestPossibleGoalWord() const;
 
+  // A TEMPORARY method that calls `StepsToPlayGoalWordDFS()`. Will be removed
+  // once `SolveWithOneLongWord()` is assembled.
+  absl::Status PlayGoalWord(const Path& goal_word);
+
   // Solver::BestPossiblePathForWord()
   //
   // Constructs and returns the best possible path for a given word. This path
@@ -200,9 +204,12 @@ class Solver {
 
   // Solver::FillWordCache()
   //
-  // If `word_cache_` is empty, runs DFS on the grid and populates `word_cache_`
-  // with the results. Does not run if `word_cache_` is populated.
-  void FillWordCache();
+  // If `cache` is empty, runs DFS on the grid and populates `cache` with the
+  // results. Does not run if `cache` is populated. If called without a
+  // parameter, fills `word_cache_`.
+  void FillWordCache() { FillWordCache(word_cache_); };
+  void FillWordCache(
+      absl::btree_map<int, absl::btree_set<Path>, std::greater<int>>& cache);
 
  private:
   // Solver::BestPathDFS()
@@ -244,7 +251,21 @@ class Solver {
   // A recursive helper method called by `FillWordCache()`. In parallel,
   // searches `trie_` and `grid_` depth-first from the node and the last tile in
   // `path`.
-  void CacheDFS(const std::shared_ptr<TrieNode>& trie_node, Path& path);
+  void CacheDFS(
+      const std::shared_ptr<TrieNode>& trie_node, Path& path,
+      absl::btree_map<int, absl::btree_set<Path>, std::greater<int>>& cache);
+
+  // Solver::StepsToPlayGoalWordDFS()
+  //
+  // A recursive helper method called by `TwoStarDFS()` and `ThreeStarDFS()`.
+  // Given `path`, recursively tries to play words in order to make the path
+  // continuous. If a sequence of words that does so is found, returns the
+  // vector of paths that do so. If not, returns an error.
+  //
+  // While the method is not const, this should not change the internal state of
+  // the solver object.
+  absl::StatusOr<std::vector<Path>> StepsToPlayGoalWordDFS(
+      const Path& goal_word);
 
   const Dict dict_;
   Grid grid_;

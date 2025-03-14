@@ -157,6 +157,87 @@ TEST(SolverTest, PlayWordFailsForWordNotInTrie) {
               StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
+TEST(SolverTest, PlayGoalWordSuccess) {
+  Solver solver(Trie({"successfully", "tiny", "word"}),
+                Grid({"   lluf", "   tond", "  ywiry", "success"}));
+  Path tiny;
+  ASSERT_THAT(tiny.push_back({
+                  solver.TileAt(2, 3),  // t
+                  solver.TileAt(1, 4),  // i
+                  solver.TileAt(2, 5),  // n
+                  solver.TileAt(1, 6),  // y
+              }),
+              IsOk());
+  Path word;
+  ASSERT_THAT(word.push_back({
+                  solver.TileAt(1, 3),  // w
+                  solver.TileAt(2, 4),  // o
+                  solver.TileAt(1, 5),  // r
+                  solver.TileAt(2, 6),  // d
+              }),
+              IsOk());
+  Path goal_word;
+  ASSERT_THAT(goal_word.push_back({
+                  solver.TileAt(0, 0),  // s
+                  solver.TileAt(0, 1),  // u
+                  solver.TileAt(0, 2),  // c
+                  solver.TileAt(0, 3),  // c
+                  solver.TileAt(0, 4),  // e
+                  solver.TileAt(0, 5),  // s
+                  solver.TileAt(0, 6),  // s
+                  solver.TileAt(3, 6),  // f
+                  solver.TileAt(3, 5),  // u
+                  solver.TileAt(3, 4),  // l
+                  solver.TileAt(3, 3),  // l
+                  solver.TileAt(1, 2)   // y
+              }),
+              IsOk());
+  EXPECT_THAT(solver.PlayGoalWord(goal_word), IsOk());
+  EXPECT_THAT(solver.solution(), testing::ElementsAre(word, tiny, goal_word));
+}
+
+TEST(SolverTest, PlayGoalWordFails) {
+  Solver solver(Trie({"successfully", "longer", "word"}),
+                Grid({"   lluf", "  onger", " lyword", "success"}));
+  Path longer;
+  ASSERT_THAT(longer.push_back({
+                  solver.TileAt(1, 1),  // l
+                  solver.TileAt(2, 2),  // o
+                  solver.TileAt(2, 3),  // n
+                  solver.TileAt(2, 4),  // g
+                  solver.TileAt(2, 5),  // e
+                  solver.TileAt(2, 6),  // r
+              }),
+              IsOk());
+  Path word;
+  ASSERT_THAT(word.push_back({
+                  solver.TileAt(1, 3),  // w
+                  solver.TileAt(1, 4),  // o
+                  solver.TileAt(1, 5),  // r
+                  solver.TileAt(1, 6),  // d
+              }),
+              IsOk());
+  Path goal_word;
+  ASSERT_THAT(goal_word.push_back({
+                  solver.TileAt(0, 0),  // s
+                  solver.TileAt(0, 1),  // u
+                  solver.TileAt(0, 2),  // c
+                  solver.TileAt(0, 3),  // c
+                  solver.TileAt(0, 4),  // e
+                  solver.TileAt(0, 5),  // s
+                  solver.TileAt(0, 6),  // s
+                  solver.TileAt(3, 6),  // f
+                  solver.TileAt(3, 5),  // u
+                  solver.TileAt(3, 4),  // l
+                  solver.TileAt(3, 3),  // l
+                  solver.TileAt(1, 2)   // y
+              }),
+              IsOk());
+  EXPECT_THAT(solver.PlayGoalWord(goal_word),
+              StatusIs(absl::StatusCode::kNotFound));
+  EXPECT_THAT(solver.solution(), testing::SizeIs(0));
+}
+
 TEST(SolverTest, SolveGreedily) {
   //
 }
