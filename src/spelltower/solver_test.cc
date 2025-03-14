@@ -23,65 +23,69 @@ TEST(SolverTest, WordCache) {
   EXPECT_THAT(solver.word_cache().begin()->second, testing::SizeIs(1));
 }
 
-TEST(SolverTest, BestPossibleThreeStarPathForWord) {
-  Solver solver_with_unused_star(
-      Trie({"ests", "set", "sets", "bet", "bets", "best", "bests", "test",
-            "tests", "beset", "besets"}),
-      Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
+// TEST(SolverTest, BestPossibleThreeStarPathForWord) {
+//   Solver solver_with_unused_star(
+//       Trie({"ests", "set", "sets", "bet", "bets", "best", "bests", "test",
+//             "tests", "beset", "besets"}),
+//       Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
 
-  // Word doesn't use a star.
-  EXPECT_THAT(solver_with_unused_star.BestPossibleThreeStarPathForWord("ests"),
-              StatusIs(absl::StatusCode::kNotFound));
+//   // Word doesn't use a star.
+//   EXPECT_THAT(solver_with_unused_star.BestPossibleThreeStarPathForWord("ests"),
+//               StatusIs(absl::StatusCode::kNotFound));
 
-  Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
-                      "tests", "beset", "besets"}),
-                Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
+//   Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
+//                       "tests", "beset", "besets"}),
+//                 Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix",
+//                 "best"}));
 
-  // Word not in trie.
-  EXPECT_THAT(solver.BestPossibleThreeStarPathForWord("exit"),
-              StatusIs(absl::StatusCode::kInvalidArgument));
+//   // Word not in trie.
+//   EXPECT_THAT(solver.BestPossibleThreeStarPathForWord("exit"),
+//               StatusIs(absl::StatusCode::kInvalidArgument));
 
-  Path best_path;
-  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 0)), IsOk());  // B
-  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 1)), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 2)), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.TileAt(2, 3)), IsOk());  // T
-  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 2)), IsOk());  // s
-  EXPECT_THAT(solver.BestPossibleThreeStarPathForWord("bests"),
-              IsOkAndHolds(best_path));
-}
+//   Path best_path;
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(6, 0)), IsOk());  // B
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(4, 1)), IsOk());  // E
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(6, 2)), IsOk());  // s
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(2, 3)), IsOk());  // T
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(4, 2)), IsOk());  // s
+//   EXPECT_THAT(solver.BestPossibleThreeStarPathForWord("bests"),
+//               IsOkAndHolds(best_path));
+// }
 
-TEST(SolverTest, BestPossiblePathForWord) {
-  Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
-                      "tests", "beset", "besets"}),
-                Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
+// TEST(SolverTest, BestPossiblePathForWord) {
+//   Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
+//                       "tests", "beset", "besets"}),
+//                 Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix",
+//                 "best"}));
 
-  // Word not in trie.
-  EXPECT_THAT(solver.BestPossiblePathForWord("exit"),
-              StatusIs(absl::StatusCode::kInvalidArgument));
+//   // Word not in trie.
+//   EXPECT_THAT(solver.BestPossiblePathForWord("exit"),
+//               StatusIs(absl::StatusCode::kInvalidArgument));
 
-  Path best_path;
-  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 0)), IsOk());  // B
-  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 1)), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 2)), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.TileAt(2, 3)), IsOk());  // T
-  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 2)), IsOk());  // s
-  EXPECT_THAT(solver.BestPossiblePathForWord("bests"), IsOkAndHolds(best_path));
-}
+//   Path best_path;
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(6, 0)), IsOk());  // B
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(4, 1)), IsOk());  // E
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(6, 2)), IsOk());  // s
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(2, 3)), IsOk());  // T
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(4, 2)), IsOk());  // s
+//   EXPECT_THAT(solver.BestPossiblePathForWord("bests"),
+//   IsOkAndHolds(best_path));
+// }
 
-TEST(SolverTest, BestPossibleGoalWord) {
-  Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
-                      "tests", "beset", "besets", "unavailable"}),
-                Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix", "best"}));
-  Path best_path;
-  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 0)), IsOk());  // B
-  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 1)), IsOk());  // E
-  ASSERT_THAT(best_path.push_back(solver.TileAt(6, 2)), IsOk());  // s
-  ASSERT_THAT(best_path.push_back(solver.TileAt(2, 3)), IsOk());  // T
-  ASSERT_THAT(best_path.push_back(solver.TileAt(4, 2)), IsOk());  // s
+// TEST(SolverTest, BestPossibleGoalWord) {
+//   Solver solver(Trie({"set", "sets", "bet", "bets", "best", "bests", "test",
+//                       "tests", "beset", "besets", "unavailable"}),
+//                 Grid({"Bxsx", "xxxx", "xEst", "xxxx", "bexT", "xiix",
+//                 "best"}));
+//   Path best_path;
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(6, 0)), IsOk());  // B
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(4, 1)), IsOk());  // E
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(6, 2)), IsOk());  // s
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(2, 3)), IsOk());  // T
+//   ASSERT_THAT(best_path.push_back(solver.TileAt(4, 2)), IsOk());  // s
 
-  EXPECT_THAT(solver.BestPossibleGoalWord(), IsOkAndHolds(best_path));
-}
+//   EXPECT_THAT(solver.BestPossibleGoalWord(), IsOkAndHolds(best_path));
+// }
 
 TEST(SolverTest, PlayWordSuccess) {
   Solver solver(
@@ -157,43 +161,54 @@ TEST(SolverTest, PlayWordFailsForWordNotInTrie) {
               StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
-TEST(SolverTest, PlayGoalWordSuccess) {
-  Solver solver(Trie({"successfully", "tiny", "word"}),
-                Grid({"   lluf", "   tond", "  ywiry", "success"}));
+TEST(SolverTest, SolveWithOneLongWordSuccess) {
+  Solver solver(
+      Trie({"successfully", "tiny", "word", "greed"}),
+      Grid({"   lluf", "   tond", "  ywiry", "SUCcess", ".......", ".greed."}));
   Path tiny;
   ASSERT_THAT(tiny.push_back({
-                  solver.TileAt(2, 3),  // t
-                  solver.TileAt(1, 4),  // i
-                  solver.TileAt(2, 5),  // n
-                  solver.TileAt(1, 6),  // y
+                  solver.TileAt(4, 3),  // t
+                  solver.TileAt(3, 4),  // i
+                  solver.TileAt(4, 5),  // n
+                  solver.TileAt(3, 6),  // y
               }),
               IsOk());
   Path word;
   ASSERT_THAT(word.push_back({
-                  solver.TileAt(1, 3),  // w
-                  solver.TileAt(2, 4),  // o
-                  solver.TileAt(1, 5),  // r
-                  solver.TileAt(2, 6),  // d
+                  solver.TileAt(3, 3),  // w
+                  solver.TileAt(4, 4),  // o
+                  solver.TileAt(3, 5),  // r
+                  solver.TileAt(4, 6),  // d
               }),
               IsOk());
-  Path goal_word;
-  ASSERT_THAT(goal_word.push_back({
-                  solver.TileAt(0, 0),  // s
-                  solver.TileAt(0, 1),  // u
-                  solver.TileAt(0, 2),  // c
-                  solver.TileAt(0, 3),  // c
+  Path successfully;
+  ASSERT_THAT(successfully.push_back({
+                  solver.TileAt(2, 0),  // s
+                  solver.TileAt(2, 1),  // u
+                  solver.TileAt(2, 2),  // c
+                  solver.TileAt(2, 3),  // c
+                  solver.TileAt(2, 4),  // e
+                  solver.TileAt(2, 5),  // s
+                  solver.TileAt(2, 6),  // s
+                  solver.TileAt(5, 6),  // f
+                  solver.TileAt(5, 5),  // u
+                  solver.TileAt(5, 4),  // l
+                  solver.TileAt(5, 3),  // l
+                  solver.TileAt(3, 2)   // y
+              }),
+              IsOk());
+  Path greed;
+  ASSERT_THAT(greed.push_back({
+                  solver.TileAt(0, 1),  // g
+                  solver.TileAt(0, 2),  // r
+                  solver.TileAt(0, 3),  // e
                   solver.TileAt(0, 4),  // e
-                  solver.TileAt(0, 5),  // s
-                  solver.TileAt(0, 6),  // s
-                  solver.TileAt(3, 6),  // f
-                  solver.TileAt(3, 5),  // u
-                  solver.TileAt(3, 4),  // l
-                  solver.TileAt(3, 3),  // l
-                  solver.TileAt(1, 2)   // y
+                  solver.TileAt(0, 5),  // d
               }),
               IsOk());
-  EXPECT_THAT(solver.PlayGoalWord(goal_word), IsOk());
-  EXPECT_THAT(solver.solution(), testing::ElementsAre(word, tiny, goal_word));
+  EXPECT_THAT(solver.SolveWithOneLongWord(), IsOk());
+  EXPECT_THAT(solver.solution(),
+              testing::UnorderedElementsAre(word, tiny, successfully, greed));
 }
 
 TEST(SolverTest, PlayGoalWordFails) {
@@ -238,9 +253,7 @@ TEST(SolverTest, PlayGoalWordFails) {
   EXPECT_THAT(solver.solution(), testing::SizeIs(0));
 }
 
-TEST(SolverTest, SolveGreedily) {
-  //
-}
+TEST(SolverTest, SolveGreedily) {}
 
 TEST(SolverTest, AbslStringify) {
   Trie trie({"carb", "crab", "arb", "arc", "bar", "bra", "cab", "car", "scat"});

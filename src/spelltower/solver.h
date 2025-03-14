@@ -173,7 +173,7 @@ class Solver {
   // Example: If we find a 22-long word using only 2 stars, the multiplier will
   // be x66. After we finish searching the length-22 words, we loop length-21
   // words that use all 3 stars, then 20, down until we finish length-17 (x68)
-  absl::StatusOr<Path> BestPossibleGoalWord() const;
+  absl::StatusOr<std::vector<Path>> BestPossibleGoalWord();
 
   // A TEMPORARY method that calls `StepsToPlayGoalWordDFS()`. Will be removed
   // once `SolveWithOneLongWord()` is assembled.
@@ -191,16 +191,16 @@ class Solver {
   //
   // Functions identically to `BestPossiblePathForWord()`, but necessitates that
   // the path contain at least two of the star tiles on the grid.
-  absl::StatusOr<Path> BestPossibleTwoStarPathForWord(
-      absl::string_view word) const;
+  absl::StatusOr<std::vector<Path>> BestPossibleTwoStarPathForWord(
+      absl::string_view word);
 
   // Solver::BestPossibleThreeStarPathForWord()
   //
   // Functions identically to `BestPossiblePathForWord()`, but necessitates that
   // the path contain all three star tiles on the grid. As a result, "best" will
   // always come down to lowest delta.
-  absl::StatusOr<Path> BestPossibleThreeStarPathForWord(
-      absl::string_view word) const;
+  absl::StatusOr<std::vector<Path>> BestPossibleThreeStarPathForWord(
+      absl::string_view word);
 
   // Solver::FillWordCache()
   //
@@ -228,9 +228,9 @@ class Solver {
   //   `unused_star_letters`, cuts the branch short immediately.
   // - If the path contains the whole word but doesn't have at least two stars
   //   in it, does not consider it for `best_path`.
-  void TwoStarDFS(absl::string_view word, int i,
-                  LetterCount& unused_star_letters, Path& path,
-                  Path& best_path) const;
+  absl::StatusOr<std::vector<Path>> TwoStarDFS(absl::string_view word, int i,
+                                               LetterCount& unused_star_letters,
+                                               Path& path);
 
   // Solver::ThreeStarDFS()
   //
@@ -242,9 +242,9 @@ class Solver {
   //   `unused_star_letters`, cuts the branch short immediately.
   // - If the path contains the whole word but doesn't have all stars in it,
   //   does not consider it for `best_path`.
-  void ThreeStarDFS(absl::string_view word, int i,
-                    LetterCount& unused_star_letters, Path& path,
-                    Path& best_path) const;
+  absl::StatusOr<std::vector<Path>> ThreeStarDFS(
+      absl::string_view word, int i, LetterCount& unused_star_letters,
+      Path& path);
 
   // Solver::CacheDFS()
   //

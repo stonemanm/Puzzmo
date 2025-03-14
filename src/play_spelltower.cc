@@ -28,12 +28,12 @@ ABSL_FLAG(std::string, spelltower_board_file_path,
 ABSL_FLAG(bool, print_current_options, false,
           "Print all playable words and their scores to the command line.");
 
-ABSL_FLAG(bool, print_best_goal_word, false,
-          "Find and print the possible word with the highest multiplier to the "
-          "command line.");
-
 ABSL_FLAG(bool, solve_greedily, false,
           "Solve the Spelltower board greedily and print the solution to the "
+          "command line.");
+
+ABSL_FLAG(bool, solve_with_one_long_word, true,
+          "Find and print the possible word with the highest multiplier to the "
           "command line.");
 
 namespace {
@@ -70,21 +70,21 @@ void PrintCurrentOptions(const Solver &solver) {
   }
 }
 
-absl::Status PrintBestGoalWord(const Solver &solver) {
-  absl::StatusOr<Path> path = solver.BestPossibleGoalWord();
-  // absl::StatusOr<Path> path =
-  //     solver.BestPossibleTwoStarPathForWord("nonrepresentationalisms");
-  if (!path.ok()) return path.status();
+// absl::Status PrintBestGoalWord(Solver &solver) {
+//   absl::StatusOr<Path> path = solver.BestPossibleGoalWord();
+//   // absl::StatusOr<Path> path =
+//   //     solver.BestPossibleTwoStarPathForWord("nonrepresentationalisms");
+//   if (!path.ok()) return path.status();
 
-  LOG(INFO) << absl::StrCat("Best possible goal word: ", path->word());
-  for (int i = 0; i < path->size(); ++i) {
-    LOG(INFO) << absl::StrCat(
-        (*path)[i]->letter_on_board(), " ", (*path)[i]->coords(), " -> ",
-        (*path).adjusted_points()[i], " --- (needs to drop ",
-        (*path)[i]->row() - (*path).adjusted_points()[i].row, " rows)");
-  }
-  return absl::OkStatus();
-}
+//   LOG(INFO) << absl::StrCat("Best possible goal word: ", path->word());
+//   for (int i = 0; i < path->size(); ++i) {
+//     LOG(INFO) << absl::StrCat(
+//         (*path)[i]->letter_on_board(), " ", (*path)[i]->coords(), " -> ",
+//         (*path).adjusted_points()[i], " --- (needs to drop ",
+//         (*path)[i]->row() - (*path).adjusted_points()[i].row, " rows)");
+//   }
+//   return absl::OkStatus();
+// }
 
 }  // namespace
 
@@ -103,19 +103,20 @@ int main(int argc, const char *argv[]) {
     PrintCurrentOptions(*solver);
   }
 
-  if (absl::GetFlag(FLAGS_print_best_goal_word)) {
-    if (absl::Status s = PrintBestGoalWord(*solver); !s.ok()) {
-      LOG(ERROR) << s;
-      return 1;
-    }
-  }
-
   if (absl::GetFlag(FLAGS_solve_greedily)) {
     if (absl::Status s = solver->SolveGreedily(); !s.ok()) {
       LOG(ERROR) << s;
       return 1;
     }
     LOG(INFO) << absl::StrCat("Greedy solution: \n", *solver);
+  }
+
+  if (absl::GetFlag(FLAGS_solve_with_one_long_word)) {
+    if (absl::Status s = solver->SolveWithOneLongWord(); !s.ok()) {
+      LOG(ERROR) << s;
+      return 1;
+    }
+    LOG(INFO) << absl::StrCat("One-long-word solution: \n", *solver);
   }
 
   return 0;
