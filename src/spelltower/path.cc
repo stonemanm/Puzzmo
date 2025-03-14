@@ -59,6 +59,12 @@ bool Path::IsContinuous() const {
   return true;
 }
 
+bool Path::IsOnGrid() const {
+  for (const std::shared_ptr<Tile> &tile : tiles_)
+    if (!tile->is_on_grid()) return false;
+  return true;
+}
+
 bool Path::IsStillPossible() const {
   std::vector<Point> points;
   for (const std::shared_ptr<Tile> &tile : tiles_) {
@@ -295,11 +301,7 @@ absl::Status Path::MakePointsNeighbors(int idx_a, int idx_b,
 }
 
 bool operator==(const Path &lhs, const Path &rhs) {
-  return lhs.tiles() == rhs.tiles() &&
-         lhs.simple_board() == rhs.simple_board() &&
-         lhs.lowest_legal_row() == rhs.lowest_legal_row() &&
-         lhs.adjusted_points() == rhs.adjusted_points() &&
-         lhs.star_count() == rhs.star_count();
+  return lhs.tiles() == rhs.tiles();
 }
 
 bool operator!=(const Path &lhs, const Path &rhs) { return !(lhs == rhs); }

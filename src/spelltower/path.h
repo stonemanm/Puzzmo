@@ -123,6 +123,11 @@ class Path {
   // Returns `true` if each pair of adjacent tiles are Moore neighbors.
   bool IsContinuous() const;
 
+  // Path::IsOnGrid()
+  //
+  // Returns `true` if every tile in the path is on the grid.
+  bool IsOnGrid() const;
+
   // Path::IsStillPossible()
   //
   // Returns `true` if the coordinates of the path have not been adjusted so as
