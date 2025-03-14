@@ -402,6 +402,8 @@ absl::StatusOr<std::vector<Path>> Solver::StepsToPlayGoalWordDFS(
   if (goal_word.IsContinuous()) {
     std::vector<Path> partial_solution = solution_;
     partial_solution.push_back(goal_word);
+    // Since we don't undo our plays on the way out, we need to call reset now.
+    if (absl::Status s = reset(); !s.ok()) return s;
     return partial_solution;
   }
 
@@ -445,7 +447,6 @@ absl::StatusOr<std::vector<Path>> Solver::StepsToPlayGoalWordDFS(
 absl::Status Solver::PlayGoalWord(const Path& goal_word) {
   absl::StatusOr<std::vector<Path>> steps = StepsToPlayGoalWordDFS(goal_word);
   if (!steps.ok()) return steps.status();
-  if (absl::Status s = reset(); !s.ok()) return s;
 
   for (const Path& path : *steps)
     if (absl::Status s = PlayWord(path); !s.ok()) return s;
