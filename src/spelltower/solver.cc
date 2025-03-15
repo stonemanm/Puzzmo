@@ -279,6 +279,7 @@ absl::StatusOr<std::vector<Path>> Solver::TwoStarDFS(
   if (i == word.length()) {
     if (path.star_count() < 2)
       return absl::NotFoundError(absl::StrFormat(kWordNotInGridError, word));
+    LOG(INFO) << "Trying to find a way to remove words to enable it.";
     return StepsToPlayGoalWordDFS(path);
   }
 
