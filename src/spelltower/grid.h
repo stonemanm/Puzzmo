@@ -178,6 +178,13 @@ class Grid {
   absl::flat_hash_set<std::shared_ptr<Tile>> PossibleNextTilesForPath(
       const Path &path) const;
 
+  // Grid::TilesBeneathPath()
+  //
+  // Returns every `Tile` in the grid that is beneath at least one of the tiles
+  // in `path`.
+  absl::flat_hash_set<std::shared_ptr<Tile>> TilesBeneathPath(
+      const Path &path) const;
+
   // Grid::TilesRemovedBy()
   //
   // Returns every `Tile` that will be removed if `path` is played. This

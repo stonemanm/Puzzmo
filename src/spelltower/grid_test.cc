@@ -208,6 +208,16 @@ TEST(GridTest, RevertPathAndReset) {
   EXPECT_EQ(grid.tiles(), starting_tiles);
 }
 
+TEST(GridTest, TilesBeneathPath) {
+  Grid grid({"aaa", "bbb", "ccc", "ddd"});
+  Path path;
+  ASSERT_THAT(path.push_back({grid[{1, 0}], grid[{2, 1}], grid[{3, 0}]}),
+              IsOk());
+  EXPECT_THAT(grid.TilesBeneathPath(path),
+              UnorderedElementsAre(grid[{0, 0}], grid[{2, 0}], grid[{0, 1}],
+                                   grid[{1, 1}]));
+}
+
 TEST(GridTest, ScorePath) {
   Grid grid({"nnnnnNn n", "mmmmmmm m", "lllllll l", "kkkkkkk k", "Iiiijii i",
              "hhhhhhhhh", "ggggggggg", "fffffffff", "eeeeeeeee", "ddddddddd",

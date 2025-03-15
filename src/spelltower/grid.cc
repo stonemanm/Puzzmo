@@ -106,6 +106,19 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::PossibleNextTilesForPath(
   return accessible_tiles;
 }
 
+absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesBeneathPath(
+    const Path& path) const {
+  absl::flat_hash_set<std::shared_ptr<Tile>> tiles_beneath_path;
+  for (int c = 0; c < 9; ++c) {
+    if (path.simple_board()[c].empty()) continue;
+    for (int r = path[path.simple_board()[c].back()]->row() - 1; r >= 0; --r) {
+      if (path.contains({.row = r, .col = c})) continue;
+      tiles_beneath_path.insert(tiles_[c][r]);
+    }
+  }
+  return tiles_beneath_path;
+}
+
 absl::flat_hash_set<Point> Grid::PointsAffectedBy(
     const std::shared_ptr<Tile>& tile) const {
   if (tile == nullptr) return {};
