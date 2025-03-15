@@ -47,7 +47,7 @@ int UnusedLetters(const std::string &word, const TypeshiftBoard &board) {
 int main(int argc, const char *argv[]) {
   // Read in the board
   TypeshiftBoard board;
-  std::ifstream boardfile("data/typeshift_board.txt");
+  std::ifstream boardfile("inputs/typeshift_board.txt");
   if (!boardfile.is_open()) {
     LOG(ERROR) << "Error: Could not open typeshift_board.txt";
     return 1;
