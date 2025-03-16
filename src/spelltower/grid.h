@@ -185,6 +185,13 @@ class Grid {
   absl::flat_hash_set<std::shared_ptr<Tile>> TilesBeneathPath(
       const Path &path) const;
 
+  // Grid::TilesBeneathEachPathTile()
+  //
+  // For every tile in the path, returns the non-path tiles beneath it in its
+  // column.
+  std::vector<std::vector<std::shared_ptr<Tile>>> TilesBeneathEachPathTile(
+      const Path &path) const;
+
   // Grid::TilesRemovedBy()
   //
   // Returns every `Tile` that will be removed if `path` is played. This

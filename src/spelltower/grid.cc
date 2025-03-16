@@ -119,6 +119,27 @@ absl::flat_hash_set<std::shared_ptr<Tile>> Grid::TilesBeneathPath(
   return tiles_beneath_path;
 }
 
+std::vector<std::vector<std::shared_ptr<Tile>>> Grid::TilesBeneathEachPathTile(
+    const Path& path) const {
+  std::vector<std::vector<std::shared_ptr<Tile>>> v(path.size());
+  // Loop over every column.
+  for (int c = 0; c < 9; ++c) {
+    std::vector<int> simple_col = path.simple_board()[c];
+    if (simple_col.empty()) continue;  // Skip a column if it lacks path tiles.
+
+    std::vector<int> simple_col_rows;
+    for (int idx : simple_col) simple_col_rows.push_back(path[idx]->row());
+    for (int r = 0; r < simple_col_rows.back(); ++r) {
+      if (path.contains({.row = r, .col = c})) continue;
+      for (int i = 0; i < simple_col.size(); ++i) {
+        if (simple_col_rows[i] < r) continue;
+        v[simple_col[i]].push_back(tiles_[c][r]);
+      }
+    }
+  }
+  return v;
+}
+
 absl::flat_hash_set<Point> Grid::PointsAffectedBy(
     const std::shared_ptr<Tile>& tile) const {
   if (tile == nullptr) return {};
