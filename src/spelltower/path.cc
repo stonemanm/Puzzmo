@@ -4,7 +4,6 @@
 #include <cmath>
 #include <string>
 
-#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -73,6 +72,20 @@ bool Path::IsStillPossible() const {
   }
   absl::Status s = AdjustPoints(points);
   return s.ok();
+}
+
+std::vector<int> Path::TilesToDrop() const {
+  std::vector<Point> points;
+  for (const std::shared_ptr<Tile> &tile : tiles_) {
+    if (!tile->is_on_grid()) return {};
+    points.push_back(tile->coords());
+  }
+  if (absl::Status s = AdjustPoints(points); !s.ok()) return {};
+
+  std::vector<int> rows_to_drop;
+  for (int i = 0; i < size(); ++i)
+    rows_to_drop.push_back(tiles_[i]->row() - points[i].row);
+  return rows_to_drop;
 }
 
 int Path::Delta() const {

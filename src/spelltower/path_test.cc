@@ -304,6 +304,33 @@ TEST(PathTest, IsStillPossible) {
   EXPECT_THAT(path.IsStillPossible(), testing::IsFalse());  // row 1
 }
 
+TEST(PathTest, TilesToDrop) {
+  Path path;
+  ASSERT_THAT(
+      path.push_back(
+          {std::make_shared<Tile>(0, 0, 'a'), std::make_shared<Tile>(1, 0, 'b'),
+           std::make_shared<Tile>(3, 0, 'b'), std::make_shared<Tile>(6, 0, 'e'),
+           std::make_shared<Tile>(6, 1, 'y')}),
+      IsOk());
+  EXPECT_THAT(path.TilesToDrop(),
+              testing::ElementsAre(0, 0, 1, 3, 2));  // row 6
+  ASSERT_THAT(path[4]->Drop(1), IsOk());
+  EXPECT_THAT(path.TilesToDrop(),
+              testing::ElementsAre(0, 0, 1, 3, 1));  // row 5
+  ASSERT_THAT(path[4]->Drop(1), IsOk());
+  EXPECT_THAT(path.TilesToDrop(),
+              testing::ElementsAre(0, 0, 1, 3, 0));  // row 4
+  ASSERT_THAT(path[4]->Drop(1), IsOk());
+  EXPECT_THAT(path.TilesToDrop(),
+              testing::ElementsAre(0, 0, 1, 3, 0));  // row 3
+  ASSERT_THAT(path[4]->Drop(1), IsOk());
+  EXPECT_THAT(path.TilesToDrop(),
+              testing::ElementsAre(0, 0, 1, 3, 0));  // row 2
+  ASSERT_THAT(path[4]->Drop(1), IsOk());
+  EXPECT_THAT(path.TilesToDrop(),
+              testing::IsEmpty());  // row 1
+}
+
 TEST(PathTest, Antiestablishment) {
   Path path;
   EXPECT_THAT(path.push_back(std::make_shared<Tile>(0, 6, 'i')), IsOk());

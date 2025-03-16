@@ -134,11 +134,18 @@ class Path {
   // to make the path impossible.
   bool IsStillPossible() const;
 
+  // Path::TilesToDrop()
+  //
+  // Returns a vector constructed such that the index of each path tile contains
+  // the number of rows it needs to drop in order to be continuous. If this is
+  // impossible, returns an empty vector.
+  std::vector<int> TilesToDrop() const;
+
   // Path::Delta()
   //
-  // Returns the sum, for each tile in the path, of the difference between its
-  // coords and its `adjusted_coords_`. A continuous path will have a delta of
-  // zero.
+  // Returns the sum, for each tile in the path, of the difference between
+  // its coords and its `adjusted_coords_`. A continuous path will have a
+  // delta of zero.
   int Delta() const;
 
   // Path::MultiplierWhenScored()
