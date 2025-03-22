@@ -85,6 +85,14 @@ class Solver {
   // `steps_` if successful.
   absl::Status FillLine(const std::vector<Point> &line, absl::string_view word);
 
+  // Solver::FillMultiplierCells()
+  //
+  // Fills the empty multiplier cells one by one with letters from the front of
+  // the string until either the cells or the letters run out. Multiplier cells
+  // are filled from highest to lowest multiplier, with ties broken UtD, LtR.
+  // Appends to `steps_` if successful.
+  absl::Status FillMultiplierCells(absl::string_view letters);
+
   // Solver::Solve()
   //
   // Tries permutations of the highest-scoring tiles on multiplier spaces or
@@ -146,14 +154,12 @@ class Solver {
 
   const Dict dict_;
   const std::vector<std::vector<Point>> lines_;
+  const std::vector<Point> bonus_line_;
+  const std::vector<Point> multiplier_points_;
   const Gamestate starting_state_;
   std::vector<Gamestate> steps_;
   Gamestate best_state_;
   int best_score_;
-
-  const std::vector<Point> bonus_line_;
-  const std::vector<Point> double_points_;
-  const Point triple_point_;
 
   // The number to pass NMostValuableTiles, from which sets of 3 are chosen to
   // make possible bonus words. Note that increasing this n scales by O(n^2).

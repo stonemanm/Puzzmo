@@ -40,11 +40,10 @@ std::string LongestAlphaSubstring(absl::string_view s) {
 Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
     : dict_(dict),
       lines_(state.LinesToScore()),
+      bonus_line_(state.bonus_line()),
+      multiplier_points_(state.MultiplierPoints()),
       starting_state_(state),
       best_state_(state),
-      bonus_line_(state.bonus_line()),
-      double_points_(state.DoublePoints()),
-      triple_point_(state.TriplePoint()),
       tiles_for_bonus_words_(params.tiles_for_bonus_words),
       tiles_for_multiplier_tiles_(params.tiles_for_multiplier_tiles) {}
 
@@ -61,9 +60,22 @@ absl::Status Solver::FillLine(const std::vector<Point> &line,
   return absl::OkStatus();
 }
 
-absl::StatusOr<Gamestate> Solver::Solve() {
-  std::vector<Point> multiplier_cells = starting_state_.MultiplierPoints();
+absl::Status Solver::FillMultiplierCells(absl::string_view letters) {
+  Gamestate state = CurrentState();
+  int l = 0;
+  for (int m = 0; m < multiplier_points_.size() && l < letters.length(); ++m) {
+    const Point p = multiplier_points_[m];
+    if (state[p].letter != kEmptyCell) continue;
+    if (absl::Status s = state.FillCell(p, letters[l++]); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
+  }
+  steps_.push_back(state);
+  return absl::OkStatus();
+}
 
+absl::StatusOr<Gamestate> Solver::Solve() {
   // To narrow the search space, grab the most valuable tiles and try to
   // make bonus words using three of them.
   absl::flat_hash_set<std::string> bonus_words_to_try;
@@ -105,25 +117,18 @@ absl::StatusOr<Gamestate> Solver::Solve() {
         CurrentState().NMostValuableLetters(tiles_for_multiplier_tiles_);
     std::sort(mvls.begin(), mvls.end());
     do {
-      Gamestate state = CurrentState();
-      for (int i = 0; i < 3; ++i) {
-        const Point p = multiplier_cells[i];
-        if (state[p].letter != kEmptyCell) continue;
-        if (absl::Status s = state.FillCell(p, mvls[i]); !s.ok()) {
-          LOG(ERROR) << s;
-          return s;
-        }
+      if (absl::Status s = FillMultiplierCells(mvls); !s.ok()) {
+        LOG(ERROR) << s;
+        return s;
       }
-      steps_.push_back(std::move(state));
-
       if (absl::Status s = FindWordsRecursively(); !s.ok()) {
         LOG(ERROR) << s;
         return s;
       }
-      steps_.pop_back();
+      steps_.pop_back();  // The multiplier tiles
 
     } while (std::next_permutation(mvls.begin(), mvls.end()));
-    steps_.pop_back();
+    steps_.pop_back();  // The bonus word
   }
 
   // Loop again if nothing found.
