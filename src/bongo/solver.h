@@ -105,6 +105,12 @@ class Solver {
   // Sums `LineScore` for the six lines to be used in scoring.
   int Score() const;
 
+  // Solver::UpdateBestState()
+  //
+  // Checks the current state of the solver against `best_state_`, updating
+  // `best_state_` and `best_score_` if the current state scores higher.
+  void UpdateBestState();
+
   //-------
   // Words
 
@@ -136,6 +142,10 @@ class Solver {
   Gamestate state_;
   Gamestate best_state_;
   int best_score_;
+
+  const std::vector<Point> bonus_line_;
+  const std::vector<Point> double_points_;
+  const Point triple_point_;
 
   // The number to pass NMostValuableTiles, from which sets of 3 are chosen to
   // make possible bonus words. Note that increasing this n scales by O(n^2).

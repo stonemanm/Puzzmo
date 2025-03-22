@@ -43,6 +43,9 @@ Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
       starting_state_(state),
       state_(state),
       best_state_(state),
+      bonus_line_(state.bonus_line()),
+      double_points_(state.DoublePoints()),
+      triple_point_(state.TriplePoint()),
       tiles_for_bonus_words_(params.tiles_for_bonus_words),
       tiles_for_multiplier_tiles_(params.tiles_for_multiplier_tiles) {}
 
@@ -51,8 +54,7 @@ Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
 void Solver::reset() { state_ = starting_state_; }
 
 absl::StatusOr<Gamestate> Solver::Solve() {
-  std::vector<Point> bonus_line = state_.bonus_line();
-  std::vector<Point> multiplier_cells = state_.MultiplierCells();
+  std::vector<Point> multiplier_cells = starting_state_.MultiplierPoints();
 
   // To narrow the search space, grab the most valuable tiles and try to
   // make bonus words using three of them.
@@ -60,9 +62,9 @@ absl::StatusOr<Gamestate> Solver::Solve() {
 
   // If there are already letters in the bonus line, adjust this phase
   // accordingly
-  LetterCount bplc(state_.LineString(state_.bonus_line()));
+  LetterCount bplc(starting_state_.LineString(bonus_line_));
   LetterCount valuable_letters(
-      state_.NMostValuableLetters(tiles_for_bonus_words_));
+      starting_state_.NMostValuableLetters(tiles_for_bonus_words_));
   absl::flat_hash_set<std::string> combos =
       valuable_letters.CombinationsOfSize(3 - bplc.size());
   for (const std::string &combo : combos) {
@@ -70,8 +72,8 @@ absl::StatusOr<Gamestate> Solver::Solve() {
         {.min_length = 4,
          .max_length = 4,
          .min_letters = LetterCount(combo),
-         .max_letters = state_.unplaced_letters() + bplc,
-         .matching_regex = state_.LineRegex(bonus_line)});
+         .max_letters = starting_state_.unplaced_letters() + bplc,
+         .matching_regex = starting_state_.LineRegex(bonus_line_)});
     bonus_words_to_try.insert(words.begin(), words.end());
   }
   LOG(INFO) << "Found " << bonus_words_to_try.size() << " bonus words to try.";
@@ -84,10 +86,10 @@ absl::StatusOr<Gamestate> Solver::Solve() {
               << bonus_word << "\"";
 
     // Place the bonus word on the board
-    if (absl::Status s = state_.FillLine(bonus_line, bonus_word); !s.ok())
+    if (absl::Status s = state_.FillLine(bonus_line_, bonus_word); !s.ok())
       return s;
     absl::flat_hash_set<Point> bonus_line_locks;
-    for (const Point &p : bonus_line) {
+    for (const Point &p : bonus_line_) {
       if (state_[p].is_locked) continue;
       state_[p].is_locked = true;
       bonus_line_locks.insert(p);
@@ -120,7 +122,7 @@ absl::StatusOr<Gamestate> Solver::Solve() {
       }
     } while (std::next_permutation(mvls.begin(), mvls.end()));
     for (const Point &p : bonus_line_locks) state_[p].is_locked = false;
-    if (absl::Status s = state_.ClearLine(bonus_line); !s.ok()) return s;
+    if (absl::Status s = state_.ClearLine(bonus_line_); !s.ok()) return s;
   }
   if (best_score_ == 0) {
     ++tiles_for_bonus_words_;
@@ -139,18 +141,7 @@ absl::Status Solver::FindWordsRecursively() {
 
   // Check for success.
   if (state_.IsComplete()) {
-    if (int score = Score(); score > best_score_) {
-      LOG(INFO) << absl::StrCat("New best score! (", score, ")");
-      for (const std::vector<Point> &line : lines_) {
-        std::string word = state_.GetWord(line);
-        LOG(INFO) << absl::StrCat(LineScore(line), " - ", word,
-                                  (dict_.IsCommonWord(word) ? " is" : " isn't"),
-                                  " a common word.");
-      }
-      LOG(INFO) << state_;
-      best_state_ = state_;
-      best_score_ = score;
-    }
+    UpdateBestState();
     return absl::OkStatus();
   }
 
@@ -197,6 +188,21 @@ int Solver::Score() const {
   int score = 0;
   for (const std::vector<Point> &line : lines_) score += LineScore(line);
   return score;
+}
+
+void Solver::UpdateBestState() {
+  if (int score = Score(); score > best_score_) {
+    LOG(INFO) << absl::StrCat("New best score! (", score, ")");
+    for (const std::vector<Point> &line : lines_) {
+      std::string word = state_.GetWord(line);
+      LOG(INFO) << absl::StrCat(LineScore(line), " - ", word,
+                                (dict_.IsCommonWord(word) ? " is" : " isn't"),
+                                " a common word.");
+    }
+    LOG(INFO) << state_;
+    best_state_ = state_;
+    best_score_ = score;
+  }
 }
 
 // Words
