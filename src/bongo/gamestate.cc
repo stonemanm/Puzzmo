@@ -28,29 +28,6 @@ bool HasCell(const Point &p) {
 // A helper function to validate a row.
 bool HasRow(int row) { return (0 <= row && row < 5); }
 
-// A helper function to identify the longest substring of alphabetical
-// characters in `s`.
-std::string LongestAlphaSubstring(absl::string_view s) {
-  int best_start = 0;
-  int best_len = 0;
-  int start = 0;
-  int len = 0;
-  for (int i = 0; i < s.size(); ++i) {
-    if (std::isalpha(s[i])) {
-      ++len;
-      if (len > best_len) {
-        best_start = start;
-        best_len = len;
-      }
-    }
-    if (!std::isalpha(s[i])) {
-      start = i + 1;
-      len = 0;
-    }
-  }
-  return std::string(s.substr(best_start, best_len));
-}
-
 }  // namespace
 
 // Constructors
