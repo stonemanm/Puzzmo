@@ -41,7 +41,6 @@ Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
     : dict_(dict),
       lines_(state.LinesToScore()),
       starting_state_(state),
-      state_(state),
       best_state_(state),
       bonus_line_(state.bonus_line()),
       double_points_(state.DoublePoints()),
@@ -51,7 +50,16 @@ Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
 
 // Mutators
 
-void Solver::reset() { state_ = starting_state_; }
+absl::Status Solver::FillLine(const std::vector<Point> &line,
+                              absl::string_view word) {
+  Gamestate state = CurrentState();
+  if (absl::Status s = state.FillLine(line, word); !s.ok()) {
+    LOG(ERROR) << s;
+    return s;
+  }
+  steps_.push_back(state);
+  return absl::OkStatus();
+}
 
 absl::StatusOr<Gamestate> Solver::Solve() {
   std::vector<Point> multiplier_cells = starting_state_.MultiplierPoints();
@@ -86,57 +94,53 @@ absl::StatusOr<Gamestate> Solver::Solve() {
               << bonus_word << "\"";
 
     // Place the bonus word on the board
-    if (absl::Status s = state_.FillLine(bonus_line_, bonus_word); !s.ok())
+    if (absl::Status s = FillLine(bonus_line_, bonus_word); !s.ok()) {
+      LOG(ERROR) << s;
       return s;
-    absl::flat_hash_set<Point> bonus_line_locks;
-    for (const Point &p : bonus_line_) {
-      if (state_[p].is_locked) continue;
-      state_[p].is_locked = true;
-      bonus_line_locks.insert(p);
     }
 
     // Grab the high-scoring tiles not used by the bonus word, and try all the
     // permutations of them on the open multiplier_squares.
-    std::string mvls = state_.NMostValuableLetters(tiles_for_multiplier_tiles_);
+    std::string mvls =
+        CurrentState().NMostValuableLetters(tiles_for_multiplier_tiles_);
     std::sort(mvls.begin(), mvls.end());
     do {
-      std::vector<Point> locked_here;
+      Gamestate state = CurrentState();
       for (int i = 0; i < 3; ++i) {
         const Point p = multiplier_cells[i];
-        Cell &cell = state_[p];
-        if (std::isalpha(cell.letter)) continue;
-        // If we have an error placing tiles, clean up the ones we have placed
-        // so far and then move on.
-        if (absl::Status s = state_.FillCell(p, mvls[i]); !s.ok()) return s;
-
-        cell.is_locked = true;
-        locked_here.push_back(p);
-      }
-
-      if (absl::Status s = FindWordsRecursively(); !s.ok()) return s;
-
-      for (int i = 0; i < locked_here.size(); ++i) {
-        state_[locked_here[i]].is_locked = false;
-        if (absl::Status s = state_.ClearCell(locked_here[i]); !s.ok())
+        if (state[p].letter != kEmptyCell) continue;
+        if (absl::Status s = state.FillCell(p, mvls[i]); !s.ok()) {
+          LOG(ERROR) << s;
           return s;
+        }
       }
+      steps_.push_back(std::move(state));
+
+      if (absl::Status s = FindWordsRecursively(); !s.ok()) {
+        LOG(ERROR) << s;
+        return s;
+      }
+      steps_.pop_back();
+
     } while (std::next_permutation(mvls.begin(), mvls.end()));
-    for (const Point &p : bonus_line_locks) state_[p].is_locked = false;
-    if (absl::Status s = state_.ClearLine(bonus_line_); !s.ok()) return s;
+    steps_.pop_back();
   }
+
+  // Loop again if nothing found.
   if (best_score_ == 0) {
     ++tiles_for_bonus_words_;
     ++tiles_for_multiplier_tiles_;
-    LOG(INFO) << "No solutions found. Trying again with a broader "
-                 "search.";
+    LOG(INFO) << "No solutions found. Trying again with a broader search.";
     return Solve();
   }
+
   return best_state_;
 }
 
 absl::Status Solver::FindWordsRecursively() {
+  Gamestate state = CurrentState();
   // Check for failure (error, really)
-  if (state_.letters().size() < 25)
+  if (state.letters().size() < 25)
     return absl::UnknownError("You've met with a terrible fate, haven't you?");
 
   // Check for success.
@@ -147,21 +151,27 @@ absl::Status Solver::FindWordsRecursively() {
 
   // Focus on the next row that needs filling, and find all possible options.
   int row = MostRestrictedWordlessRow();
-  std::vector<Point> line = state_.line(row);
-  LetterCount line_letters(state_.LineString(line));
+  std::vector<Point> line = state.line(row);
+  LetterCount line_letters(state.LineString(line));
   absl::flat_hash_set<std::string> matches = dict_.WordsMatchingParameters(
       {.min_length = 5,  // TODO: allow shorter words
        .max_length = 5,
        .min_letters = line_letters,
-       .max_letters = line_letters + state_.unplaced_letters(),
-       .matching_regex = state_.LineRegex(line)});
+       .max_letters = line_letters + state.unplaced_letters(),
+       .matching_regex = state.LineRegex(line)});
 
   // Try all possible options, recurse, then backtrack. If something goes wrong,
   // return the error.
   for (const absl::string_view word : matches) {
-    if (absl::Status s = state_.FillLine(line, word); !s.ok()) return s;
-    if (absl::Status s = FindWordsRecursively(); !s.ok()) return s;
-    if (absl::Status s = state_.ClearLine(line); !s.ok()) return s;
+    if (absl::Status s = FillLine(line, word); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
+    if (absl::Status s = FindWordsRecursively(); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
+    steps_.pop_back();
   }
   return absl::OkStatus();
 }
@@ -169,17 +179,18 @@ absl::Status Solver::FindWordsRecursively() {
 // Score
 
 int Solver::LineScore(const std::vector<Point> &line) const {
+  const Gamestate state = CurrentState();
   const std::string word = GetWord(line);
   if (!dict_.contains(word)) return 0;
 
   // Find the index in line where word begins.
   int offset = 0;
-  while (state_.LineString(line).substr(offset, word.size()) != word) ++offset;
+  while (state.LineString(line).substr(offset, word.size()) != word) ++offset;
 
   int score = 0;
   for (int i = 0; i < word.size(); ++i) {
     char c = word[i];
-    score += state_.letter_values().at(c) * state_[line[i + offset]].multiplier;
+    score += state.letter_values().at(c) * state[line[i + offset]].multiplier;
   }
   return std::ceil(score * (dict_.IsCommonWord(word) ? 1.3 : 1));
 }
@@ -192,16 +203,16 @@ int Solver::Score() const {
 
 void Solver::UpdateBestState() {
   if (int score = Score(); score > best_score_) {
-    LOG(INFO) << absl::StrCat("New best score! (", score, ")");
+    best_score_ = score;
+    best_state_ = CurrentState();
+    LOG(INFO) << absl::StrCat("New best score! (", best_score_, ")");
     for (const std::vector<Point> &line : lines_) {
-      const std::string word = GetWord(line);
+      std::string word = GetWord(line);
       LOG(INFO) << absl::StrCat(LineScore(line), " - ", word,
                                 (dict_.IsCommonWord(word) ? " is" : " isn't"),
                                 " a common word.");
     }
-    LOG(INFO) << state_;
-    best_state_ = state_;
-    best_score_ = score;
+    LOG(INFO) << best_state_;
   }
 }
 
@@ -209,7 +220,8 @@ void Solver::UpdateBestState() {
 
 std::string Solver::GetWord(const std::vector<Point> &line) const {
   const int threshold = (line == bonus_line_) ? 4 : 3;
-  const std::string word = LongestAlphaSubstring(state_.LineString(line));
+  const std::string word =
+      LongestAlphaSubstring(CurrentState().LineString(line));
   return (word.length() >= threshold && dict_.contains(word)) ? word : "";
 }
 
@@ -226,7 +238,7 @@ int Solver::MostRestrictedWordlessRow() const {
   for (int row = 0; row < 5; ++row) {
     if (!(GetWord(lines_[row]).empty())) continue;
     const int letters = absl::c_count_if(
-        state_.grid()[row],
+        CurrentState().grid()[row],
         [](const Cell &cell) { return cell.letter != kEmptyCell; });
     if (letters > most_letters_placed) {
       most_letters_placed = letters;

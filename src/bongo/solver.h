@@ -54,10 +54,12 @@ class Solver {
   // Returns the starting gamestate passed to the solver.
   Gamestate starting_state() const { return starting_state_; }
 
-  // Solver::state()
+  // Solver::CurrentState()
   //
   // Returns the current gamestate managed by the solver.
-  Gamestate state() const { return state_; }
+  Gamestate CurrentState() const {
+    return steps_.empty() ? starting_state_ : steps_.back();
+  }
 
   // Solver::best_score()
   //
@@ -75,7 +77,13 @@ class Solver {
   // Solver::reset()
   //
   // Returns the solver to its starting state.
-  void reset();
+  void reset() { steps_.clear(); }
+
+  // Solver::FillLine()
+  //
+  // Makes the relevant modification to `CurrentState()`, appending it to
+  // `steps_` if successful.
+  absl::Status FillLine(const std::vector<Point> &line, absl::string_view word);
 
   // Solver::Solve()
   //
@@ -107,8 +115,8 @@ class Solver {
 
   // Solver::UpdateBestState()
   //
-  // Checks the current state of the solver against `best_state_`, updating
-  // `best_state_` and `best_score_` if the current state scores higher.
+  // Checks `CurrentState()` against `best_state_`, updating `best_state_` and
+  // `best_score_` if the current state scores higher.
   void UpdateBestState();
 
   //-------
@@ -116,15 +124,15 @@ class Solver {
 
   // Solver::GetWord()
   //
-  // Returns the word that will be scored from the line in `state_`. Word must
-  // consist of 3+ consecutive letters (or 4 exactly if in the bonus line) and
-  // be a valid word in `dict_`. If these conditions are failed, returns an
-  // empty string.
+  // Returns the word that will be scored from the line in `CurrentState()`.
+  // Word must consist of 3+ consecutive letters (or 4 exactly if in the bonus
+  // line) and be a valid word in `dict_`. If these conditions are failed,
+  // returns an empty string.
   std::string GetWord(const std::vector<Point> &line) const;
 
   // Solver::IsComplete()
   //
-  // Returns `true` if every row of `state_` has a word on it.
+  // Returns `true` if every row of `CurrentState()` has a word on it.
   bool IsComplete() const;
 
   // Solver::MostRestrictedWordlessRow()
@@ -139,7 +147,7 @@ class Solver {
   const Dict dict_;
   const std::vector<std::vector<Point>> lines_;
   const Gamestate starting_state_;
-  Gamestate state_;
+  std::vector<Gamestate> steps_;
   Gamestate best_state_;
   int best_score_;
 
