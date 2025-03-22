@@ -277,37 +277,6 @@ int Gamestate::UpperBoundOnScore() const {
   return std::ceil(1.3 * score);
 }
 
-// Words
-
-std::string Gamestate::GetWord(const std::vector<Point> &line) const {
-  int threshold = (line == bonus_line_) ? 4 : 3;
-  std::string line_substr = LongestAlphaSubstring(LineString(line));
-  return (line_substr.length() >= threshold) ? line_substr : "";
-}
-
-bool Gamestate::IsComplete() const {
-  for (const std::vector<Point> &line : LinesToScore()) {
-    if (line == bonus_line_) continue;
-    if (GetWord(line).empty()) return false;
-  }
-  return true;
-}
-
-int Gamestate::MostRestrictedWordlessRow() const {
-  int row_to_focus = 0;
-  int most_letters = INT_MIN;
-  for (int row = 0; row < 5; ++row) {
-    if (!GetWord(line(row)).empty()) continue;
-    int letters = absl::c_count_if(
-        grid_[row], [](const Cell &cell) { return cell.letter != kEmptyCell; });
-    if (letters > most_letters) {
-      most_letters = letters;
-      row_to_focus = row;
-    }
-  }
-  return row_to_focus;
-}
-
 // Operator
 
 bool operator==(const Cell &lhs, const Cell &rhs) {

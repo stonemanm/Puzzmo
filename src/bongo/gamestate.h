@@ -207,28 +207,6 @@ class Gamestate {
   // that every string is a common word.
   int UpperBoundOnScore() const;
 
-  //-------
-  // Words
-
-  // Gamestate::GetWord()
-  //
-  // Grabs the longest consecutive substring of letters from the line. If it is
-  // 3+ characters (or 4+ if it's the bonus line), return it; otherwise, returns
-  // an empty string. Note that whether or not this is a dictionary word is not
-  // validated.
-  std::string GetWord(const std::vector<Point> &line) const;
-
-  // Gamestate::IsComplete()
-  //
-  // Returns `true` if every row has a word on it.
-  bool IsComplete() const;
-
-  // Gamestate::MostRestrictedWordlessRow()
-  //
-  // Returns the index of the row with the most letters but doesn't have 3+
-  // consecutive letters. Breaks ties in favor of the lowest index.
-  int MostRestrictedWordlessRow() const;
-
  private:
   std::vector<std::vector<Cell>> grid_;
   LetterCount letters_;

@@ -140,7 +140,7 @@ absl::Status Solver::FindWordsRecursively() {
     return absl::UnknownError("You've met with a terrible fate, haven't you?");
 
   // Check for success.
-  if (state_.IsComplete()) {
+  if (IsComplete()) {
     UpdateBestState();
     return absl::OkStatus();
   }
@@ -169,7 +169,7 @@ absl::Status Solver::FindWordsRecursively() {
 // Score
 
 int Solver::LineScore(const std::vector<Point> &line) const {
-  std::string word = state_.GetWord(line);
+  const std::string word = GetWord(line);
   if (!dict_.contains(word)) return 0;
 
   // Find the index in line where word begins.
@@ -194,7 +194,7 @@ void Solver::UpdateBestState() {
   if (int score = Score(); score > best_score_) {
     LOG(INFO) << absl::StrCat("New best score! (", score, ")");
     for (const std::vector<Point> &line : lines_) {
-      std::string word = state_.GetWord(line);
+      const std::string word = GetWord(line);
       LOG(INFO) << absl::StrCat(LineScore(line), " - ", word,
                                 (dict_.IsCommonWord(word) ? " is" : " isn't"),
                                 " a common word.");
@@ -208,27 +208,26 @@ void Solver::UpdateBestState() {
 // Words
 
 std::string Solver::GetWord(const std::vector<Point> &line) const {
-  int threshold = (line != state_.bonus_line()) ? 3 : 4;
-  std::string line_substr = LongestAlphaSubstring(state_.LineString(line));
-  return (line_substr.length() < threshold) ? "" : line_substr;
+  const int threshold = (line == bonus_line_) ? 4 : 3;
+  const std::string word = LongestAlphaSubstring(state_.LineString(line));
+  return (word.length() >= threshold && dict_.contains(word)) ? word : "";
 }
 
 bool Solver::IsComplete() const {
-  return std::all_of(lines_.begin(), lines_.end(),
-                     [*this](const std::vector<Point> &line) {
-                       return !GetWord(line).empty();
-                     });
+  return std::none_of(lines_.begin(), lines_.end(),
+                      [*this](const std::vector<Point> &line) {
+                        return GetWord(line).empty();
+                      });
 }
 
 int Solver::MostRestrictedWordlessRow() const {
   int most_letters_placed = INT_MIN;
   int row_to_focus = 0;
-
   for (int row = 0; row < 5; ++row) {
-    if (!GetWord(lines_[row]).empty()) continue;
-    int letters = absl::c_count_if(state_.grid()[row], [](const Cell &cell) {
-      return cell.letter != kEmptyCell;
-    });
+    if (!(GetWord(lines_[row]).empty())) continue;
+    const int letters = absl::c_count_if(
+        state_.grid()[row],
+        [](const Cell &cell) { return cell.letter != kEmptyCell; });
     if (letters > most_letters_placed) {
       most_letters_placed = letters;
       row_to_focus = row;
