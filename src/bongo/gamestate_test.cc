@@ -177,7 +177,7 @@ TEST(GamestateTest, MultiplierPoints) {
   Point p0 = {0, 4};
   Point p1 = {1, 4};
   Point p2 = {2, 4};
-  EXPECT_THAT(bgs.MultiplierPoints(), ::testing::ElementsAre(p0, p1, p2));
+  EXPECT_THAT(bgs.MultiplierPoints(), ::testing::ElementsAre(p2, p0, p1));
   EXPECT_THAT(bgs.DoublePoints(), ::testing::ElementsAre(p0, p1));
   EXPECT_THAT(bgs.TriplePoint(), ::testing::Eq(p2));
 }

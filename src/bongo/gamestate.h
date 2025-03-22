@@ -32,6 +32,7 @@ constexpr char kTripleMultiplier = '3';
 // value of 1x, 2x, or 3x, and may or may not contain a letter. It can also be
 // locked, which prevents it from being filled or cleared.
 struct Cell {
+  // TODO: remove locking, since it's no longer necessary.
   bool is_locked = false;
   char letter = kEmptyCell;
   int multiplier = 1;
@@ -87,7 +88,9 @@ class Gamestate {
 
   // Gamestate::MultiplierPoints()
   //
-  // Returns a vector of points to cells with multipliers greater than 1.
+  // Returns a vector of points to cells with multipliers greater than 1, sorted
+  // first by highest to lowest multiplier, then lowest to highest row, and
+  // finally lowest to highest column.
   std::vector<Point> MultiplierPoints() const;
 
   // Gamestate::DoublePoints()

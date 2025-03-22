@@ -80,6 +80,14 @@ std::vector<Point> Gamestate::MultiplierPoints() const {
         multiplier_points.push_back({.row = r, .col = c});
     }
   }
+  std::sort(multiplier_points.begin(), multiplier_points.end(),
+            [*this](const Point &lhs, const Point &rhs) {
+              const int lhs_mult = grid_[lhs.row][lhs.col].multiplier;
+              const int rhs_mult = grid_[rhs.row][rhs.col].multiplier;
+              return lhs_mult != rhs_mult ? lhs_mult > rhs_mult
+                     : lhs.row != rhs.row ? lhs.row < rhs.row
+                                          : lhs.col < rhs.col;
+            });
   return multiplier_points;
 }
 
