@@ -217,12 +217,14 @@ TEST(GamestateTest, MostRestrictedWordlessRow) {
   EXPECT_EQ(bgs.MostRestrictedWordlessRow(), 3);
 }
 
-TEST(GamestateTest, MultiplierCells) {
+TEST(GamestateTest, MultiplierPoints) {
   Gamestate bgs(kDummyBoard, kLetterValues, LetterCount());
   Point p0 = {0, 4};
   Point p1 = {1, 4};
   Point p2 = {2, 4};
-  EXPECT_THAT(bgs.MultiplierCells(), ::testing::ElementsAre(p0, p1, p2));
+  EXPECT_THAT(bgs.MultiplierPoints(), ::testing::ElementsAre(p0, p1, p2));
+  EXPECT_THAT(bgs.DoublePoints(), ::testing::ElementsAre(p0, p1));
+  EXPECT_THAT(bgs.TriplePoint(), ::testing::Eq(p2));
 }
 
 TEST(GamestateTest, NMostValuableTiles) {

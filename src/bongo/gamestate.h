@@ -85,10 +85,20 @@ class Gamestate {
   Cell &operator[](Point p) { return grid_[p.row][p.col]; }
   const Cell &operator[](Point p) const { return grid_[p.row][p.col]; }
 
-  // Gamestate::MultiplierCells()
+  // Gamestate::MultiplierPoints()
   //
   // Returns a vector of points to cells with multipliers greater than 1.
-  std::vector<Point> MultiplierCells() const;
+  std::vector<Point> MultiplierPoints() const;
+
+  // Gamestate::DoublePoints()
+  //
+  // Returns a vector of points to cells with 2x multipliers.
+  std::vector<Point> DoublePoints() const;
+
+  // Gamestate::TriplePoint()
+  //
+  // Returns a point to the cell with a 3x multiplier.
+  Point TriplePoint() const;
 
   // Gamestate::letters()
   //

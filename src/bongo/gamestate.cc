@@ -95,16 +95,35 @@ Gamestate::Gamestate(const std::vector<std::string> board,
 
 // Accessors
 
-std::vector<Point> Gamestate::MultiplierCells() const {
-  std::vector<Point> multiplier_cells;
-  for (int row = 0; row < 5; ++row) {
-    for (int col = 0; col < 5; ++col) {
-      if (grid_[row][col].multiplier >= 2) {
-        multiplier_cells.push_back({row, col});
-      }
+std::vector<Point> Gamestate::MultiplierPoints() const {
+  std::vector<Point> multiplier_points;
+  for (int r = 0; r < 5; ++r) {
+    for (int c = 0; c < 5; ++c) {
+      if (grid_[r][c].multiplier >= 2)
+        multiplier_points.push_back({.row = r, .col = c});
     }
   }
-  return multiplier_cells;
+  return multiplier_points;
+}
+
+std::vector<Point> Gamestate::DoublePoints() const {
+  std::vector<Point> double_points;
+  for (int r = 0; r < 5; ++r) {
+    for (int c = 0; c < 5; ++c) {
+      if (grid_[r][c].multiplier == 2)
+        double_points.push_back({.row = r, .col = c});
+    }
+  }
+  return double_points;
+}
+
+Point Gamestate::TriplePoint() const {
+  for (int r = 0; r < 5; ++r) {
+    for (int c = 0; c < 5; ++c) {
+      if (grid_[r][c].multiplier == 3) return {.row = r, .col = c};
+    }
+  }
+  return {-1, -1};  // Should never happen.
 }
 
 std::string Gamestate::NMostValuableLetters(int n) const {
