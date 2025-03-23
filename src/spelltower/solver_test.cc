@@ -9,7 +9,6 @@ namespace puzzmo::spelltower {
 namespace {
 
 using absl_testing::IsOk;
-using absl_testing::IsOkAndHolds;
 using absl_testing::StatusIs;
 
 TEST(SolverTest, WordCache) {

@@ -4,6 +4,7 @@
 #include <string>
 
 #include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -159,9 +160,10 @@ absl::Status Gamestate::ClearCell(const Point &p) {
   // If a letter is already in the cell, add it to `unplaced_letters_`.
   char letter_in_cell = grid_[p.row][p.col].letter;
   if (std::isalpha(letter_in_cell)) {
-    if (absl::StatusOr<int> s = unplaced_letters_.AddLetter(letter_in_cell);
-        !s.ok())
-      return s.status();
+    if (absl::Status s = unplaced_letters_.AddLetter(letter_in_cell); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
   }
 
   grid_[p.row][p.col].letter = kEmptyCell;
@@ -170,9 +172,14 @@ absl::Status Gamestate::ClearCell(const Point &p) {
 
 absl::Status Gamestate::FillCell(const Point &p, char l) {
   // Ensure we have that letter to place.
-  if (absl::StatusOr<int> s = unplaced_letters_.RemoveLetter(l); !s.ok())
-    return s.status();
-  if (absl::Status s = ClearCell(p); !s.ok()) return s;
+  if (absl::Status s = unplaced_letters_.RemoveLetter(l); !s.ok()) {
+    LOG(ERROR) << s;
+    return s;
+  }
+  if (absl::Status s = ClearCell(p); !s.ok()) {
+    LOG(ERROR) << s;
+    return s;
+  }
 
   grid_[p.row][p.col].letter = l;
   return absl::OkStatus();
@@ -187,7 +194,10 @@ absl::Status Gamestate::ClearLine(const std::vector<Point> &line) {
     // If the cell isn't locked and contains a letter, clear it.
     if (!grid_[p.row][p.col].is_locked &&
         std::isalpha(grid_[p.row][p.col].letter)) {
-      if (absl::Status s = ClearCell(p); !s.ok()) return s;
+      if (absl::Status s = ClearCell(p); !s.ok()) {
+        LOG(ERROR) << s;
+        return s;
+      }
     }
   }
   return absl::OkStatus();
@@ -204,7 +214,10 @@ absl::Status Gamestate::FillLine(const std::vector<Point> &line,
     // If the letter in the cell already aligns with `word`, we don't call
     // `FillCell()`.
     if (grid_[p.row][p.col].letter == word[i]) continue;
-    if (absl::Status s = FillCell(p, word[i]); !s.ok()) return s;
+    if (absl::Status s = FillCell(p, word[i]); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
   }
   return absl::OkStatus();
 }
@@ -213,7 +226,10 @@ absl::Status Gamestate::ClearBoard() {
   for (int r = 0; r < 5; ++r) {
     for (int c = 0; c < 5; ++c) {
       if (grid_[r][c].is_locked) continue;
-      if (absl::Status s = ClearCell({r, c}); !s.ok()) return s;
+      if (absl::Status s = ClearCell({r, c}); !s.ok()) {
+        LOG(ERROR) << s;
+        return s;
+      }
     }
   }
   return absl::OkStatus();

@@ -39,7 +39,8 @@ cc_library(
     hdrs = ["letter_count.h"],
     deps = [
         "@abseil-cpp//absl/container:flat_hash_set",
-        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/log:log",
+        "@abseil-cpp//absl/status:status",
         "@abseil-cpp//absl/strings",
     ],
 )

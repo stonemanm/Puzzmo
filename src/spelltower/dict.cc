@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "re2/re2.h"
@@ -43,7 +44,10 @@ absl::StatusOr<Dict> Dict::LoadDictFromSerializedTrie() {
       node->children[idx] = std::make_shared<TrieNode>();
       node_path.push(node);
       node = node->children[idx];
-      if (absl::StatusOr<int> s = lc.AddLetter(c); !s.ok()) return s.status();
+      if (absl::StatusOr<int> s = lc.AddLetter(c); !s.ok()) {
+        LOG(ERROR) << s.status();
+        return s.status();
+      }
       letter_path.push_back(c);
     } else if (std::isdigit(c)) {
       node->words_with_prefix *= 10;
@@ -55,8 +59,11 @@ absl::StatusOr<Dict> Dict::LoadDictFromSerializedTrie() {
       if (node_path.empty()) continue;
       node = node_path.top();
       node_path.pop();
-      if (absl::StatusOr<int> s = lc.RemoveLetter(letter_path.back()); !s.ok())
+      if (absl::StatusOr<int> s = lc.RemoveLetter(letter_path.back());
+          !s.ok()) {
+        LOG(ERROR) << s.status();
         return s.status();
+      }
       letter_path.pop_back();
     }
   }

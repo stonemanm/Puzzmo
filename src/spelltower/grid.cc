@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 
@@ -270,7 +271,10 @@ std::string Grid::VisualizePath(const Path& path) const {
 
 absl::Status Grid::reset() {
   while (!tile_removal_history_.empty()) {
-    if (absl::Status s = RevertLastClear(); !s.ok()) return s;
+    if (absl::Status s = RevertLastClear(); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
   }
   return absl::OkStatus();
 }
@@ -295,9 +299,11 @@ absl::Status Grid::ClearPath(const Path& path) {
     if (!tile->is_blank()) {
       char l = tile->letter();
       letter_map_[l].erase(tile);
-      if (absl::StatusOr<int> s = column_letter_counts_[col].RemoveLetter(l);
-          !s.ok())
-        return s.status();
+      if (absl::Status s = column_letter_counts_[col].RemoveLetter(l);
+          !s.ok()) {
+        LOG(ERROR) << s;
+        return s;
+      }
     }
 
     // Shift the coordinates of all tiles above it in the column down by one.
@@ -305,7 +311,10 @@ absl::Status Grid::ClearPath(const Path& path) {
     for (int r = row + 1; r < kNumRows; ++r) {
       std::shared_ptr<Tile> curr_tile = column[r];
       if (curr_tile == nullptr) break;
-      if (absl::Status s = curr_tile->Drop(1); !s.ok()) return s;
+      if (absl::Status s = curr_tile->Drop(1); !s.ok()) {
+        LOG(ERROR) << s;
+        return s;
+      }
     }
 
     // Remove the tile itself, and insert a nullptr at the end of the column.
@@ -342,16 +351,20 @@ absl::Status Grid::RevertLastClear() {
     if (!tile->is_blank()) {
       char l = tile->letter();
       letter_map_[l].insert(tile);
-      if (absl::StatusOr<int> s = column_letter_counts_[col].AddLetter(l);
-          !s.ok())
-        return s.status();
+      if (absl::Status s = column_letter_counts_[col].AddLetter(l); !s.ok()) {
+        LOG(ERROR) << s;
+        return s;
+      }
     }
 
     // Shift the coordinates of all tiles above it in the column up by one.
     for (int r = row + 1; r < kNumRows; ++r) {
       std::shared_ptr<Tile> curr_tile = column[r];
       if (curr_tile == nullptr) break;
-      if (absl::Status s = curr_tile->Drop(-1); !s.ok()) return s;
+      if (absl::Status s = curr_tile->Drop(-1); !s.ok()) {
+        LOG(ERROR) << s;
+        return s;
+      }
     }
   }
 

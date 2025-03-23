@@ -8,7 +8,7 @@
 namespace puzzmo {
 namespace {
 
-using ::absl_testing::IsOkAndHolds;
+using ::absl_testing::IsOk;
 using ::absl_testing::StatusIs;
 using ::testing::StrEq;
 
@@ -47,17 +47,16 @@ TEST(LetterCountTest, StringConstructor) {
   EXPECT_EQ(lc.count('x'), 0);
   EXPECT_EQ(lc.count('y'), 1);
   EXPECT_EQ(lc.count('z'), 0);
-  EXPECT_EQ(lc.count('?'), -1);
+  EXPECT_EQ(lc.count('?'), 0);
 }
 
 TEST(LetterCountTest, AddLetter) {
   LetterCount lc;
-  EXPECT_THAT(lc.AddLetter('a'), IsOkAndHolds(1));
-  EXPECT_THAT(lc.AddLetter('a'), IsOkAndHolds(2));
-  EXPECT_THAT(lc.AddLetter('b', 3), IsOkAndHolds(3));
-  EXPECT_THAT(lc.AddLetter('b', 2), IsOkAndHolds(5));
-  EXPECT_THAT(lc.AddLetter('c', 0),
-              StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(lc.AddLetter('a'), IsOk());
+  EXPECT_THAT(lc.AddLetter('a'), IsOk());
+  EXPECT_THAT(lc.AddLetter('b', 3), IsOk());
+  EXPECT_THAT(lc.AddLetter('b', 2), IsOk());
+  EXPECT_THAT(lc.AddLetter('c', 0), IsOk());
   EXPECT_THAT(lc.AddLetter('d', -1),
               StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(lc.AddLetter('?'), StatusIs(absl::StatusCode::kInvalidArgument));
@@ -71,21 +70,31 @@ TEST(LetterCountTest, CharsInOrder) {
 TEST(LetterCountTest, Count) {
   LetterCount lc("Can you hear me?");
   EXPECT_EQ(lc.count('a'), 2);
+  EXPECT_EQ(lc['a'], 2);
   EXPECT_EQ(lc.count('b'), 0);
+  EXPECT_EQ(lc['b'], 0);
   EXPECT_EQ(lc.count('c'), 1);
-  EXPECT_EQ(lc.count('?'), -1);
+  EXPECT_EQ(lc['c'], 1);
+  EXPECT_EQ(lc.count('?'), 0);
 }
 
 TEST(LetterCountTest, RemoveLetter) {
   LetterCount lc("Can you hear me?");
-  EXPECT_THAT(lc.RemoveLetter('a'), IsOkAndHolds(1));
-  EXPECT_THAT(lc.RemoveLetter('a'), IsOkAndHolds(0));
+
+  // There are 2 `a`s.
+  EXPECT_THAT(lc.RemoveLetter('a'), IsOk());
+  EXPECT_THAT(lc.RemoveLetter('a'), IsOk());
   EXPECT_THAT(lc.RemoveLetter('a'),
               StatusIs(absl::StatusCode::kInvalidArgument));
-  EXPECT_THAT(lc.RemoveLetter('e', 2), IsOkAndHolds(0));
+
+  // There are 2 `e`s.
+  EXPECT_THAT(lc.RemoveLetter('e', 2), IsOk());
+
+  // There is 1 `o`.
   EXPECT_THAT(lc.RemoveLetter('o', 2),
               StatusIs(absl::StatusCode::kInvalidArgument));
-  EXPECT_THAT(lc.RemoveLetter('o'), IsOkAndHolds(0));
+  EXPECT_THAT(lc.RemoveLetter('o'), IsOk());
+
   EXPECT_THAT(lc.RemoveLetter('?'),
               StatusIs(absl::StatusCode::kInvalidArgument));
 }
@@ -98,8 +107,7 @@ TEST(LetterCountTest, Size) {
 TEST(LetterCountTest, AbslStringify) {
   LetterCount lc("Can you hear me?");
   EXPECT_EQ(absl::StrFormat("%v", lc),
-            "[a:2, b:0, c:1, d:0, e:2, f:0, g:0, h:1, i:0, j:0, k:0, l:0, m:1, "
-            "n:1, o:1, p:0, q:0, r:1, s:0, t:0, u:1, v:0, w:0, x:0, y:1, z:0]");
+            "[a:2, c:1, e:2, h:1, m:1, n:1, o:1, r:1, u:1, y:1]");
 }
 
 TEST(LetterCountTest, CombinationsOfSize) {

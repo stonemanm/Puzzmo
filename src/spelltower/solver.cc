@@ -66,14 +66,20 @@ auto path_comparator = [](const Path& lhs, const Path& rhs) {
 absl::StatusOr<Solver> Solver::CreateSolverWithSerializedDict(
     const Grid& grid) {
   absl::StatusOr<Dict> dict = Dict::LoadDictFromSerializedTrie();
-  if (!dict.ok()) return dict.status();
+  if (!dict.ok()) {
+    LOG(ERROR) << dict.status();
+    return dict.status();
+  }
   return Solver(*dict, grid);
 }
 
 absl::StatusOr<Solver> Solver::CreateSolverWithSerializedDict(
     const std::vector<std::string>& grid) {
   absl::StatusOr<Dict> dict = Dict::LoadDictFromSerializedTrie();
-  if (!dict.ok()) return dict.status();
+  if (!dict.ok()) {
+    LOG(ERROR) << dict.status();
+    return dict.status();
+  }
   return Solver(*dict, Grid(grid));
 }
 
@@ -115,7 +121,10 @@ absl::Status Solver::UndoLastPlay() {
   if (solution_.empty())
     return absl::FailedPreconditionError("No words have been played!");
 
-  if (absl::Status s = grid_.RevertLastClear(); !s.ok()) return s;
+  if (absl::Status s = grid_.RevertLastClear(); !s.ok()) {
+    LOG(ERROR) << s;
+    return s;
+  }
   word_score_sum_ -= grid_.ScorePath(solution_.back());
   word_cache_.clear();
   solution_.pop_back();

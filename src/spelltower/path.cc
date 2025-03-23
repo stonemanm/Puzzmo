@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -136,7 +137,10 @@ absl::Status Path::push_back(const std::shared_ptr<Tile> &tile) {
 
 absl::Status Path::push_back(const std::vector<std::shared_ptr<Tile>> &tiles) {
   for (const std::shared_ptr<Tile> &tile : tiles)
-    if (absl::Status s = push_back(tile); !s.ok()) return s;
+    if (absl::Status s = push_back(tile); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
   return absl::OkStatus();
 }
 
