@@ -6,9 +6,13 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 
 namespace puzzmo::bongo {
 namespace {
+
+constexpr absl::string_view kVerboseLoop =
+    "%sBeginning loop %d/%d with %s \"%s\".";
 
 // A helper function to identify the longest substring of alphabetical
 // characters in `s`.
@@ -47,7 +51,103 @@ Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
       tiles_for_bonus_words_(params.tiles_for_bonus_words),
       tiles_for_multiplier_tiles_(params.tiles_for_multiplier_tiles) {}
 
+// Solvers
+
+absl::StatusOr<Gamestate> Solver::Solve() {
+  return SolveWithTechniquesInOrder(
+      {Technique::kFillBonusWord, Technique::kFillMultiplierTiles});
+}
+
+absl::StatusOr<Gamestate> Solver::SolveWithTechniquesInOrder(
+    absl::Span<const Technique> techniques) {
+  if (absl::Status s = RecursiveHelper(techniques, 0); !s.ok()) {
+    LOG(ERROR) << s;
+    return s;
+  }
+  // Loop again if nothing found.
+  if (best_score_ == 0) {
+    ++tiles_for_bonus_words_;
+    ++tiles_for_multiplier_tiles_;
+    LOG(INFO) << "No solutions found. Trying again with a broader search.";
+    return SolveWithTechniquesInOrder(techniques);
+  }
+  return best_state_;
+}
+
 // Mutators
+
+absl::Status Solver::RecursiveHelper(absl::Span<const Technique> techniques,
+                                     int i) {
+  Gamestate state = CurrentState();
+  // Check for failure (error, really)
+  if (state.letters().size() < 25)
+    return absl::InternalError("Somehow we're losing letters.");
+
+  // Check for success.
+  if (IsComplete()) {
+    UpdateBestState();
+    return absl::OkStatus();
+  }
+
+  // When we run out of techniques, finish by finding words recursively.
+  Technique t = (i < techniques.size()) ? techniques[i]
+                                        : Technique::kFillMostRestrictedRow;
+
+  // Initialize variables used by some techniques.
+  std::vector<Point> line;
+
+  // Get the options for the technique.
+  absl::flat_hash_set<std::string> options;
+  switch (t) {
+    case Technique::kFillMostRestrictedRow:
+      line = state.line(MostRestrictedWordlessRow());
+      options = OptionsForLine(line);
+      break;
+    case Technique::kFillBonusWord:
+      options = OptionsForBonusWord();
+      break;
+    case Technique::kFillMultiplierTiles:
+      options = OptionsForMultiplierTiles();
+      break;
+  }
+
+  // Try each option.
+  int loop = 0;
+  for (const absl::string_view option : options) {
+    // Place it with the appropriate method.
+    absl::Status s;
+    switch (t) {
+      case Technique::kFillMostRestrictedRow:
+        LOG(INFO) << absl::StrFormat(kVerboseLoop, std::string(i + 1, ' '),
+                                     ++loop, options.size(), "word", option);
+        s = FillLine(line, option);
+        break;
+      case Technique::kFillBonusWord:
+        LOG(INFO) << absl::StrFormat(kVerboseLoop, std::string(i + 1, ' '),
+                                     ++loop, options.size(), "bonus word",
+                                     option);
+        s = FillLine(bonus_line_, option);
+        break;
+      case Technique::kFillMultiplierTiles:
+        LOG(INFO) << absl::StrFormat(kVerboseLoop, std::string(i + 1, ' '),
+                                     ++loop, options.size(), "letters", option);
+        s = FillMultiplierCells(option);
+        break;
+    }
+    if (!s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
+    // Recurse.
+    if (absl::Status s = RecursiveHelper(techniques, i + 1); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
+    // Undo the placement.
+    steps_.pop_back();
+  }
+  return absl::OkStatus();
+}
 
 absl::Status Solver::FillLine(const std::vector<Point> &line,
                               absl::string_view word) {
@@ -60,125 +160,82 @@ absl::Status Solver::FillLine(const std::vector<Point> &line,
   return absl::OkStatus();
 }
 
-absl::Status Solver::FillMultiplierCells(absl::string_view letters) {
+absl::Status Solver::FillMultiplierCells(const absl::string_view letters) {
   Gamestate state = CurrentState();
-  int l = 0;
-  for (int m = 0; m < multiplier_points_.size() && l < letters.length(); ++m) {
-    const Point p = multiplier_points_[m];
-    if (state[p].letter != kEmptyCell) continue;
-    if (absl::Status s = state.FillCell(p, letters[l++]); !s.ok()) {
+  int i = 0;
+  for (const Point &p : multiplier_points_) {
+    if (std::isalpha(state[p].letter)) continue;
+    if (i >= letters.size()) break;
+    if (absl::Status s = state.FillCell(p, letters[i]); !s.ok()) {
       LOG(ERROR) << s;
       return s;
     }
+    ++i;
   }
   steps_.push_back(state);
   return absl::OkStatus();
 }
 
-absl::StatusOr<Gamestate> Solver::Solve() {
-  // To narrow the search space, grab the most valuable tiles and try to
-  // make bonus words using three of them.
-  absl::flat_hash_set<std::string> bonus_words_to_try;
+absl::flat_hash_set<std::string> Solver::OptionsForBonusWord() const {
+  const Gamestate state = CurrentState();
+  const LetterCount line_contents(state.LineString(bonus_line_));
+  Dict::SearchParameters params = {
+      .min_length = 4,
+      .max_length = 4,
+      .max_letters = state.unplaced_letters() + line_contents,
+      .matching_regex = state.LineRegex(bonus_line_)};
 
-  // If there are already letters in the bonus line, adjust this phase
-  // accordingly
-  LetterCount bplc(starting_state_.LineString(bonus_line_));
-  LetterCount valuable_letters(
-      starting_state_.NMostValuableLetters(tiles_for_bonus_words_));
+  // We narrow the possible bonus words by requiring they use a certain number
+  // of the most valuable tiles.
+  const LetterCount top_letters(
+      state.NMostValuableLetters(tiles_for_bonus_words_));
   absl::flat_hash_set<std::string> combos =
-      valuable_letters.CombinationsOfSize(3 - bplc.size());
-  for (const std::string &combo : combos) {
-    absl::flat_hash_set<std::string> words = dict_.WordsMatchingParameters(
-        {.min_length = 4,
-         .max_length = 4,
-         .min_letters = LetterCount(combo),
-         .max_letters = starting_state_.unplaced_letters() + bplc,
-         .matching_regex = starting_state_.LineRegex(bonus_line_)});
-    bonus_words_to_try.insert(words.begin(), words.end());
+      top_letters.CombinationsOfSize(3 - line_contents.size());
+
+  // For each combo, get the possible words and add them to the set.
+  absl::flat_hash_set<std::string> options;
+  for (const absl::string_view combo : combos) {
+    params.min_letters = LetterCount(combo);
+    absl::flat_hash_set<std::string> words =
+        dict_.WordsMatchingParameters(params);
+    options.insert(words.begin(), words.end());
   }
-  LOG(INFO) << "Found " << bonus_words_to_try.size() << " bonus words to try.";
-  LOG(INFO) << absl::StrJoin(bonus_words_to_try, ", ");
-
-  int loops = 0;
-  for (const std::string &bonus_word : bonus_words_to_try) {
-    LOG(INFO) << "Beginning loop " << ++loops << "/"
-              << bonus_words_to_try.size() << " with bonus word \""
-              << bonus_word << "\"";
-
-    // Place the bonus word on the board
-    if (absl::Status s = FillLine(bonus_line_, bonus_word); !s.ok()) {
-      LOG(ERROR) << s;
-      return s;
-    }
-
-    // Grab the high-scoring tiles not used by the bonus word, and try all the
-    // permutations of them on the open multiplier_squares.
-    std::string mvls =
-        CurrentState().NMostValuableLetters(tiles_for_multiplier_tiles_);
-    std::sort(mvls.begin(), mvls.end());
-    do {
-      if (absl::Status s = FillMultiplierCells(mvls); !s.ok()) {
-        LOG(ERROR) << s;
-        return s;
-      }
-      if (absl::Status s = FindWordsRecursively(); !s.ok()) {
-        LOG(ERROR) << s;
-        return s;
-      }
-      steps_.pop_back();  // The multiplier tiles
-
-    } while (std::next_permutation(mvls.begin(), mvls.end()));
-    steps_.pop_back();  // The bonus word
-  }
-
-  // Loop again if nothing found.
-  if (best_score_ == 0) {
-    ++tiles_for_bonus_words_;
-    ++tiles_for_multiplier_tiles_;
-    LOG(INFO) << "No solutions found. Trying again with a broader search.";
-    return Solve();
-  }
-
-  return best_state_;
+  return options;
 }
 
-absl::Status Solver::FindWordsRecursively() {
-  Gamestate state = CurrentState();
-  // Check for failure (error, really)
-  if (state.letters().size() < 25)
-    return absl::UnknownError("You've met with a terrible fate, haven't you?");
-
-  // Check for success.
-  if (IsComplete()) {
-    UpdateBestState();
-    return absl::OkStatus();
-  }
-
-  // Focus on the next row that needs filling, and find all possible options.
-  int row = MostRestrictedWordlessRow();
-  std::vector<Point> line = state.line(row);
-  LetterCount line_letters(state.LineString(line));
-  absl::flat_hash_set<std::string> matches = dict_.WordsMatchingParameters(
-      {.min_length = 5,  // TODO: allow shorter words
-       .max_length = 5,
-       .min_letters = line_letters,
-       .max_letters = line_letters + state.unplaced_letters(),
+absl::flat_hash_set<std::string> Solver::OptionsForLine(
+    const std::vector<Point> &line) const {
+  const Gamestate state = CurrentState();
+  const LetterCount line_contents(state.LineString(line));
+  const int n = line.size();
+  return dict_.WordsMatchingParameters(
+      {.min_length = n,  // TODO: 3
+       .max_length = n,
+       .min_letters = line_contents,
+       .max_letters = line_contents + state.unplaced_letters(),
        .matching_regex = state.LineRegex(line)});
+}
 
-  // Try all possible options, recurse, then backtrack. If something goes wrong,
-  // return the error.
-  for (const absl::string_view word : matches) {
-    if (absl::Status s = FillLine(line, word); !s.ok()) {
-      LOG(ERROR) << s;
-      return s;
-    }
-    if (absl::Status s = FindWordsRecursively(); !s.ok()) {
-      LOG(ERROR) << s;
-      return s;
-    }
-    steps_.pop_back();
+absl::flat_hash_set<std::string> Solver::OptionsForMultiplierTiles() const {
+  const Gamestate state = CurrentState();
+
+  // We only consider a certain number of high-value letters to place on the
+  // multiplier tiles.
+  const LetterCount top_letters(
+      state.NMostValuableLetters(tiles_for_multiplier_tiles_));
+  LOG(INFO) << "top_letters == " << top_letters;
+  const int k = absl::c_count_if(multiplier_points_, [state](const Point &p) {
+    return state[p].letter == kEmptyCell;
+  });
+  absl::flat_hash_set<std::string> combos = top_letters.CombinationsOfSize(k);
+
+  // Get the permutations of each combination.
+  absl::flat_hash_set<std::string> options;
+  for (std::string combo : combos) {
+    do options.insert(combo);
+    while (std::next_permutation(combo.begin(), combo.end()));
   }
-  return absl::OkStatus();
+  return options;
 }
 
 // Score

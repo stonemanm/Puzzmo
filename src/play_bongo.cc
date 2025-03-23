@@ -89,8 +89,10 @@ absl::StatusOr<Gamestate> LoadStartingState() {
     char letter = v[0][0];
     int count = std::stoi(v[1]);
     int value = std::stoi(v[2]);
-    if (absl::StatusOr<int> s = letters.AddLetter(letter, count); !s.ok())
-      return s.status();
+    if (absl::Status s = letters.AddLetter(letter, count); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
     letter_values[letter] = value;
   }
   return Gamestate(*grid_strings, letter_values, letters);

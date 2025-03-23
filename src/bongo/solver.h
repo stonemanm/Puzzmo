@@ -11,10 +11,40 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/types/span.h"
 #include "dict.h"
 #include "gamestate.h"
 
 namespace puzzmo::bongo {
+
+// bongo::Technique
+//
+// Each enumerated `Technique` corresponds to (a) one or more set of cells in
+// the grid, (b) a `Solver::OptionsFor*()` class method in `bongo::Solver` that
+// gathers the options to try, and (c) a `Solver::Fill*()` class method that
+// places a given option on the given cells.
+enum class Technique {
+  // Technique::kFillMostRestrictedRow
+  //
+  // The default technique. Tries options for whatever row has the most
+  // populated cells without having a word in it. Corresponds to
+  // `Solver::OptionsForLine()` and `Solver::FillLine()`.
+  kFillMostRestrictedRow = 0,
+
+  // Technique::kFillBonusWord
+  //
+  // Try to fill the bonus line. Possible options are constrained by
+  // `Parameters::tiles_for_bonus_words`. Corresponds to
+  // `Solver::OptionsForBonusWord()` and `Solver::FillLine()`.
+  kFillBonusWord,
+
+  // Technique::kFillMultiplierTiles
+  //
+  // Try to fill the cells with multipliers. Possible options are constrained by
+  // `Parameters::tiles_for_multiplier_tiles`. Corresponds to
+  // `Solver::OptionsForMultiplierTiles()` and `Solver::FillMultiplierCells()`.
+  kFillMultiplierTiles,
+};
 
 // bongo::Solver
 //
@@ -71,6 +101,30 @@ class Solver {
   // Returns the `Gamestate` that scored `best_score`.
   Gamestate best_state() const { return best_state_; }
 
+  //---------
+  // Solvers
+
+  // Solver::Solve()
+  //
+  // Solves by first applying `kFillBonusWord`, then `kFillMultiplierTiles`, and
+  // then repeating `kFillMostRestrictedRow`.
+  absl::StatusOr<Gamestate> Solve();
+
+  // Solver::SolveWithTechniquesInOrder()
+  //
+  // Applies the `techniques` in order, depth-first, ending each branch when
+  // `IsComplete()` is `true`. If that point has not been reached once all
+  // provided `techniques` have been applied, repeatedly applies
+  // `Technique::kFillMostRestrictedRow` to finish the search. At the end of
+  // every branch of the search, if the current gamestate scores higher than
+  // `best_score_`, it is saved as `best_state_` and `best_score_` is updated.
+  //
+  // If no solutions are found, the process is repeated from the top with
+  // `tiles_for_bonus_words_` and `tiles_for_multiplier_tiles_` both
+  // incremented.
+  absl::StatusOr<Gamestate> SolveWithTechniquesInOrder(
+      absl::Span<const Technique> techniques);
+
   //----------
   // Mutators
 
@@ -78,6 +132,18 @@ class Solver {
   //
   // Returns the solver to its starting state.
   void reset() { steps_.clear(); }
+
+ private:
+  // Solver::RecursiveHelper()
+  //
+  // If the gamestate is complete, checks to see if we have a new best state.
+  // Otherwise, applies the `i`th technique passed in, gathering the
+  // corresponding options and calling the corresponding filler method, and then
+  // calls itself with `i` incremented.
+  //
+  // If `i >= techniques.size()`, uses the technique
+  // `Technique::kFillMostRestrictedRow`.
+  absl::Status RecursiveHelper(absl::Span<const Technique> techniques, int i);
 
   // Solver::FillLine()
   //
@@ -91,20 +157,31 @@ class Solver {
   // the string until either the cells or the letters run out. Multiplier cells
   // are filled from highest to lowest multiplier, with ties broken UtD, LtR.
   // Appends to `steps_` if successful.
-  absl::Status FillMultiplierCells(absl::string_view letters);
+  absl::Status FillMultiplierCells(const absl::string_view letters);
 
-  // Solver::Solve()
+  // Solver::OptionsForBonusWord()
   //
-  // Tries permutations of the highest-scoring tiles on multiplier spaces or
-  // bonus path spaces. If no solutions are found, increments the parameter
-  // values and tries again.
-  absl::StatusOr<Gamestate> Solve();
+  // Calculates and returns all words to be tried in the bonus word slot. In
+  // addition to the available letters, options are limited by the dictionary,
+  // the letters already placed in the bonus word, and by
+  // `Parameters::tiles_for_bonus_words`.
+  absl::flat_hash_set<std::string> OptionsForBonusWord() const;
 
- private:
-  // Solver::FindWordsRecursively()
+  // Solver::OptionsForBonusWord()
   //
-  // A recursive helper method used by `Solve()`.
-  absl::Status FindWordsRecursively();
+  // Calculates and returns all words to be tried in the line. In addition to
+  // the available letters, options are limited by the dictionary and the
+  // letters already placed in the line.
+  absl::flat_hash_set<std::string> OptionsForLine(
+      const std::vector<Point> &line) const;
+
+  // Solver::OptionsForMultiplierTiles()
+  //
+  // Calculates and returns all words to be tried in the multiplier slot. In
+  // addition to the available letters, options are limited by the dictionary,
+  // any letters already placed in the multiplier slots, and by
+  // `Parameters::tiles_for_multiplier_tiles`.
+  absl::flat_hash_set<std::string> OptionsForMultiplierTiles() const;
 
   //---------
   // Scoring
