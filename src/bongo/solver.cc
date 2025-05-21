@@ -14,6 +14,18 @@ namespace {
 constexpr absl::string_view kVerboseLoop =
     "%sBeginning loop %d/%d with %s \"%s\".";
 
+// How to fill the second "%s" in `kVerboseLoop`.
+std::string VerboseLoopText(const Technique &t) {
+  switch (t) {
+    case Technique::kFillMostRestrictedRow:
+      return "word";
+    case Technique::kFillBonusWordCells:
+      return "bonus word";
+    case Technique::kFillMultiplierCells:
+      return "letters";
+  }
+}
+
 // A helper function to identify the longest substring of alphabetical
 // characters in `s`.
 std::string LongestAlphaSubstring(absl::string_view s) {
@@ -39,7 +51,9 @@ std::string LongestAlphaSubstring(absl::string_view s) {
 
 }  // namespace
 
-// Constructors
+/** * * * * * * *
+ * Constructors *
+ * * * * * * * **/
 
 Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
     : dict_(dict),
@@ -48,147 +62,143 @@ Solver::Solver(const Dict &dict, const Gamestate &state, Parameters params)
       multiplier_points_(state.MultiplierPoints()),
       starting_state_(state),
       best_state_(state),
-      tiles_for_bonus_words_(params.tiles_for_bonus_words),
-      tiles_for_multiplier_tiles_(params.tiles_for_multiplier_tiles) {}
+      state_(state),
+      params_(params) {}
 
-// Solvers
+/** * * * * *
+ * Mutators *
+ * * * * * **/
 
-absl::StatusOr<Gamestate> Solver::Solve() {
-  return SolveWithTechniquesInOrder(
-      {Technique::kFillBonusWord, Technique::kFillMultiplierTiles});
+void Solver::reset() {
+  state_ = starting_state_;
+  locks_.clear();
 }
 
-absl::StatusOr<Gamestate> Solver::SolveWithTechniquesInOrder(
-    absl::Span<const Technique> techniques) {
-  if (absl::Status s = RecursiveHelper(techniques, 0); !s.ok()) {
+absl::StatusOr<Gamestate> Solver::Solve() {
+  if (absl::Status s = RecursiveHelper(0); !s.ok()) {
     LOG(ERROR) << s;
     return s;
   }
   // Loop again if nothing found.
   if (best_score_ == 0) {
-    ++tiles_for_bonus_words_;
-    ++tiles_for_multiplier_tiles_;
+    ++params_.num_tiles_for_bonus_words;
+    ++params_.num_tiles_for_mult_cells;
     LOG(INFO) << "No solutions found. Trying again with a broader search.";
-    return SolveWithTechniquesInOrder(techniques);
+    return Solve();
   }
   return best_state_;
 }
 
-// Mutators
-
-absl::Status Solver::RecursiveHelper(absl::Span<const Technique> techniques,
-                                     int i) {
-  Gamestate state = CurrentState();
-  // Check for failure (error, really)
-  if (state.letters().size() < 25)
-    return absl::InternalError("Somehow we're losing letters.");
-
-  // Check for success.
+absl::Status Solver::RecursiveHelper(int i) {
+  // Check for success/failure.
   if (IsComplete()) {
     UpdateBestState();
     return absl::OkStatus();
   }
 
-  // When we run out of techniques, finish by finding words recursively.
-  Technique t = (i < techniques.size()) ? techniques[i]
-                                        : Technique::kFillMostRestrictedRow;
+  // Get the technique to use.
+  Technique t = (i < params_.techniques.size())
+                    ? params_.techniques[i]
+                    : Technique::kFillMostRestrictedRow;
 
-  // Initialize variables used by some techniques.
-  std::vector<Point> line;
-
-  // Get the options for the technique.
+  // Get the cells targeted by the technique and the options for them.
+  std::vector<Point> cells;
   absl::flat_hash_set<std::string> options;
   switch (t) {
     case Technique::kFillMostRestrictedRow:
-      line = state.line(MostRestrictedWordlessRow());
-      options = OptionsForLine(line);
+      cells = state_.line(MostRestrictedWordlessRow());
+      options = OptionsForLine(cells);
       break;
-    case Technique::kFillBonusWord:
+
+    case Technique::kFillBonusWordCells:
+      cells = bonus_line_;
       options = OptionsForBonusWord();
       break;
-    case Technique::kFillMultiplierTiles:
+
+    case Technique::kFillMultiplierCells:
+      cells = RemainingMultiplierCells();
       options = OptionsForMultiplierTiles();
       break;
   }
 
-  // Try each option.
   int loop = 0;
-  for (const absl::string_view option : options) {
-    // Place it with the appropriate method.
-    absl::Status s;
-    switch (t) {
-      case Technique::kFillMostRestrictedRow:
-        LOG(INFO) << absl::StrFormat(kVerboseLoop, std::string(i + 1, ' '),
-                                     ++loop, options.size(), "word", option);
-        s = FillLine(line, option);
-        break;
-      case Technique::kFillBonusWord:
-        LOG(INFO) << absl::StrFormat(kVerboseLoop, std::string(i + 1, ' '),
-                                     ++loop, options.size(), "bonus word",
-                                     option);
-        s = FillLine(bonus_line_, option);
-        break;
-      case Technique::kFillMultiplierTiles:
-        LOG(INFO) << absl::StrFormat(kVerboseLoop, std::string(i + 1, ' '),
-                                     ++loop, options.size(), "letters", option);
-        s = FillMultiplierCells(option);
-        break;
-    }
-    if (!s.ok()) {
+  for (const absl::string_view letters : options) {
+    if (i < 3)
+      LOG(INFO) << absl::StrFormat(kVerboseLoop, std::string(i + 1, ' '),
+                                   ++loop, options.size(), VerboseLoopText(t),
+                                   letters);
+
+    // Place the letters in the cells.
+    if (absl::Status s = FillCells(cells, letters); !s.ok()) {
       LOG(ERROR) << s;
       return s;
     }
     // Recurse.
-    if (absl::Status s = RecursiveHelper(techniques, i + 1); !s.ok()) {
+    if (absl::Status s = RecursiveHelper(i + 1); !s.ok()) {
       LOG(ERROR) << s;
       return s;
     }
     // Undo the placement.
-    steps_.pop_back();
-  }
-  return absl::OkStatus();
-}
-
-absl::Status Solver::FillLine(const std::vector<Point> &line,
-                              absl::string_view word) {
-  Gamestate state = CurrentState();
-  if (absl::Status s = state.FillLine(line, word); !s.ok()) {
-    LOG(ERROR) << s;
-    return s;
-  }
-  steps_.push_back(state);
-  return absl::OkStatus();
-}
-
-absl::Status Solver::FillMultiplierCells(const absl::string_view letters) {
-  Gamestate state = CurrentState();
-  int i = 0;
-  for (const Point &p : multiplier_points_) {
-    if (std::isalpha(state[p].letter)) continue;
-    if (i >= letters.size()) break;
-    if (absl::Status s = state.FillCell(p, letters[i]); !s.ok()) {
+    if (absl::Status s = ClearCells(); !s.ok()) {
       LOG(ERROR) << s;
       return s;
     }
-    ++i;
   }
-  steps_.push_back(state);
   return absl::OkStatus();
 }
 
+std::vector<Point> Solver::RemainingMultiplierCells() const {
+  std::vector<Point> open_multiplier_points;
+  for (const Point &p : multiplier_points_)
+    if (state_[p].letter == kEmptyCell) open_multiplier_points.push_back(p);
+  return open_multiplier_points;
+}
+
+absl::Status Solver::FillCells(const std::vector<Point> &cells,
+                               const absl::string_view letters) {
+  if (absl::Status s = state_.FillLine(cells, letters); !s.ok()) {
+    LOG(ERROR) << s;
+    return s;
+  }
+
+  locks_.push_back({});
+  for (const Point &p : cells) {
+    if (state_[p].is_locked) continue;
+    locks_.back().insert(p);
+    state_[p].is_locked = true;
+  }
+  return absl::OkStatus();
+}
+
+absl::Status Solver::ClearCells() {
+  absl::flat_hash_set<Point> locks = locks_.back();
+  locks_.pop_back();
+  for (const Point &p : locks) {
+    state_[p].is_locked = false;
+    if (absl::Status s = state_.ClearCell(p); !s.ok()) {
+      LOG(ERROR) << s;
+      return s;
+    }
+  }
+  return absl::OkStatus();
+}
+
+/** * * * **
+ * Options *
+ ** * * * **/
+
 absl::flat_hash_set<std::string> Solver::OptionsForBonusWord() const {
-  const Gamestate state = CurrentState();
-  const LetterCount line_contents(state.LineString(bonus_line_));
+  const LetterCount line_contents(state_.LineString(bonus_line_));
   Dict::SearchParameters params = {
       .min_length = 4,
       .max_length = 4,
-      .max_letters = state.unplaced_letters() + line_contents,
-      .matching_regex = state.LineRegex(bonus_line_)};
+      .max_letters = state_.unplaced_letters() + line_contents,
+      .matching_regex = state_.LineRegex(bonus_line_)};
 
   // We narrow the possible bonus words by requiring they use a certain number
   // of the most valuable tiles.
   const LetterCount top_letters(
-      state.NMostValuableLetters(tiles_for_bonus_words_));
+      state_.NMostValuableLetters(params_.num_tiles_for_bonus_words));
   absl::flat_hash_set<std::string> combos =
       top_letters.CombinationsOfSize(3 - line_contents.size());
 
@@ -205,27 +215,23 @@ absl::flat_hash_set<std::string> Solver::OptionsForBonusWord() const {
 
 absl::flat_hash_set<std::string> Solver::OptionsForLine(
     const std::vector<Point> &line) const {
-  const Gamestate state = CurrentState();
-  const LetterCount line_contents(state.LineString(line));
+  const LetterCount line_contents(state_.LineString(line));
   const int n = line.size();
   return dict_.WordsMatchingParameters(
       {.min_length = n,  // TODO: 3
        .max_length = n,
        .min_letters = line_contents,
-       .max_letters = line_contents + state.unplaced_letters(),
-       .matching_regex = state.LineRegex(line)});
+       .max_letters = line_contents + state_.unplaced_letters(),
+       .matching_regex = state_.LineRegex(line)});
 }
 
 absl::flat_hash_set<std::string> Solver::OptionsForMultiplierTiles() const {
-  const Gamestate state = CurrentState();
-
   // We only consider a certain number of high-value letters to place on the
   // multiplier tiles.
   const LetterCount top_letters(
-      state.NMostValuableLetters(tiles_for_multiplier_tiles_));
-  LOG(INFO) << "top_letters == " << top_letters;
-  const int k = absl::c_count_if(multiplier_points_, [state](const Point &p) {
-    return state[p].letter == kEmptyCell;
+      state_.NMostValuableLetters(params_.num_tiles_for_mult_cells));
+  const int k = absl::c_count_if(multiplier_points_, [*this](const Point &p) {
+    return state_[p].letter == kEmptyCell;
   });
   absl::flat_hash_set<std::string> combos = top_letters.CombinationsOfSize(k);
 
@@ -238,21 +244,22 @@ absl::flat_hash_set<std::string> Solver::OptionsForMultiplierTiles() const {
   return options;
 }
 
-// Score
+/** * * * **
+ * Scoring *
+ ** * * * **/
 
 int Solver::LineScore(const std::vector<Point> &line) const {
-  const Gamestate state = CurrentState();
   const std::string word = GetWord(line);
   if (!dict_.contains(word)) return 0;
 
   // Find the index in line where word begins.
   int offset = 0;
-  while (state.LineString(line).substr(offset, word.size()) != word) ++offset;
+  while (state_.LineString(line).substr(offset, word.size()) != word) ++offset;
 
   int score = 0;
   for (int i = 0; i < word.size(); ++i) {
     char c = word[i];
-    score += state.letter_values().at(c) * state[line[i + offset]].multiplier;
+    score += state_.letter_values().at(c) * state_[line[i + offset]].multiplier;
   }
   return std::ceil(score * (dict_.IsCommonWord(word) ? 1.3 : 1));
 }
@@ -266,7 +273,7 @@ int Solver::Score() const {
 void Solver::UpdateBestState() {
   if (int score = Score(); score > best_score_) {
     best_score_ = score;
-    best_state_ = CurrentState();
+    best_state_ = state();
     LOG(INFO) << absl::StrCat("New best score! (", best_score_, ")");
     for (const std::vector<Point> &line : lines_) {
       std::string word = GetWord(line);
@@ -278,12 +285,13 @@ void Solver::UpdateBestState() {
   }
 }
 
-// Words
+/** * * **
+ * Words *
+ ** * * **/
 
 std::string Solver::GetWord(const std::vector<Point> &line) const {
   const int threshold = (line == bonus_line_) ? 4 : 3;
-  const std::string word =
-      LongestAlphaSubstring(CurrentState().LineString(line));
+  const std::string word = LongestAlphaSubstring(state().LineString(line));
   return (word.length() >= threshold && dict_.contains(word)) ? word : "";
 }
 
@@ -300,7 +308,7 @@ int Solver::MostRestrictedWordlessRow() const {
   for (int row = 0; row < 5; ++row) {
     if (!(GetWord(lines_[row]).empty())) continue;
     const int letters = absl::c_count_if(
-        CurrentState().grid()[row],
+        state().grid()[row],
         [](const Cell &cell) { return cell.letter != kEmptyCell; });
     if (letters > most_letters_placed) {
       most_letters_placed = letters;

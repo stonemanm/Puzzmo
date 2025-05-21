@@ -42,6 +42,7 @@ using namespace puzzmo;
 using ::bongo::Dict;
 using ::bongo::Gamestate;
 using ::bongo::Solver;
+using ::bongo::Technique;
 
 using LettersToWordsMap =
     absl::flat_hash_map<LetterCount, absl::flat_hash_set<std::string>>;
@@ -120,11 +121,11 @@ int main(int argc, const char *argv[]) {
   }
 
   // std::vector<Point> path;
-  // int r = 0;
-  // for (int i = 0; i < 5; ++i) {
-  //   path.push_back({r, i});
+  // int row = 4;
+  // for (int col = 0; col < 5; ++col) {
+  //   path.push_back({row, col});
   // }
-  // absl::Status s = starting_state->FillLine(path, "swabs");
+  // absl::Status s = starting_state->FillLine(path, "trove");
   // if (!s.ok()) {
   //   LOG(ERROR) << s;
   //   return 1;
@@ -135,8 +136,9 @@ int main(int argc, const char *argv[]) {
 
   Solver bongo_solver(
       *dict, *starting_state,
-      {.tiles_for_bonus_words = absl::GetFlag(FLAGS_tiles_for_bonus_words),
-       .tiles_for_multiplier_tiles =
+      {.techniques = {Technique::kFillBonusWordCells},
+       .num_tiles_for_bonus_words = absl::GetFlag(FLAGS_tiles_for_bonus_words),
+       .num_tiles_for_mult_cells =
            absl::GetFlag(FLAGS_tiles_for_multiplier_tiles)});
   if (absl::StatusOr<Gamestate> solution = bongo_solver.Solve();
       !solution.ok()) {
